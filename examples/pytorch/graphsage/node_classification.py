@@ -1,6 +1,7 @@
 import argparse
 
 import dgl
+import numpy as np
 import dgl.nn as dglnn
 import torch
 import torch.nn as nn
@@ -41,6 +42,7 @@ class SAGE(nn.Module):
         """Conduct layer-wise inference to get all the node embeddings."""
         feat = g.ndata["feat"]
         sampler = MultiLayerFullNeighborSampler(1, prefetch_node_feats=["feat"])
+        print("MultiLayerFullNeighborSampler called")
         dataloader = DataLoader(
             g,
             torch.arange(g.num_nodes()).to(g.device),
@@ -105,14 +107,16 @@ def layerwise_infer(device, graph, nid, model, num_classes, batch_size):
         )
 
 
-def train(args, device, g, dataset, model, num_classes):
+def train(args, device, g, dataset, model, num_classes, part_array):
     # create sampler & dataloader
     train_idx = dataset.train_idx.to(device)
     val_idx = dataset.val_idx.to(device)
+    print("NeighborSampler Callled node_classification.py line 113")
     sampler = NeighborSampler(
         [10, 10, 10],  # fanout for [layer-0, layer-1, layer-2]
         prefetch_node_feats=["feat"],
         prefetch_labels=["label"],
+        part_array,
     )
     use_uva = args.mode == "mixed"
     train_dataloader = DataLoader(
@@ -141,7 +145,7 @@ def train(args, device, g, dataset, model, num_classes):
 
     opt = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=5e-4)
 
-    for epoch in range(10):
+    for epoch in range(1):
         model.train()
         total_loss = 0
         for it, (input_nodes, output_nodes, blocks) in enumerate(
@@ -187,10 +191,12 @@ if __name__ == "__main__":
     print("Loading data")
     dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-products"))
     g = dataset[0]
+    part_array = np.zeros(g.num_nodes())
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     num_classes = dataset.num_classes
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
 
+    print(len(part_array))
     # create GraphSAGE model
     in_size = g.ndata["feat"].shape[1]
     out_size = dataset.num_classes
@@ -203,7 +209,7 @@ if __name__ == "__main__":
 
     # model training
     print("Training...")
-    train(args, device, g, dataset, model, num_classes)
+    train(args, device, g, dataset, model, num_classes, part_array)
 
     # test the model
     print("Testing...")

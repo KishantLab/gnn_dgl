@@ -182,6 +182,7 @@ std::pair<HeteroSubgraph, std::vector<FloatArray>> SampleLabors(
     const IdArray NIDs_ntype =
         NIDs[(dir == EdgeDir::kIn) ? src_vtype : dst_vtype];
     const int64_t num_nodes = nodes_ntype->shape[0];
+    printf("SampleLabors called from neighbor.cc line 185\n");
     if (num_nodes == 0 || fanouts[etype] == 0) {
       // Nothing to sample for this etype, create a placeholder relation graph
       subrels[etype] = UnitGraph::Empty(
@@ -281,6 +282,7 @@ HeteroSubgraph SampleNeighbors(
 
     if (num_nodes == 0 || fanouts[etype] == 0) {
       // Nothing to sample for this etype, create a placeholder relation graph
+      printf("SampleNeighbors line 285 from neighbor.cc\n");
       subrels[etype] = UnitGraph::Empty(
           hg->GetRelationGraph(etype)->NumVertexTypes(),
           hg->NumVertices(src_vtype), hg->NumVertices(dst_vtype),
@@ -294,10 +296,12 @@ HeteroSubgraph SampleNeighbors(
       switch (avail_fmt) {
         case SparseFormat::kCOO:
           if (dir == EdgeDir::kIn) {
+            printf("SampleNeighbors line 299 from IF case kCOO\n");
             sampled_coo = aten::COOTranspose(aten::COORowWiseSampling(
                 aten::COOTranspose(hg->GetCOOMatrix(etype)), nodes_ntype,
                 fanouts[etype], prob_or_mask[etype], replace));
           } else {
+            printf("SampleLabors line 303 from else case KCOO\n");
             sampled_coo = aten::COORowWiseSampling(
                 hg->GetCOOMatrix(etype), nodes_ntype, fanouts[etype],
                 prob_or_mask[etype], replace);
@@ -306,11 +310,13 @@ HeteroSubgraph SampleNeighbors(
         case SparseFormat::kCSR:
           CHECK(dir == EdgeDir::kOut)
               << "Cannot sample out edges on CSC matrix.";
+          printf("SampleLabors line 315 from case kCSR neighbor.cc \n");
           sampled_coo = aten::CSRRowWiseSampling(
               hg->GetCSRMatrix(etype), nodes_ntype, fanouts[etype],
               prob_or_mask[etype], replace);
           break;
         case SparseFormat::kCSC:
+          printf("SampleLabors line 319 from cse KCSC neighbour.cc \n");
           CHECK(dir == EdgeDir::kIn) << "Cannot sample in edges on CSR matrix.";
           sampled_coo = aten::CSRRowWiseSampling(
               hg->GetCSCMatrix(etype), nodes_ntype, fanouts[etype],
@@ -372,6 +378,7 @@ SampleNeighborsFused(
     const IdArray nodes_ntype = nodes[rhs_node_type];
     const int64_t num_nodes = nodes_ntype->shape[0];
 
+    printf("SampleNeighborsFused called from neighbor.cc line 381\n");
     if (num_nodes == 0 || fanouts[etype] == 0) {
       // Nothing to sample for this etype, create a placeholder
       sampled_graphs.push_back(CSRMatrix());
@@ -677,6 +684,7 @@ HeteroSubgraph SampleNeighborsTopk(
     const IdArray nodes_ntype =
         nodes[(dir == EdgeDir::kOut) ? src_vtype : dst_vtype];
     const int64_t num_nodes = nodes_ntype->shape[0];
+    printf("SampleNeighborsTopk from neighbor.cc line 687\n");
     if (num_nodes == 0 || k[etype] == 0) {
       // Nothing to sample for this etype, create a placeholder relation graph
       subrels[etype] = UnitGraph::Empty(
@@ -961,4 +969,4 @@ DGL_REGISTER_GLOBAL("sampling.neighbor._CAPI_DGLSampleNeighborsBiased")
     });
 
 }  // namespace sampling
-}  // namespace dgl
+}  // namespace dgl

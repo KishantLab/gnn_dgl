@@ -219,6 +219,7 @@ def sample_neighbors(
     _dist_training=False,
     exclude_edges=None,
     output_device=None,
+    part_array,
 ):
     """Sample neighboring edges of the given nodes and return the induced subgraph.
 
@@ -377,6 +378,7 @@ def sample_neighbors(
             replace=replace,
             copy_ndata=copy_ndata,
             copy_edata=copy_edata,
+            part_array,
         )
         if exclude_edges is not None:
             eid_excluder = EidExcluder(exclude_edges)
@@ -395,6 +397,7 @@ def sample_neighbors_fused(
     copy_edata=True,
     exclude_edges=None,
     mapping=None,
+    part_array,
 ):
     """Sample neighboring edges of the given nodes and return the induced subgraph.
 
@@ -484,6 +487,7 @@ def sample_neighbors_fused(
             exclude_edges=exclude_edges,
             fused=True,
             mapping=mapping,
+            part_array,
         )
     else:
         frontier = _sample_neighbors(
@@ -497,6 +501,7 @@ def sample_neighbors_fused(
             copy_edata=copy_edata,
             fused=True,
             mapping=mapping,
+            part_array,
         )
         if exclude_edges is not None:
             eid_excluder = EidExcluder(exclude_edges)
@@ -517,6 +522,7 @@ def _sample_neighbors(
     exclude_edges=None,
     fused=False,
     mapping=None,
+    part_array,
 ):
     if not isinstance(nodes, dict):
         if len(g.ntypes) > 1:
@@ -525,6 +531,7 @@ def _sample_neighbors(
             )
         nodes = {g.ntypes[0]: nodes}
 
+    print("_sample_neighbors function inside dgl/sampling/neighbor.py line 528")
     nodes = utils.prepare_tensor_dict(g, nodes, "nodes")
     if len(nodes) == 0:
         raise ValueError(
@@ -620,6 +627,7 @@ def _sample_neighbors(
         assert ret.is_unibipartite
 
     else:
+        print("_CAPI_DGLSampleNeighbors called from neightbour.py line 624")
         subgidx = _CAPI_DGLSampleNeighbors(
             g._graph,
             nodes_all_types,

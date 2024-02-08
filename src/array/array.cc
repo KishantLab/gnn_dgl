@@ -576,6 +576,7 @@ COOMatrix CSRRowWiseSampling(
     bool replace) {
   COOMatrix ret;
   if (IsNullArray(prob_or_mask)) {
+    printf("CSRRowWiseSamplingUniform line 579, array.cc\n");
     ATEN_CSR_SWITCH_CUDA_UVA(
         mat, rows, XPU, IdType, "CSRRowWiseSamplingUniform", {
           ret = impl::CSRRowWiseSamplingUniform<XPU, IdType>(
@@ -583,6 +584,8 @@ COOMatrix CSRRowWiseSampling(
         });
   } else {
     // prob_or_mask is pinned and rows on GPU is valid
+     
+    printf("CSRRowWiseSampling line 588, array.cc\n");
     CHECK_VALID_CONTEXT(prob_or_mask, rows);
     ATEN_CSR_SWITCH_CUDA_UVA(mat, rows, XPU, IdType, "CSRRowWiseSampling", {
       CHECK(!(prob_or_mask->dtype.bits == 8 && XPU == kDGLCUDA))
@@ -893,6 +896,7 @@ COOMatrix COORowWiseSampling(
   COOMatrix ret;
   ATEN_COO_SWITCH(mat, XPU, IdType, "COORowWiseSampling", {
     if (IsNullArray(prob_or_mask)) {
+      printf("COORowWiseSampling called if array.cc\n");
       ret = impl::COORowWiseSamplingUniform<XPU, IdType>(
           mat, rows, num_samples, replace);
     } else {
@@ -1149,7 +1153,7 @@ void CSRSpMM(
     const std::string& op, const std::string& reduce, const CSRMatrix& csr,
     NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux) {
   const auto& bcast = CalcBcastOff(op, ufeat, efeat);
-
+    printf("CSRSpMM from array.cc called\n");
   ATEN_XPU_SWITCH_CUDA(csr.indptr->ctx.device_type, XPU, "SpMM", {
     ATEN_ID_TYPE_SWITCH(csr.indptr->dtype, IdType, {
       ATEN_FLOAT_TYPE_SWITCH_16BITS(out->dtype, Dtype, XPU, "Feature data", {

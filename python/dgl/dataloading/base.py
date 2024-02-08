@@ -258,6 +258,7 @@ class BlockSampler(Sampler):
     ):  # pylint: disable=arguments-differ
         """Sample a list of blocks from the given seed nodes."""
         result = self.sample_blocks(g, seed_nodes, exclude_eids=exclude_eids)
+        print("sample_blocks from base.py line 261")
         return self.assign_lazy_features(result)
 
 

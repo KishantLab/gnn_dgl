@@ -46,6 +46,8 @@ __global__ void _CSRRowWiseSampleDegreeKernel(
     IdType* const out_deg) {
   const int tIdx = threadIdx.x + blockIdx.x * blockDim.x;
 
+  if(tIdx == 0)
+    printf("_CSRRowWiseSampleDegreeKernel from CUDA Kernel line 50\n");
   if (tIdx < num_rows) {
     const int in_row = in_rows[tIdx];
     const int out_row = tIdx;
@@ -77,6 +79,7 @@ __global__ void _CSRRowWiseSampleDegreeReplaceKernel(
     IdType* const out_deg) {
   const int tIdx = threadIdx.x + blockIdx.x * blockDim.x;
 
+  printf("_CSRRowWiseSampleDegreeReplaceKernel from cuda/rowwise_sampling.cu line 82 \n");
   if (tIdx < num_rows) {
     const int64_t in_row = in_rows[tIdx];
     const int64_t out_row = tIdx;
@@ -263,16 +266,19 @@ COOMatrix _CSRRowWiseSamplingUniform(
       device->AllocWorkspace(ctx, (num_rows + 1) * sizeof(IdType)));
   if (replace) {
     const dim3 block(512);
+    printf("_CSRRowWiseSampleDegreeReplaceKernel line 269 rowwise_sampling.cu\n");
     const dim3 grid((num_rows + block.x - 1) / block.x);
     CUDA_KERNEL_CALL(
         _CSRRowWiseSampleDegreeReplaceKernel, grid, block, 0, stream, num_picks,
         num_rows, slice_rows, in_ptr, out_deg);
   } else {
     const dim3 block(512);
+    printf("_CSRRowWiseSampleDegreeKernel line 276 rowwise_sampling.cu\n");
     const dim3 grid((num_rows + block.x - 1) / block.x);
     CUDA_KERNEL_CALL(
         _CSRRowWiseSampleDegreeKernel, grid, block, 0, stream, num_picks,
         num_rows, slice_rows, in_ptr, out_deg);
+    cudaDeviceSynchronize();
   }
 
   // fill out_ptr
@@ -314,12 +320,14 @@ COOMatrix _CSRRowWiseSamplingUniform(
   if (replace) {  // with replacement
     const dim3 block(BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
+    printf("_CSRRowWiseSampleUniformReplaceKernel cuda/rowwise_sampling.cu line 322\n");
     CUDA_KERNEL_CALL(
         (_CSRRowWiseSampleUniformReplaceKernel<IdType, TILE_SIZE>), grid, block,
         0, stream, random_seed, num_picks, num_rows, slice_rows, in_ptr,
         in_cols, data, out_ptr, out_rows, out_cols, out_idxs);
   } else {  // without replacement
     const dim3 block(BLOCK_SIZE);
+    printf("_CSRRowWiseSampleUniformKernel cuda/rowwise_sampling.cu line 329\n");
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
     CUDA_KERNEL_CALL(
         (_CSRRowWiseSampleUniformKernel<IdType, TILE_SIZE>), grid, block, 0,

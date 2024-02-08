@@ -127,6 +127,7 @@ class NeighborSampler(BlockSampler):
         prefetch_edge_feats=None,
         output_device=None,
         fused=True,
+        part_array,
     ):
         super().__init__(
             prefetch_node_feats=prefetch_node_feats,
@@ -148,7 +149,7 @@ class NeighborSampler(BlockSampler):
         self.mapping = {}
         self.g = None
 
-    def sample_blocks(self, g, seed_nodes, exclude_eids=None):
+    def sample_blocks(self, g, seed_nodes, exclude_eids=None, part_array):
         output_nodes = seed_nodes
         blocks = []
         # sample_neighbors_fused function requires multithreading to be more efficient
@@ -183,6 +184,7 @@ class NeighborSampler(BlockSampler):
                 return seed_nodes, output_nodes, blocks
 
         for fanout in reversed(self.fanouts):
+            print("sample_neighbors neighbor_sampler.py line 186")
             frontier = g.sample_neighbors(
                 seed_nodes,
                 fanout,
@@ -191,6 +193,7 @@ class NeighborSampler(BlockSampler):
                 replace=self.replace,
                 output_device=self.output_device,
                 exclude_edges=exclude_eids,
+                part_array,
             )
             eid = frontier.edata[EID]
             block = to_block(frontier, seed_nodes)
@@ -198,6 +201,7 @@ class NeighborSampler(BlockSampler):
             seed_nodes = block.srcdata[NID]
             blocks.insert(0, block)
 
+        print(" one minibatch completed neighbor_sampler.py line 202")
         return seed_nodes, output_nodes, blocks
 
 
