@@ -113,8 +113,7 @@ def train(args, device, g, dataset, model, num_classes):
     execution_time = 0.0
     start_time = time.time()
     sampler = NeighborSampler(
-        [30, 30, 30],  # fanout for [layer-0, layer-1, layer-2]
-        # part_array,
+        [10, 10, 10],  # fanout for [layer-0, layer-1, layer-2]
         prefetch_node_feats=["feat"],
         prefetch_labels=["label"],
     )
@@ -132,7 +131,6 @@ def train(args, device, g, dataset, model, num_classes):
         g,
         train_idx,
         sampler,
-        # part_array,
         device=device,
         batch_size= int(args.batch_size),
         shuffle=True,
