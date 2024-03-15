@@ -572,9 +572,16 @@ std::pair<COOMatrix, FloatArray> CSRLaborSampling(
 }
 
 COOMatrix CSRRowWiseSampling(
-    CSRMatrix mat, IdArray rows, int64_t num_samples, NDArray prob_or_mask,
+    CSRMatrix mat, IdArray rows, int64_t num_samples, 
+    // NDArray parts_array,
+    NDArray prob_or_mask,
     bool replace) {
   COOMatrix ret;
+  // printf("Vector data from array.cc : ");
+    // for (auto elem : parts_array) {
+        // printf("%ld ", elem);
+    // }
+    printf("\n");
   if (IsNullArray(prob_or_mask)) {
     ATEN_CSR_SWITCH_CUDA_UVA(
         mat, rows, XPU, IdType, "CSRRowWiseSamplingUniform", {
@@ -596,6 +603,48 @@ COOMatrix CSRRowWiseSampling(
   }
   return ret;
 }
+
+COOMatrix CSRRowWiseSampling1(
+    CSRMatrix mat, IdArray rows, int64_t num_samples, 
+    const NDArray& parts_array,
+    NDArray prob_or_mask,
+    bool replace) {
+  COOMatrix ret;
+  // printf("Vector data from array.cc : ");
+    // for (auto elem : parts_array) {
+        // printf("%ld ", elem);
+    // }
+    // printf("\n");
+  
+  // size_t size = parts_array->shape[0];
+  // int64_t* part_array = static_cast<int64_t*>(parts_array->data);
+  //
+  // int64_t* d_part_array;
+  // cudaMalloc(&d_part_array, size * sizeof(int64_t));
+  //
+  // cudaMemcpy(d_part_array, part_array, size * sizeof(int64_t), cudaMemcpyHostToDevice);
+  if (IsNullArray(prob_or_mask)) {
+    ATEN_CSR_SWITCH_CUDA_UVA(
+        mat, rows, XPU, IdType, "CSRRowWiseSamplingUniform1", {
+          ret = impl::CSRRowWiseSamplingUniform1<XPU, IdType>(
+              mat, rows, num_samples, parts_array, replace);
+        });
+  } else {
+    // prob_or_mask is pinned and rows on GPU is valid
+    CHECK_VALID_CONTEXT(prob_or_mask, rows);
+    ATEN_CSR_SWITCH_CUDA_UVA(mat, rows, XPU, IdType, "CSRRowWiseSampling", {
+      CHECK(!(prob_or_mask->dtype.bits == 8 && XPU == kDGLCUDA))
+          << "GPU sampling with masks is currently not supported yet.";
+      ATEN_FLOAT_INT8_UINT8_TYPE_SWITCH(
+          prob_or_mask->dtype, FloatType, "probability or mask", {
+            ret = impl::CSRRowWiseSampling1<XPU, IdType, FloatType>(
+                mat, rows, num_samples, parts_array, prob_or_mask, replace);
+          });
+    });
+  }
+  return ret;
+}
+
 
 template <typename IdType, bool map_seed_nodes>
 std::pair<CSRMatrix, IdArray> CSRRowWiseSamplingFused(

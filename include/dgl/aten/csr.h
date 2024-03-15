@@ -572,8 +572,14 @@ std::pair<COOMatrix, FloatArray> CSRLaborSampling(
  * @return A COOMatrix storing the picked row, col and data indices.
  * @note The edges of the entire graph must be ordered by their edge types.
  */
+COOMatrix CSRRowWiseSampling1(
+    CSRMatrix mat, IdArray rows, int64_t num_samples,
+    const NDArray& parts_array,
+    NDArray prob_or_mask = NDArray(), bool replace = true);
+
 COOMatrix CSRRowWiseSampling(
     CSRMatrix mat, IdArray rows, int64_t num_samples,
+    // NDArray parts_array = NDArray(),
     NDArray prob_or_mask = NDArray(), bool replace = true);
 
 /*!

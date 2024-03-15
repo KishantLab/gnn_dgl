@@ -225,6 +225,42 @@ template COOMatrix CSRRowWiseSampling<kDGLCPU, int32_t, uint8_t>(
 template COOMatrix CSRRowWiseSampling<kDGLCPU, int64_t, uint8_t>(
     CSRMatrix, IdArray, int64_t, NDArray, bool);
 
+
+/////////////////////////////// CSR ///////////////////////////////
+
+template <DGLDeviceType XPU, typename IdxType, typename DType>
+COOMatrix CSRRowWiseSampling1(
+    CSRMatrix mat, IdArray rows, int64_t num_samples, const NDArray& parts_array, NDArray prob_or_mask,
+    bool replace) {
+  // If num_samples is -1, select all neighbors without replacement.
+  replace = (replace && num_samples != -1);
+  CHECK(prob_or_mask.defined());
+  auto num_picks_fn =
+      GetSamplingNumPicksFn<IdxType, DType>(num_samples, prob_or_mask, replace);
+  auto pick_fn =
+      GetSamplingPickFn<IdxType, DType>(num_samples, prob_or_mask, replace);
+  return CSRRowWisePick(mat, rows, num_samples, replace, pick_fn, num_picks_fn);
+}
+
+
+template COOMatrix CSRRowWiseSampling1<kDGLCPU, int32_t, float>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, NDArray, bool);
+template COOMatrix CSRRowWiseSampling1<kDGLCPU, int64_t, float>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, NDArray, bool);
+template COOMatrix CSRRowWiseSampling1<kDGLCPU, int32_t, double>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, NDArray, bool);
+template COOMatrix CSRRowWiseSampling1<kDGLCPU, int64_t, double>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, NDArray, bool);
+template COOMatrix CSRRowWiseSampling1<kDGLCPU, int32_t, int8_t>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, NDArray, bool);
+template COOMatrix CSRRowWiseSampling1<kDGLCPU, int64_t, int8_t>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, NDArray, bool);
+template COOMatrix CSRRowWiseSampling1<kDGLCPU, int32_t, uint8_t>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, NDArray, bool);
+template COOMatrix CSRRowWiseSampling1<kDGLCPU, int64_t, uint8_t>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, NDArray, bool);
+
+
 template <
     DGLDeviceType XPU, typename IdxType, typename DType, bool map_seed_nodes>
 std::pair<CSRMatrix, IdArray> CSRRowWiseSamplingFused(
@@ -346,10 +382,27 @@ COOMatrix CSRRowWiseSamplingUniform(
   return CSRRowWisePick(mat, rows, num_samples, replace, pick_fn, num_picks_fn);
 }
 
+template <DGLDeviceType XPU, typename IdxType>
+COOMatrix CSRRowWiseSamplingUniform1(
+    CSRMatrix mat, IdArray rows, int64_t num_samples, const NDArray& parts_array, bool replace) {
+  // If num_samples is -1, select all neighbors without replacement.
+  replace = (replace && num_samples != -1);
+  auto num_picks_fn =
+      GetSamplingUniformNumPicksFn<IdxType>(num_samples, replace);
+  auto pick_fn = GetSamplingUniformPickFn<IdxType>(num_samples, replace);
+  return CSRRowWisePick(mat, rows, num_samples, replace, pick_fn, num_picks_fn);
+}
+
 template COOMatrix CSRRowWiseSamplingUniform<kDGLCPU, int32_t>(
     CSRMatrix, IdArray, int64_t, bool);
 template COOMatrix CSRRowWiseSamplingUniform<kDGLCPU, int64_t>(
     CSRMatrix, IdArray, int64_t, bool);
+
+template COOMatrix CSRRowWiseSamplingUniform1<kDGLCPU, int32_t>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, bool);
+template COOMatrix CSRRowWiseSamplingUniform1<kDGLCPU, int64_t>(
+    CSRMatrix, IdArray, int64_t, const NDArray&, bool);
+
 
 template <DGLDeviceType XPU, typename IdxType, bool map_seed_nodes>
 std::pair<CSRMatrix, IdArray> CSRRowWiseSamplingUniformFused(

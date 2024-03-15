@@ -3,7 +3,7 @@
 import os
 
 import torch
-
+from .metis_sampling import *
 from .. import backend as F, ndarray as nd, utils
 from .._ffi.function import _init_api
 from ..base import DGLError, EID
@@ -211,6 +211,7 @@ def sample_neighbors(
     g,
     nodes,
     fanout,
+    # part_array,
     edge_dir="in",
     prob=None,
     replace=False,
@@ -368,10 +369,15 @@ def sample_neighbors(
             exclude_edges=exclude_edges,
         )
     else:
+        # print("hello")
+        # print(g)
+        # part_array = get_part_array()
+        # print(part_array)
         frontier = _sample_neighbors(
             g,
             nodes,
             fanout,
+            # part_array,
             edge_dir=edge_dir,
             prob=prob,
             replace=replace,
@@ -508,6 +514,7 @@ def _sample_neighbors(
     g,
     nodes,
     fanout,
+    # part_array,
     edge_dir="in",
     prob=None,
     replace=False,
@@ -518,6 +525,8 @@ def _sample_neighbors(
     fused=False,
     mapping=None,
 ):
+    # print(nodes)
+    # print(type(nodes))
     if not isinstance(nodes, dict):
         if len(g.ntypes) > 1:
             raise DGLError(
@@ -526,6 +535,9 @@ def _sample_neighbors(
         nodes = {g.ntypes[0]: nodes}
 
     nodes = utils.prepare_tensor_dict(g, nodes, "nodes")
+    # print("nodes from line 538")
+    # print(nodes)
+    # print(type(nodes))
     if len(nodes) == 0:
         raise ValueError(
             "Got an empty dictionary in the nodes argument. "
@@ -533,6 +545,9 @@ def _sample_neighbors(
         )
     device = utils.context_of(nodes)
     ctx = utils.to_dgl_context(device)
+    # print("NODES from line 543")
+    # print(nodes)
+    # print(type(nodes))
     nodes_all_types = []
     for ntype in g.ntypes:
         if ntype in nodes:
@@ -619,11 +634,25 @@ def _sample_neighbors(
         ret = DGLBlock(subgidx, new_ntypes, g.etypes)
         assert ret.is_unibipartite
 
-    else:
+    else: 
+        part_array = get_part_array(g)
+        # part_array = utils.prepare_tensor_dict(part_array, part_array, "part_array")
+        # device = utils.context_of(part_array)
+        # ctx = utils.to_dgl_context(device)
+        # print(type(fanout)) 
+        # print(type(fanout_array))
+        # print(fanout)
+        # print(fanout_array)
+        # print(nodes_all_types)
+        # print(type(nodes_all_types))
+        # print("array read frome neighbor.py line 631")
+        # print(part_array)
+        # print(type(part_array))
         subgidx = _CAPI_DGLSampleNeighbors(
             g._graph,
             nodes_all_types,
             fanout_array,
+            part_array,
             edge_dir,
             prob_arrays,
             excluded_edges_all_t,
@@ -968,6 +997,9 @@ def select_topk(
 
     # Parse nodes into a list of NDArrays.
     nodes = utils.prepare_tensor_dict(g, nodes, "nodes")
+    # print("NODES ARRAY line 990")
+    # print(nodes)
+    # print(type(nodes))
     device = utils.context_of(nodes)
     nodes_all_types = []
     for ntype in g.ntypes:

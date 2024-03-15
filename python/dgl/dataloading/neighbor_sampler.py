@@ -118,6 +118,7 @@ class NeighborSampler(BlockSampler):
     def __init__(
         self,
         fanouts,
+        # part_array,
         edge_dir="in",
         prob=None,
         mask=None,
@@ -135,6 +136,7 @@ class NeighborSampler(BlockSampler):
             output_device=output_device,
         )
         self.fanouts = fanouts
+        # self.part_array = part_array
         self.edge_dir = edge_dir
         if mask is not None and prob is not None:
             raise ValueError(
@@ -153,6 +155,8 @@ class NeighborSampler(BlockSampler):
         blocks = []
         # sample_neighbors_fused function requires multithreading to be more efficient
         # than sample_neighbors
+        # print("from Neighbour NeighborSampler line 156")
+        # print(part_array)
         if self.fused and get_num_threads() > 1:
             cpu = F.device_type(g.device) == "cpu"
             if isinstance(seed_nodes, dict):
@@ -183,18 +187,23 @@ class NeighborSampler(BlockSampler):
                 return seed_nodes, output_nodes, blocks
 
         for fanout in reversed(self.fanouts):
+            # print("data from neighbor_sampler.py line 188 part_array passed")
+            # print(part_array)
             frontier = g.sample_neighbors(
                 seed_nodes,
                 fanout,
+                # part_array,
                 edge_dir=self.edge_dir,
                 prob=self.prob,
                 replace=self.replace,
                 output_device=self.output_device,
                 exclude_edges=exclude_eids,
             )
-            eid = frontier.edata[EID]
             block = to_block(frontier, seed_nodes)
-            block.edata[EID] = eid
+            # If sampled from graphbolt-backed DistGraph, `EID` may not be in
+            # the block.
+            if EID in frontier.edata.keys():
+                block.edata[EID] = frontier.edata[EID]
             seed_nodes = block.srcdata[NID]
             blocks.insert(0, block)
 
