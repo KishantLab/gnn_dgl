@@ -186,6 +186,10 @@ c10::intrusive_ptr<SparseMatrix> SparseMatrix::Sample(
   // Sampling all rows on sliced matrix.
   auto sample_coo =
       dgl::aten::CSRRowWiseSampling(slice_csr, slice_id, fanout, prob, replace);
+  
+   // auto sample_coo1 =
+      // dgl::aten::CSRRowWiseSampling1(slice_csr, slice_id, fanout, parts_array, prob, replace);
+
   auto sample_value =
       slice_value.index_select(0, DGLArrayToTorchTensor(sample_coo.data));
   sample_coo.data = dgl::aten::NullArray();

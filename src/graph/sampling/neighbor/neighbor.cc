@@ -11,7 +11,9 @@
 #include <dgl/runtime/container.h>
 #include <dgl/runtime/parallel_for.h>
 #include <dgl/sampling/neighbor.h>
+// #include <dgl/src/c_api_common.h>
 
+#include <cstdint>
 #include <tuple>
 #include <utility>
 
@@ -256,7 +258,8 @@ std::pair<HeteroSubgraph, std::vector<FloatArray>> SampleLabors(
 
 HeteroSubgraph SampleNeighbors(
     const HeteroGraphPtr hg, const std::vector<IdArray>& nodes,
-    const std::vector<int64_t>& fanouts, EdgeDir dir,
+    const std::vector<int64_t>& fanouts,
+    const std::vector<int64_t>& parts_arr, EdgeDir dir,
     const std::vector<NDArray>& prob_or_mask,
     const std::vector<IdArray>& exclude_edges, bool replace) {
   // sanity check
@@ -269,6 +272,12 @@ HeteroSubgraph SampleNeighbors(
 
   DGLContext ctx = aten::GetContextOf(nodes);
 
+  // printf("Vector data: ");
+    // for (auto elem : parts_arr) {
+        // printf("%ld ", elem);
+    // }
+    // printf("\n");
+  // dgl::runtime::NDArray parts_array = CopyVectorToNDArray(parts_arr);
   std::vector<HeteroGraphPtr> subrels(hg->NumEdgeTypes());
   std::vector<IdArray> induced_edges(hg->NumEdgeTypes());
   for (dgl_type_t etype = 0; etype < hg->NumEdgeTypes(); ++etype) {
@@ -288,6 +297,17 @@ HeteroSubgraph SampleNeighbors(
       induced_edges[etype] = aten::NullArray(hg->DataType(), ctx);
     } else {
       COOMatrix sampled_coo;
+      // Create a DGL NDArray from the vector
+    // dgl::runtime::NDArray parts_array = dgl::runtime::NDArray::Empty(
+    //     {static_cast<int64_t>(parts_arr.size())},    // Shape
+    //     dgl::runtime::kDGLInt,                   // Data type (int64)
+    //     dgl::runtime::DGLContext{ctx, 0}       // Device context (CPU)
+    // );
+    // //
+    // Copy vector data into the NDArray
+      NDArray parts_arr_nd = NDArray::FromVector(parts_arr);
+
+    // std::copy(parts_arr.begin(), parts_arr.end(), static_cast<int64_t*>(parts_array->data));
       // sample from one relation graph
       auto req_fmt = (dir == EdgeDir::kOut) ? CSR_CODE : CSC_CODE;
       auto avail_fmt = hg->SelectFormat(etype, req_fmt);
@@ -306,14 +326,18 @@ HeteroSubgraph SampleNeighbors(
         case SparseFormat::kCSR:
           CHECK(dir == EdgeDir::kOut)
               << "Cannot sample out edges on CSC matrix.";
-          sampled_coo = aten::CSRRowWiseSampling(
+          sampled_coo = aten::CSRRowWiseSampling1(
               hg->GetCSRMatrix(etype), nodes_ntype, fanouts[etype],
+              parts_arr_nd,
               prob_or_mask[etype], replace);
           break;
         case SparseFormat::kCSC:
           CHECK(dir == EdgeDir::kIn) << "Cannot sample in edges on CSR matrix.";
-          sampled_coo = aten::CSRRowWiseSampling(
+          // int x;
+          // scanf("%d", &x);
+          sampled_coo = aten::CSRRowWiseSampling1(
               hg->GetCSCMatrix(etype), nodes_ntype, fanouts[etype],
+              parts_arr_nd,
               prob_or_mask[etype], replace);
           sampled_coo = aten::COOTranspose(sampled_coo);
           break;
@@ -861,10 +885,13 @@ DGL_REGISTER_GLOBAL("sampling.neighbor._CAPI_DGLSampleNeighbors")
       const auto& nodes = ListValueToVector<IdArray>(args[1]);
       IdArray fanouts_array = args[2];
       const auto& fanouts = fanouts_array.ToVector<int64_t>();
-      const std::string dir_str = args[3];
-      const auto& prob_or_mask = ListValueToVector<NDArray>(args[4]);
-      const auto& exclude_edges = ListValueToVector<IdArray>(args[5]);
-      const bool replace = args[6];
+      IdArray parts = args[3];
+      // const auto& parts_array = ListValueToVector<NDArray>(args[3]);
+      const auto& parts_array = parts.ToVector<int64_t>();
+      const std::string dir_str = args[4];
+      const auto& prob_or_mask = ListValueToVector<NDArray>(args[5]);
+      const auto& exclude_edges = ListValueToVector<IdArray>(args[6]);
+      const bool replace = args[7];
 
       CHECK(dir_str == "in" || dir_str == "out")
           << "Invalid edge direction. Must be \"in\" or \"out\".";
@@ -872,7 +899,7 @@ DGL_REGISTER_GLOBAL("sampling.neighbor._CAPI_DGLSampleNeighbors")
 
       std::shared_ptr<HeteroSubgraph> subg(new HeteroSubgraph);
       *subg = sampling::SampleNeighbors(
-          hg.sptr(), nodes, fanouts, dir, prob_or_mask, exclude_edges, replace);
+          hg.sptr(), nodes, fanouts, parts_array, dir, prob_or_mask, exclude_edges, replace);
 
       *rv = HeteroSubgraphRef(subg);
     });

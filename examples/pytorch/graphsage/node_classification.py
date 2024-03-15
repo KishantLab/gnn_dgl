@@ -1,6 +1,7 @@
 import argparse
-
+import numpy as np
 import dgl
+import time
 import dgl.nn as dglnn
 import torch
 import torch.nn as nn
@@ -109,18 +110,31 @@ def train(args, device, g, dataset, model, num_classes):
     # create sampler & dataloader
     train_idx = dataset.train_idx.to(device)
     val_idx = dataset.val_idx.to(device)
+    execution_time = 0.0
+    start_time = time.time()
     sampler = NeighborSampler(
-        [10, 10, 10],  # fanout for [layer-0, layer-1, layer-2]
+        [30, 30, 30],  # fanout for [layer-0, layer-1, layer-2]
+        # part_array,
         prefetch_node_feats=["feat"],
         prefetch_labels=["label"],
     )
+    end_time = time.time()
+    execution_time = end_time - start_time
+    # G = dgl.to_homogeneous(g)
+    # print(G, type(G))
+    # print("total sampling time:", execution_time, "seconds")
+
+    # _computed_array = dgl.metis_partition_assignment(G, 4, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
+    # dgl.distributed.partition_graph(G, 'test', 2, out_path='output/')
+
     use_uva = args.mode == "mixed"
     train_dataloader = DataLoader(
         g,
         train_idx,
         sampler,
+        # part_array,
         device=device,
-        batch_size=1024,
+        batch_size= int(args.batch_size),
         shuffle=True,
         drop_last=False,
         num_workers=0,
@@ -131,8 +145,9 @@ def train(args, device, g, dataset, model, num_classes):
         g,
         val_idx,
         sampler,
+        # part_array,
         device=device,
-        batch_size=1024,
+        batch_size=int(args.batch_size),
         shuffle=True,
         drop_last=False,
         num_workers=0,
@@ -141,9 +156,11 @@ def train(args, device, g, dataset, model, num_classes):
 
     opt = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=5e-4)
 
-    for epoch in range(10):
-        model.train()
+    for epoch in range(1):
+        model.train()    
         total_loss = 0
+        execution_time = 0.0
+        start_time1 = time.time()
         for it, (input_nodes, output_nodes, blocks) in enumerate(
             train_dataloader
         ):
@@ -155,13 +172,16 @@ def train(args, device, g, dataset, model, num_classes):
             loss.backward()
             opt.step()
             total_loss += loss.item()
+        end_time1 = time.time()
+        execution_time = end_time1 - start_time1
+        # print("training time:", execution_time, "seconds")
         acc = evaluate(model, g, val_dataloader, num_classes)
         print(
-            "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} ".format(
-                epoch, total_loss / (it + 1), acc.item()
-            )
-        )
-
+            "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {}".format(
+                 epoch, total_loss / (it + 1), acc.item(), execution_time
+             )
+         )
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -178,6 +198,18 @@ if __name__ == "__main__":
         default="float",
         help="data type(float, bfloat16)",
     )
+    parser.add_argument(
+        "--dataset",
+        default="ogbn-products",
+        choices=["ogbn-products", "ogbn-arxiv", "ogbn-papers100M", "reddit"],
+        help="pass dataset",
+    )
+    parser.add_argument(
+        "--batch_size",
+        default="1024",
+        choices=["1024", "2048", "4096", "8192"],
+        help="batch_size for train",
+    )
     args = parser.parse_args()
     if not torch.cuda.is_available():
         args.mode = "cpu"
@@ -185,13 +217,13 @@ if __name__ == "__main__":
 
     # load and preprocess dataset
     print("Loading data")
-    dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-products"))
+    dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
     g = dataset[0]
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     num_classes = dataset.num_classes
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
 
-    # create GraphSAGE model
+    # create GraphSAGE model)
     in_size = g.ndata["feat"].shape[1]
     out_size = dataset.num_classes
     model = SAGE(in_size, 256, out_size).to(device)
@@ -201,9 +233,18 @@ if __name__ == "__main__":
         g = dgl.to_bfloat16(g)
         model = model.to(dtype=torch.bfloat16)
 
+    # out partion create array 
+    part_array = np.ones(5)
+    # part_array = torch.from_numpy(part_array)
     # model training
     print("Training...")
+    execution_time1 = 0.0
+    start_time1 = time.time()
     train(args, device, g, dataset, model, num_classes)
+    end_time1 = time.time()
+    execution_time1 = end_time1 - start_time1
+    # print("total training time:", execution_time1, "seconds")
+
 
     # test the model
     print("Testing...")

@@ -235,6 +235,7 @@ class BlockSampler(Sampler):
         self.output_device = output_device
 
     def sample_blocks(self, g, seed_nodes, exclude_eids=None):
+        # print(part_array)
         """Generates a list of blocks from the given seed nodes.
 
         This function must return a triplet where the first element is the input node IDs
@@ -256,6 +257,7 @@ class BlockSampler(Sampler):
     def sample(
         self, g, seed_nodes, exclude_eids=None
     ):  # pylint: disable=arguments-differ
+        # print("data from base.py 259")
         """Sample a list of blocks from the given seed nodes."""
         result = self.sample_blocks(g, seed_nodes, exclude_eids=exclude_eids)
         return self.assign_lazy_features(result)
@@ -334,7 +336,7 @@ def find_exclude_eids(
         None (default)
             Does not exclude any edge.
 
-        'self'
+        'self'``
             Exclude the given edges themselves but nothing else.
 
         'reverse_id'
