@@ -193,15 +193,19 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
 
   if (blockIdx.x==0 && threadIdx.x == 0)
   {
-    printf("Kishan define function that passed d_part_array and 1st data is :%ld\n",d_part_array[0]);
-    printf("out_row: %ld\n", out_row);
+    // printf("Kishan define function that passed d_part_array and 1st data is :%ld\n",d_part_array[0]);
+    // printf("out_row: %ld\n", out_row);
   }
   while (out_row < last_row) {
     const int64_t row = in_rows[out_row];
     const int64_t in_row_start = in_ptr[row];
     const int64_t deg = in_ptr[row + 1] - in_row_start;
     const int64_t out_row_start = out_ptr[out_row];
-
+    
+    if(blockIdx.x ==0 && threadIdx.x ==0)
+    {
+      printf("row: %ld, in_row_start: %ld, deg: %ld, out_row_start: %ld", row, in_row_start, deg, out_row_start);
+    }
     if (deg <= num_picks) {
       // just copy row when there is not enough nodes to sample.
       for (int idx = threadIdx.x; idx < deg; idx += BLOCK_SIZE) {
