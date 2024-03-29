@@ -9,6 +9,7 @@
 #include <dgl/runtime/device_api.h>
 #include <dgl/runtime/tensordispatch.h>
 
+#include <cstdint>
 #include <numeric>
 
 #include "../../array/cuda/atomic.cuh"
@@ -204,7 +205,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
     
     if(blockIdx.x ==0 && threadIdx.x ==0)
     {
-      printf("row: %ld, in_row_start: %ld, deg: %ld, out_row_start: %ld", row, in_row_start, deg, out_row_start);
+      // printf("row: %ld, in_row_start: %ld, deg: %ld, out_row_start: %ld\n", row, in_row_start, deg, out_row_start);
     }
     if (deg <= num_picks) {
       // just copy row when there is not enough nodes to sample.
@@ -215,6 +216,75 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         out_idxs[out_row_start + idx] = data ? data[in_idx] : in_idx;
       }
     } else {
+      
+      // Shared memory to store counts for each value and their index
+      __shared__ int counts[4];
+      // extern __shared__ int index_array[];
+      __shared__ int index_array[10];
+      __shared__ int maxCount;
+      __shared__ int maxValue;
+      __shared__ int pointer_position;
+
+      if (threadIdx.x < 4) {
+        counts[threadIdx.x] = 0;
+        }
+      __syncthreads();
+
+
+      for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
+      {
+        
+        int val = d_part_array[in_index[in_row_start + kk]];
+        // printf(" val : %d\n", val);
+        atomicAdd(&counts[val], 1);
+      }
+      __syncthreads();
+
+      // Find maximum count and corresponding value
+      if (threadIdx.x == 0) {
+        maxCount = 0;
+        pointer_position = 0; 
+
+      // if (blockIdx.x == 0 && threadIdx.x == 0)
+      // {
+      //   printf("row: %ld, in_row_start: %ld, deg: %ld, out_row_start: %ld maxValue: %d, maxCount: %d, pointer_position: %d \n", row, in_row_start, deg, out_row_start, maxValue, maxCount, pointer_position);
+      // }
+
+        for (int i = 0; i < 4; ++i) {
+          if (counts[i] > maxCount) {
+            maxCount = counts[i];
+            maxValue = i;
+          }
+        }
+      }
+      __syncthreads();
+     
+      // Find indices of maximum repeated value
+      if (threadIdx.x == 0)
+      {
+        for(int kk = 0; kk < deg; kk++)
+        {
+          if(d_part_array[in_index[in_row_start + kk]] == maxValue && pointer_position < num_picks)
+          {
+            index_array[pointer_position] = in_index[in_row_start + kk];
+            //printf("index_array :%d, pointer_position: %d, value: %d\n ", index_array[pointer_position], pointer_position, in_index[in_row_start + kk]);
+            pointer_position++;
+            //atomicAdd(&pointer_position, 1);
+          }
+        }
+
+        // for(int ll = 0; ll<num_picks; ll++)
+        // {
+        //   printf("value of index_array: %d\n",index_array[ll]);
+        // }
+      }
+      
+      if (blockIdx.x == 0)
+      {
+        //printf("row: %ld, in_row_start: %ld, in_row_end: %ld, deg: %ld, out_row_start: %ld maxValue: %d, maxCount: %d, pointer_position: %d, index_array: %d, num_picks: %ld, blockIdx: %d, threadIdx: %d\n", row, in_row_start, in_ptr[row + 1], deg, out_row_start, maxValue, maxCount, pointer_position, index_array[threadIdx.x], num_picks, blockIdx.x, threadIdx.x);
+      }
+
+
       // generate permutation list via reservoir algorithm
       for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
         out_idxs[out_row_start + idx] = idx;
@@ -231,13 +301,72 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
       }
       __syncthreads();
 
-      // copy permutation over
-      for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
+      if (num_picks < maxCount)
+      {
+        for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE)
+        {
+          const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+          out_rows[out_row_start + idx] = row;
+          out_cols[out_row_start + idx] = in_index[index_array[idx]];
+          out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+        }
+      }
+      else {
+      for (int idx = threadIdx.x; idx < maxCount; idx += BLOCK_SIZE) {
         const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
         out_rows[out_row_start + idx] = row;
-        out_cols[out_row_start + idx] = in_index[perm_idx];
+        out_cols[out_row_start + idx] = in_index[index_array[idx]];
         out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
       }
+        int remining_size = num_picks - maxCount;
+        for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
+        const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+        out_rows[out_row_start + idx] = row;
+        int counter = 0;
+        for(int i = 0; i < deg && counter < remining_size; i++)
+          {
+            int flag = 0;
+            for (int j = 0; j < maxCount; j++)
+            {
+              if ( in_index[i + in_row_start] == in_index[index_array[j]])
+              {
+                flag = 1;
+                break;
+              }
+
+            }
+            if (flag == 0)
+            {
+              out_cols[out_row_start + idx] = in_index[i + in_row_start];
+              counter++;
+            }
+          }
+          out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+        }
+
+      }
+      //   for (int idx = maxCount; idx < num_picks; idx += BLOCK_SIZE) {
+      //   const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+      //   out_rows[out_row_start + idx] = row;
+      //   if ( in_index[perm_idx] != in_index[index_array[idx]])
+      //     out_cols[out_row_start + idx] = in_index[perm_idx];
+      //   out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+      // }
+        //if ()
+      // {
+      //   printf("row: %ld, in_row_start: %ld, in_row_end: %ld, deg: %ld, out_row_start: %ld maxValue: %d, maxCount: %d, pointer_position: %d, index_array: %d, num_picks: %ld, blockIdx: %d, threadIdx: %d, remining_size: %d\n", row, in_row_start, in_ptr[row + 1], deg, out_row_start, maxValue, maxCount, pointer_position, index_array[threadIdx.x], num_picks, blockIdx.x, threadIdx.x, remining_size);
+      // }
+      //
+          //
+     // 
+     //  // copy permutation over
+      // for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
+      //   const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+      //   out_rows[out_row_start + idx] = row;
+      //   out_cols[out_row_start + idx] = in_index[perm_idx];
+      //   out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+      // }
+      // }
     }
     out_row += 1;
   }
@@ -543,11 +672,11 @@ COOMatrix _CSRRowWiseSamplingUniform1(
 
   // select edges
   // the number of rows each thread block will cover
-  			cudaEvent_t start,stop;
-				cudaEventCreate(&start);
-				cudaEventCreate(&stop);
+  // cudaEvent_t start,stop;
+  // cudaEventCreate(&start);
+  // cudaEventCreate(&stop);
   constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
-  cudaEventRecord(start);
+  // cudaEventRecord(start);
   if (replace) {  // with replacement
     const dim3 block(BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
@@ -574,17 +703,18 @@ COOMatrix _CSRRowWiseSamplingUniform1(
         data, out_ptr, out_rows, out_cols, out_idxs, d_part_array);
 
   }
-				cudaDeviceSynchronize();
-  cudaEventRecord(stop);
-				cudaEventSynchronize(stop);
   device->FreeWorkspace(ctx, out_ptr);
-  float milliseconds = 0;
-  	cudaEventElapsedTime(&milliseconds, start, stop);
+  // cudaDeviceSynchronize();
+  // cudaEventRecord(stop);
+  // cudaEventSynchronize(stop);
+  // float milliseconds = 0;
+  // cudaEventElapsedTime(&milliseconds, start, stop);
   // printf("cuda sapmling time: %.6f\n", milliseconds/1000);
 
   // wait for copying `new_len` to finish
   CUDA_CALL(cudaEventSynchronize(copyEvent));
   CUDA_CALL(cudaEventDestroy(copyEvent));
+  cudaFree(d_part_array);
 
   const IdType new_len = static_cast<const IdType*>(new_len_tensor->data)[0];
   picked_row = picked_row.CreateView({new_len}, picked_row->dtype);

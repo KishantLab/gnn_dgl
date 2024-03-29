@@ -17,6 +17,7 @@ def metis_partition(G):
 
         # print(g)
         _computed_array = dgl.metis_partition_assignment(G, 4, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
+        print(_computed_array.shape)
         # context = dgl.cuda.get_context(0)
         # context = dgl.cuda.context(0)
         # _computed_array = np.random.rand(10)
