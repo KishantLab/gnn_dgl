@@ -219,18 +219,19 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
       
       // Shared memory to store counts for each value and their index
       __shared__ int counts[4];
-      // extern __shared__ int index_array[];
-      __shared__ int index_array[10];
+      extern __shared__ int index_array[];
+      // __shared__ int index_array[10];
       __shared__ int maxCount;
       __shared__ int maxValue;
       __shared__ int pointer_position;
 
+      // initilize 0 
       if (threadIdx.x < 4) {
         counts[threadIdx.x] = 0;
         }
       __syncthreads();
 
-
+      //count the total repeated values of same partition
       for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
       {
         
@@ -291,16 +292,17 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
       }
       __syncthreads();
 
-      for (int idx = num_picks + threadIdx.x; idx < deg; idx += BLOCK_SIZE) {
-        const int num = curand(&rng) % (idx + 1);
-        if (num < num_picks) {
-          // use max so as to achieve the replacement order the serial
-          // algorithm would have
-          AtomicMax(out_idxs + out_row_start + num, idx);
-        }
-      }
-      __syncthreads();
-
+      // for (int idx = num_picks + threadIdx.x; idx < deg; idx += BLOCK_SIZE) {
+      //   const int num = curand(&rng) % (idx + 1);
+      //   if (num < num_picks) {
+      //     // use max so as to achieve the replacement order the serial
+      //     // algorithm would have
+      //     AtomicMax(out_idxs + out_row_start + num, idx);
+      //   }
+      // }
+      // __syncthreads();
+      // 
+      // copy all vertex if avalible of same partition
       if (num_picks < maxCount)
       {
         for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE)
@@ -312,6 +314,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         }
       }
       else {
+      // copy maximum same partition vertex avalible 
       for (int idx = threadIdx.x; idx < maxCount; idx += BLOCK_SIZE) {
         const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
         out_rows[out_row_start + idx] = row;
@@ -672,11 +675,11 @@ COOMatrix _CSRRowWiseSamplingUniform1(
 
   // select edges
   // the number of rows each thread block will cover
-  // cudaEvent_t start,stop;
-  // cudaEventCreate(&start);
-  // cudaEventCreate(&stop);
+  cudaEvent_t start,stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
   constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
-  // cudaEventRecord(start);
+  cudaEventRecord(start);
   if (replace) {  // with replacement
     const dim3 block(BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
@@ -698,22 +701,21 @@ COOMatrix _CSRRowWiseSamplingUniform1(
      const dim3 block(BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
     CUDA_KERNEL_CALL(
-        (_CSRRowWiseSampleUniformKernel1<IdType, TILE_SIZE>), grid, block, 0,
+        (_CSRRowWiseSampleUniformKernel1<IdType, TILE_SIZE>), grid, block, num_picks,
         stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
         data, out_ptr, out_rows, out_cols, out_idxs, d_part_array);
 
   }
   device->FreeWorkspace(ctx, out_ptr);
-  // cudaDeviceSynchronize();
-  // cudaEventRecord(stop);
-  // cudaEventSynchronize(stop);
-  // float milliseconds = 0;
-  // cudaEventElapsedTime(&milliseconds, start, stop);
-  // printf("cuda sapmling time: %.6f\n", milliseconds/1000);
-
-  // wait for copying `new_len` to finish
+  cudaDeviceSynchronize();
+   // wait for copying `new_len` to finish
   CUDA_CALL(cudaEventSynchronize(copyEvent));
   CUDA_CALL(cudaEventDestroy(copyEvent));
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  float milliseconds = 0;
+  cudaEventElapsedTime(&milliseconds, start, stop);
+  printf("\n cuda sapmling time %.6f\t \n", milliseconds/1000);
   cudaFree(d_part_array);
 
   const IdType new_len = static_cast<const IdType*>(new_len_tensor->data)[0];

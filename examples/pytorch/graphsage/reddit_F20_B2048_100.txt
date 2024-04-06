@@ -1,0 +1,2 @@
+Dataset = reddit, batch_size = 2048
+Total sampling time :  0.0 , Total training time : 0.0

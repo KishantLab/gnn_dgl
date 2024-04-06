@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics.functional as MF
 import tqdm
+from dgl.sampling.metis_sampling import *
 from dgl.data import AsNodePredDataset
 from dgl.dataloading import (
     DataLoader,
@@ -15,6 +16,7 @@ from dgl.dataloading import (
     NeighborSampler,
 )
 from ogb.nodeproppred import DglNodePropPredDataset
+from dgl.data import CoraGraphDataset,RedditDataset,FlickrDataset
 
 
 class SAGE(nn.Module):
@@ -108,12 +110,18 @@ def layerwise_infer(device, graph, nid, model, num_classes, batch_size):
 
 def train(args, device, g, dataset, model, num_classes):
     # create sampler & dataloader
-    train_idx = dataset.train_idx.to(device)
-    val_idx = dataset.val_idx.to(device)
+    #train_idx = dataset.train_idx.to(device)
+    #val_idx = dataset.val_idx.to(device)
+    train_mask=g.ndata['train_mask']
+    val_mask=g.ndata['val_mask']
+    train_idx = torch.nonzero(train_mask).squeeze().to(device)
+    val_idx = torch.nonzero(val_mask).squeeze().to(device)
+
     execution_time = 0.0
     start_time = time.time()
     sampler = NeighborSampler(
-        [10, 10, 10],  # fanout for [layer-0, layer-1, layer-2]
+        [int(fanout) for fanout in args.fan_out.split(",")],
+        #[30, 30, 30],  # fanout for [layer-0, layer-1, layer-2]
         prefetch_node_feats=["feat"],
         prefetch_labels=["label"],
     )
@@ -154,7 +162,9 @@ def train(args, device, g, dataset, model, num_classes):
 
     opt = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=5e-4)
 
-    for epoch in range(10):
+    total_training_time = 0.0
+    epoch_lines = []
+    for epoch in range(int(args.epoch)):
         model.train()    
         total_loss = 0
         execution_time = 0.0
@@ -172,13 +182,23 @@ def train(args, device, g, dataset, model, num_classes):
             total_loss += loss.item()
         end_time1 = time.time()
         execution_time = end_time1 - start_time1
+        total_training_time += execution_time
         # print("training time:", execution_time, "seconds")
         acc = evaluate(model, g, val_dataloader, num_classes)
-        print(
-            "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {}".format(
-                 epoch, total_loss / (it + 1), acc.item(), execution_time
-             )
-         )
+        # print(
+        #     "\nEpoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {}".format(
+        #          epoch, total_loss / (it + 1), acc.item(), execution_time
+        #      )
+        #  )
+        epoch_line = "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {}".format(
+                    epoch, total_loss / (it + 1), acc.item(), execution_time
+        )
+        epoch_lines.append(epoch_line)
+    tt_time = "Total Training time {:.4f}".format( total_training_time)
+    epoch_lines.append(tt_time)
+    return epoch_lines
+
+    # print("\nTotal Training Time {:.4f} seconds".format(total_training_time))
         
 
 if __name__ == "__main__":
@@ -208,16 +228,46 @@ if __name__ == "__main__":
         choices=["1024", "2048", "4096", "8192"],
         help="batch_size for train",
     )
+    parser.add_argument(
+        "--epoch",
+        default="1",
+        help="batch_size for train",
+    )
+    parser.add_argument("--fan_out", type=str, default="10,10,10")
     args = parser.parse_args()
     if not torch.cuda.is_available():
         args.mode = "cpu"
-    print(f"Training in {args.mode} mode.")
+    print(f"\nTraining in {args.mode} mode.")
 
     # load and preprocess dataset
-    print("Loading data")
-    dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
+    # print("\nLoading data")
+    # dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
+    # load and preprocess dataset
+    if args.dataset == "cora":
+        dataset = CoraGraphDataset()
+    elif args.dataset == "citeseer":
+        dataset = CiteseerGraphDataset()
+    elif args.dataset == "pubmed":
+        dataset = PubmedGraphDataset()
+    elif args.dataset == "wisconsin":
+        dataset = WisconsinDataset()
+    elif args.dataset == "flickr":
+        dataset = FlickrDataset()
+    elif args.dataset == "reddit":
+        dataset = RedditDataset()
+    elif args.dataset == "ogbn-products":
+        dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-products"))
+    elif args.dataset == "ogbn-arxiv":
+        dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-arxiv"))
+    else:
+        dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
+        raise ValueError("Unknown dataset: {}".format(args.dataset))
+
     g = dataset[0]
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
+    test_mask=g.ndata['test_mask']
+    test_idx = torch.nonzero(test_mask).squeeze()
+
     num_classes = dataset.num_classes
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
 
@@ -232,21 +282,32 @@ if __name__ == "__main__":
         model = model.to(dtype=torch.bfloat16)
 
     # out partion create array 
-    part_array = np.ones(5)
+    #part_array = np.ones(5)
+    part_array = get_part_array(g)
+
     # part_array = torch.from_numpy(part_array)
     # model training
-    print("Training...")
+    # print("\nTraining...")
     execution_time1 = 0.0
     start_time1 = time.time()
-    train(args, device, g, dataset, model, num_classes)
+    #train(args, device, g, dataset, model, num_classes)
+    epoch_lines=train(args, device, g, dataset, model, num_classes)
     end_time1 = time.time()
     execution_time1 = end_time1 - start_time1
     # print("total training time:", execution_time1, "seconds")
 
 
     # test the model
-    print("Testing...")
+    # print("\nTesting...")
     acc = layerwise_infer(
-        device, g, dataset.test_idx, model, num_classes, batch_size=4096
+        device, g, test_idx, model, num_classes, batch_size=4096
     )
-    print("Test Accuracy {:.4f}".format(acc.item()))
+    #print("\nTest Accuracy {:.4f}".format(acc.item()))
+    Accuracy = "Test Accuracy {:.4f}".format(acc.item())
+    epoch_lines.append(Accuracy)
+    with open('epoch_data.txt', 'w') as file:
+        for value in epoch_lines:
+            file.write(str(value) + '\n')
+
+
+
