@@ -1,0 +1,110 @@
+Training in mixed mode.
+Loading data
+Graph(num_nodes=169343, num_edges=1166243,
+      ndata_schemes={'test_mask': Scheme(shape=(), dtype=torch.uint8), 'val_mask': Scheme(shape=(), dtype=torch.uint8), 'train_mask': Scheme(shape=(), dtype=torch.uint8), 'feat': Scheme(shape=(128,), dtype=torch.float32), 'label': Scheme(shape=(), dtype=torch.int64), 'year': Scheme(shape=(1,), dtype=torch.int64)}
+      edata_schemes={})
+<class 'dgl.heterograph.DGLGraph'>
+partition start
+Convert a graph into a bidirected graph: 0.062 seconds, peak memory: 12.556 GB
+Construct multi-constraint weights: 0.000 seconds, peak memory: 12.556 GB
+Metis partitioning: 0.457 seconds, peak memory: 12.663 GB
+torch.Size([169343])
+Array computation done and passed to neighbour.py line 631
+Training...
+Epoch 00000 | Loss 3.1521 | Accuracy 0.3196 | Time : 1.500563621520996
+ Total Training Time 1.5006 seconds
+Testing...
+Test Accuracy 0.2411
+cuda, sapmling, time:, 0.001626
+cuda, sapmling, time:, 0.002146
+cuda, sapmling, time:, 0.003015
+cuda, sapmling, time:, 0.000842
+cuda, sapmling, time:, 0.001994
+cuda, sapmling, time:, 0.003064
+cuda, sapmling, time:, 0.000765
+cuda, sapmling, time:, 0.005671
+cuda, sapmling, time:, 0.006449
+cuda, sapmling, time:, 0.001574
+cuda, sapmling, time:, 0.002412
+cuda, sapmling, time:, 0.003156
+cuda, sapmling, time:, 0.001362
+cuda, sapmling, time:, 0.002255
+cuda, sapmling, time:, 0.003111
+cuda, sapmling, time:, 0.000656
+cuda, sapmling, time:, 0.001887
+cuda, sapmling, time:, 0.003074
+cuda, sapmling, time:, 0.004061
+cuda, sapmling, time:, 0.004386
+cuda, sapmling, time:, 0.005274
+cuda, sapmling, time:, 0.000806
+cuda, sapmling, time:, 0.002080
+cuda, sapmling, time:, 0.003154
+cuda, sapmling, time:, 0.001518
+cuda, sapmling, time:, 0.002120
+cuda, sapmling, time:, 0.002988
+cuda, sapmling, time:, 0.000412
+cuda, sapmling, time:, 0.002062
+cuda, sapmling, time:, 0.003449
+cuda, sapmling, time:, 0.001111
+cuda, sapmling, time:, 0.002521
+cuda, sapmling, time:, 0.006480
+cuda, sapmling, time:, 0.001717
+cuda, sapmling, time:, 0.002270
+cuda, sapmling, time:, 0.006547
+cuda, sapmling, time:, 0.000489
+cuda, sapmling, time:, 0.001428
+cuda, sapmling, time:, 0.003057
+cuda, sapmling, time:, 0.000513
+cuda, sapmling, time:, 0.002088
+cuda, sapmling, time:, 0.002927
+cuda, sapmling, time:, 0.001126
+cuda, sapmling, time:, 0.002291
+cuda, sapmling, time:, 0.003105
+cuda, sapmling, time:, 0.000599
+cuda, sapmling, time:, 0.001942
+cuda, sapmling, time:, 0.002962
+cuda, sapmling, time:, 0.002007
+cuda, sapmling, time:, 0.002566
+cuda, sapmling, time:, 0.003378
+cuda, sapmling, time:, 0.005192
+cuda, sapmling, time:, 0.005387
+cuda, sapmling, time:, 0.006428
+cuda, sapmling, time:, 0.005247
+cuda, sapmling, time:, 0.005664
+cuda, sapmling, time:, 0.006520
+cuda, sapmling, time:, 0.000710
+cuda, sapmling, time:, 0.005820
+cuda, sapmling, time:, 0.006505
+cuda, sapmling, time:, 0.000441
+cuda, sapmling, time:, 0.002230
+cuda, sapmling, time:, 0.003094
+cuda, sapmling, time:, 0.000379
+cuda, sapmling, time:, 0.002459
+cuda, sapmling, time:, 0.003331
+cuda, sapmling, time:, 0.001589
+cuda, sapmling, time:, 0.001643
+cuda, sapmling, time:, 0.002009
+cuda, sapmling, time:, 0.000235
+cuda, sapmling, time:, 0.000981
+cuda, sapmling, time:, 0.002195
+cuda, sapmling, time:, 0.000175
+cuda, sapmling, time:, 0.000725
+cuda, sapmling, time:, 0.002319
+cuda, sapmling, time:, 0.000124
+cuda, sapmling, time:, 0.001869
+cuda, sapmling, time:, 0.002313
+cuda, sapmling, time:, 0.000842
+cuda, sapmling, time:, 0.001787
+cuda, sapmling, time:, 0.002223
+cuda, sapmling, time:, 0.000499
+cuda, sapmling, time:, 0.001828
+cuda, sapmling, time:, 0.002193
+cuda, sapmling, time:, 0.000132
+cuda, sapmling, time:, 0.001824
+cuda, sapmling, time:, 0.005548
+cuda, sapmling, time:, 0.000160
+cuda, sapmling, time:, 0.001846
+cuda, sapmling, time:, 0.005627
+cuda, sapmling, time:, 0.000051
+cuda, sapmling, time:, 0.001547
+cuda, sapmling, time:, 0.001779

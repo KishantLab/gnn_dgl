@@ -1,0 +1,3594 @@
+
+ cuda sapmling time 0.004151	 
+
+ cuda sapmling time 0.010991	 
+
+ cuda sapmling time 0.005524	 
+
+ cuda sapmling time 0.004839	 
+
+ cuda sapmling time 0.005717	 
+
+ cuda sapmling time 0.009698	 
+
+ cuda sapmling time 0.014004	 
+
+ cuda sapmling time 0.014116	 
+
+ cuda sapmling time 0.018315	 
+
+ cuda sapmling time 0.004690	 
+
+ cuda sapmling time 0.005440	 
+
+ cuda sapmling time 0.006035	 
+
+ cuda sapmling time 0.004347	 
+
+ cuda sapmling time 0.000831	 
+
+ cuda sapmling time 0.002111	 
+
+ cuda sapmling time 0.000300	 
+
+ cuda sapmling time 0.001600	 
+
+ cuda sapmling time 0.002245	 
+
+ cuda sapmling time 0.004743	 
+
+ cuda sapmling time 0.005034	 
+
+ cuda sapmling time 0.006290	 
+
+ cuda sapmling time 0.002933	 
+
+ cuda sapmling time 0.000729	 
+
+ cuda sapmling time 0.001226	 
+
+ cuda sapmling time 0.004795	 
+
+ cuda sapmling time 0.005353	 
+
+ cuda sapmling time 0.006725	 
+
+ cuda sapmling time 0.004743	 
+
+ cuda sapmling time 0.006747	 
+
+ cuda sapmling time 0.009758	 
+
+ cuda sapmling time 0.004775	 
+
+ cuda sapmling time 0.005620	 
+
+ cuda sapmling time 0.006121	 
+
+ cuda sapmling time 0.004815	 
+
+ cuda sapmling time 0.005479	 
+
+ cuda sapmling time 0.006684	 
+
+ cuda sapmling time 0.005331	 
+
+ cuda sapmling time 0.002440	 
+
+ cuda sapmling time 0.006036	 
+
+ cuda sapmling time 0.004948	 
+
+ cuda sapmling time 0.006156	 
+
+ cuda sapmling time 0.006686	 
+
+ cuda sapmling time 0.005064	 
+
+ cuda sapmling time 0.005271	 
+
+ cuda sapmling time 0.006692	 
+
+ cuda sapmling time 0.005544	 
+
+ cuda sapmling time 0.005704	 
+
+ cuda sapmling time 0.002339	 
+
+ cuda sapmling time 0.003270	 
+
+ cuda sapmling time 0.000438	 
+
+ cuda sapmling time 0.002147	 
+
+ cuda sapmling time 0.004741	 
+
+ cuda sapmling time 0.006419	 
+
+ cuda sapmling time 0.009480	 
+
+ cuda sapmling time 0.002184	 
+
+ cuda sapmling time 0.000560	 
+
+ cuda sapmling time 0.002028	 
+
+ cuda sapmling time 0.004753	 
+
+ cuda sapmling time 0.006234	 
+
+ cuda sapmling time 0.006733	 
+
+ cuda sapmling time 0.004829	 
+
+ cuda sapmling time 0.005377	 
+
+ cuda sapmling time 0.006686	 
+
+ cuda sapmling time 0.004829	 
+
+ cuda sapmling time 0.005515	 
+
+ cuda sapmling time 0.009183	 
+
+ cuda sapmling time 0.004850	 
+
+ cuda sapmling time 0.006419	 
+
+ cuda sapmling time 0.009392	 
+
+ cuda sapmling time 0.016439	 
+
+ cuda sapmling time 0.018200	 
+
+ cuda sapmling time 0.018831	 
+
+ cuda sapmling time 0.005028	 
+
+ cuda sapmling time 0.006086	 
+
+ cuda sapmling time 0.006711	 
+
+ cuda sapmling time 0.004689	 
+
+ cuda sapmling time 0.005988	 
+
+ cuda sapmling time 0.006557	 
+
+ cuda sapmling time 0.001482	 
+
+ cuda sapmling time 0.001655	 
+
+ cuda sapmling time 0.002303	 
+
+ cuda sapmling time 0.000096	 
+
+ cuda sapmling time 0.002038	 
+
+ cuda sapmling time 0.002594	 
+
+ cuda sapmling time 0.004770	 
+
+ cuda sapmling time 0.005161	 
+
+ cuda sapmling time 0.006674	 
+
+ cuda sapmling time 0.000398	 
+
+ cuda sapmling time 0.000567	 
+
+ cuda sapmling time 0.002061	 
+
+ cuda sapmling time 0.004737	 
+
+ cuda sapmling time 0.006330	 
+
+ cuda sapmling time 0.006736	 
+
+ cuda sapmling time 0.004948	 
+
+ cuda sapmling time 0.005370	 
+
+ cuda sapmling time 0.006211	 
+
+ cuda sapmling time 0.004741	 
+
+ cuda sapmling time 0.015483	 
+
+ cuda sapmling time 0.018525	 
+
+ cuda sapmling time 0.004895	 
+
+ cuda sapmling time 0.005161	 
+
+ cuda sapmling time 0.009366	 
+
+ cuda sapmling time 0.001962	 
+
+ cuda sapmling time 0.005402	 
+
+ cuda sapmling time 0.008166	 
+
+ cuda sapmling time 0.004791	 
+
+ cuda sapmling time 0.006299	 
+
+ cuda sapmling time 0.006745	 
+
+ cuda sapmling time 0.004976	 
+
+ cuda sapmling time 0.005267	 
+
+ cuda sapmling time 0.006585	 
+
+ cuda sapmling time 0.004945	 
+
+ cuda sapmling time 0.001510	 
+
+ cuda sapmling time 0.002196	 
+
+ cuda sapmling time 0.001883	 
+
+ cuda sapmling time 0.001605	 
+
+ cuda sapmling time 0.002159	 
+
+ cuda sapmling time 0.005003	 
+
+ cuda sapmling time 0.005417	 
+
+ cuda sapmling time 0.009208	 
+
+ cuda sapmling time 0.002462	 
+
+ cuda sapmling time 0.000739	 
+
+ cuda sapmling time 0.002014	 
+
+ cuda sapmling time 0.006244	 
+
+ cuda sapmling time 0.006329	 
+
+ cuda sapmling time 0.009194	 
+
+ cuda sapmling time 0.005541	 
+
+ cuda sapmling time 0.006438	 
+
+ cuda sapmling time 0.009237	 
+
+ cuda sapmling time 0.004874	 
+
+ cuda sapmling time 0.005542	 
+
+ cuda sapmling time 0.006054	 
+
+ cuda sapmling time 0.004776	 
+
+ cuda sapmling time 0.005192	 
+
+ cuda sapmling time 0.006694	 
+
+ cuda sapmling time 0.005172	 
+
+ cuda sapmling time 0.003007	 
+
+ cuda sapmling time 0.006656	 
+
+ cuda sapmling time 0.004910	 
+
+ cuda sapmling time 0.005537	 
+
+ cuda sapmling time 0.006755	 
+
+ cuda sapmling time 0.004825	 
+
+ cuda sapmling time 0.005163	 
+
+ cuda sapmling time 0.006611	 
+
+ cuda sapmling time 0.004706	 
+
+ cuda sapmling time 0.004780	 
+
+ cuda sapmling time 0.002114	 
+
+ cuda sapmling time 0.000563	 
+
+ cuda sapmling time 0.001623	 
+
+ cuda sapmling time 0.002100	 
+
+ cuda sapmling time 0.004878	 
+
+ cuda sapmling time 0.005362	 
+
+ cuda sapmling time 0.009139	 
+
+ cuda sapmling time 0.002843	 
+
+ cuda sapmling time 0.001213	 
+
+ cuda sapmling time 0.002220	 
+
+ cuda sapmling time 0.004828	 
+
+ cuda sapmling time 0.006164	 
+
+ cuda sapmling time 0.006747	 
+
+ cuda sapmling time 0.004887	 
+
+ cuda sapmling time 0.006308	 
+
+ cuda sapmling time 0.009278	 
+
+ cuda sapmling time 0.004785	 
+
+ cuda sapmling time 0.006093	 
+
+ cuda sapmling time 0.009238	 
+
+ cuda sapmling time 0.004804	 
+
+ cuda sapmling time 0.006227	 
+
+ cuda sapmling time 0.009157	 
+
+ cuda sapmling time 0.005646	 
+
+ cuda sapmling time 0.005910	 
+
+ cuda sapmling time 0.005594	 
+
+ cuda sapmling time 0.004773	 
+
+ cuda sapmling time 0.006286	 
+
+ cuda sapmling time 0.006649	 
+
+ cuda sapmling time 0.004970	 
+
+ cuda sapmling time 0.005143	 
+
+ cuda sapmling time 0.006693	 
+
+ cuda sapmling time 0.004775	 
+
+ cuda sapmling time 0.001999	 
+
+ cuda sapmling time 0.002251	 
+
+ cuda sapmling time 0.000103	 
+
+ cuda sapmling time 0.000526	 
+
+ cuda sapmling time 0.001269	 
+
+ cuda sapmling time 0.000282	 
+
+ cuda sapmling time 0.000914	 
+
+ cuda sapmling time 0.009806	 
+
+ cuda sapmling time 0.006285	 
+
+ cuda sapmling time 0.006450	 
+
+ cuda sapmling time 0.003160	 
+
+ cuda sapmling time 0.000539	 
+
+ cuda sapmling time 0.000715	 
+
+ cuda sapmling time 0.001964	 
+
+ cuda sapmling time 0.006643	 
+
+ cuda sapmling time 0.009180	 
+
+ cuda sapmling time 0.009728	 
+
+ cuda sapmling time 0.004754	 
+
+ cuda sapmling time 0.006297	 
+
+ cuda sapmling time 0.006778	 
+
+ cuda sapmling time 0.005093	 
+
+ cuda sapmling time 0.005289	 
+
+ cuda sapmling time 0.006748	 
+
+ cuda sapmling time 0.005262	 
+
+ cuda sapmling time 0.005528	 
+
+ cuda sapmling time 0.009263	 
+
+ cuda sapmling time 0.011586	 
+
+ cuda sapmling time 0.015591	 
+
+ cuda sapmling time 0.018578	 
+
+ cuda sapmling time 0.004780	 
+
+ cuda sapmling time 0.005323	 
+
+ cuda sapmling time 0.009493	 
+
+ cuda sapmling time 0.004832	 
+
+ cuda sapmling time 0.005340	 
+
+ cuda sapmling time 0.009063	 
+
+ cuda sapmling time 0.000592	 
+
+ cuda sapmling time 0.000772	 
+
+ cuda sapmling time 0.002071	 
+
+ cuda sapmling time 0.000606	 
+
+ cuda sapmling time 0.000685	 
+
+ cuda sapmling time 0.002152	 
+
+ cuda sapmling time 0.004778	 
+
+ cuda sapmling time 0.005195	 
+
+ cuda sapmling time 0.006010	 
+
+ cuda sapmling time 0.003197	 
+
+ cuda sapmling time 0.001643	 
+
+ cuda sapmling time 0.010882	 
+
+ cuda sapmling time 0.004949	 
+
+ cuda sapmling time 0.005358	 
+
+ cuda sapmling time 0.006583	 
+
+ cuda sapmling time 0.006097	 
+
+ cuda sapmling time 0.006307	 
+
+ cuda sapmling time 0.006763	 
+
+ cuda sapmling time 0.004779	 
+
+ cuda sapmling time 0.005605	 
+
+ cuda sapmling time 0.006651	 
+
+ cuda sapmling time 0.004817	 
+
+ cuda sapmling time 0.006468	 
+
+ cuda sapmling time 0.009399	 
+
+ cuda sapmling time 0.001901	 
+
+ cuda sapmling time 0.006262	 
+
+ cuda sapmling time 0.008205	 
+
+ cuda sapmling time 0.004996	 
+
+ cuda sapmling time 0.005555	 
+
+ cuda sapmling time 0.009143	 
+
+ cuda sapmling time 0.004813	 
+
+ cuda sapmling time 0.006094	 
+
+ cuda sapmling time 0.006646	 
+
+ cuda sapmling time 0.004779	 
+
+ cuda sapmling time 0.001375	 
+
+ cuda sapmling time 0.001962	 
+
+ cuda sapmling time 0.000251	 
+
+ cuda sapmling time 0.000529	 
+
+ cuda sapmling time 0.002100	 
+
+ cuda sapmling time 0.005565	 
+
+ cuda sapmling time 0.005772	 
+
+ cuda sapmling time 0.006251	 
+
+ cuda sapmling time 0.000076	 
+
+ cuda sapmling time 0.001018	 
+
+ cuda sapmling time 0.002083	 
+
+ cuda sapmling time 0.005259	 
+
+ cuda sapmling time 0.005426	 
+
+ cuda sapmling time 0.006667	 
+
+ cuda sapmling time 0.005023	 
+
+ cuda sapmling time 0.006328	 
+
+ cuda sapmling time 0.009237	 
+
+ cuda sapmling time 0.004812	 
+
+ cuda sapmling time 0.005241	 
+
+ cuda sapmling time 0.006714	 
+
+ cuda sapmling time 0.004721	 
+
+ cuda sapmling time 0.004840	 
+
+ cuda sapmling time 0.006377	 
+
+ cuda sapmling time 0.004700	 
+
+ cuda sapmling time 0.004830	 
+
+ cuda sapmling time 0.006376	 
+
+ cuda sapmling time 0.003591	 
+
+ cuda sapmling time 0.004982	 
+
+ cuda sapmling time 0.006435	 
+
+ cuda sapmling time 0.004732	 
+
+ cuda sapmling time 0.004782	 
+
+ cuda sapmling time 0.006425	 
+
+ cuda sapmling time 0.004641	 
+
+ cuda sapmling time 0.006160	 
+
+ cuda sapmling time 0.015507	 
+
+ cuda sapmling time 0.000133	 
+
+ cuda sapmling time 0.001577	 
+
+ cuda sapmling time 0.002270	 
+
+ cuda sapmling time 0.002357	 
+
+ cuda sapmling time 0.001535	 
+
+ cuda sapmling time 0.001737	 
+
+ cuda sapmling time 0.000092	 
+
+ cuda sapmling time 0.004895	 
+
+ cuda sapmling time 0.006409	 
+
+ cuda sapmling time 0.004708	 
+
+ cuda sapmling time 0.004749	 
+
+ cuda sapmling time 0.004063	 
+
+ cuda sapmling time 0.000829	 
+
+ cuda sapmling time 0.001519	 
+
+ cuda sapmling time 0.006481	 
+
+ cuda sapmling time 0.004721	 
+
+ cuda sapmling time 0.005316	 
+
+ cuda sapmling time 0.006421	 
+
+ cuda sapmling time 0.004747	 
+
+ cuda sapmling time 0.005121	 
+
+ cuda sapmling time 0.006504	 
+
+ cuda sapmling time 0.004730	 
+
+ cuda sapmling time 0.006176	 
+
+ cuda sapmling time 0.006501	 
+
+ cuda sapmling time 0.004732	 
+
+ cuda sapmling time 0.004942	 
+
+ cuda sapmling time 0.006377	 
+
+ cuda sapmling time 0.005104	 
+
+ cuda sapmling time 0.005223	 
+
+ cuda sapmling time 0.006356	 
+
+ cuda sapmling time 0.004754	 
+
+ cuda sapmling time 0.004573	 
+
+ cuda sapmling time 0.005946	 
+
+ cuda sapmling time 0.004812	 
+
+ cuda sapmling time 0.004888	 
+
+ cuda sapmling time 0.006354	 
+
+ cuda sapmling time 0.004687	 
+
+ cuda sapmling time 0.005272	 
+
+ cuda sapmling time 0.005427	 
+
+ cuda sapmling time 0.004649	 
+
+ cuda sapmling time 0.002341	 
+
+ cuda sapmling time 0.005444	 
+
+ cuda sapmling time 0.001473	 
+
+ cuda sapmling time 0.000941	 
+
+ cuda sapmling time 0.001849	 
+
+ cuda sapmling time 0.000055	 
+
+ cuda sapmling time 0.000380	 
+
+ cuda sapmling time 0.005339	 
+
+ cuda sapmling time 0.004725	 
+
+ cuda sapmling time 0.004883	 
+
+ cuda sapmling time 0.005496	 
+
+ cuda sapmling time 0.000056	 
+
+ cuda sapmling time 0.001569	 
+
+ cuda sapmling time 0.001851	 
+
+ cuda sapmling time 0.000096	 
+
+ cuda sapmling time 0.005302	 
+
+ cuda sapmling time 0.006488	 
+
+ cuda sapmling time 0.004738	 
+
+ cuda sapmling time 0.004939	 
+
+ cuda sapmling time 0.005294	 
+
+ cuda sapmling time 0.004709	 
+
+ cuda sapmling time 0.005040	 
+
+ cuda sapmling time 0.006400	 
+
+ cuda sapmling time 0.004717	 
+
+ cuda sapmling time 0.005288	 
+
+ cuda sapmling time 0.006390	 
+
+ cuda sapmling time 0.004708	 
+
+ cuda sapmling time 0.004853	 
+
+ cuda sapmling time 0.006373	 
+
+ cuda sapmling time 0.004749	 
+
+ cuda sapmling time 0.004393	 
+
+ cuda sapmling time 0.005780	 
+
+ cuda sapmling time 0.003515	 
+
+ cuda sapmling time 0.004751	 
+
+ cuda sapmling time 0.004823	 
+
+ cuda sapmling time 0.004865	 
+
+ cuda sapmling time 0.005551	 
+
+ cuda sapmling time 0.006094	 
+
+ cuda sapmling time 0.005061	 
+
+ cuda sapmling time 0.005491	 
+
+ cuda sapmling time 0.002070	 
+
+ cuda sapmling time 0.001319	 
+
+ cuda sapmling time 0.000742	 
+
+ cuda sapmling time 0.005816	 
+
+ cuda sapmling time 0.006360	 
+
+ cuda sapmling time 0.006708	 
+
+ cuda sapmling time 0.009915	 
+
+ cuda sapmling time 0.002038	 
+
+ cuda sapmling time 0.000505	 
+
+ cuda sapmling time 0.002066	 
+
+ cuda sapmling time 0.004748	 
+
+ cuda sapmling time 0.006227	 
+
+ cuda sapmling time 0.006736	 
+
+ cuda sapmling time 0.005207	 
+
+ cuda sapmling time 0.005379	 
+
+ cuda sapmling time 0.006621	 
+
+ cuda sapmling time 0.004849	 
+
+ cuda sapmling time 0.006339	 
+
+ cuda sapmling time 0.009333	 
+
+ cuda sapmling time 0.004804	 
+
+ cuda sapmling time 0.006338	 
+
+ cuda sapmling time 0.009158	 
+
+ cuda sapmling time 0.005229	 
+
+ cuda sapmling time 0.003178	 
+
+ cuda sapmling time 0.006568	 
+
+ cuda sapmling time 0.005167	 
+
+ cuda sapmling time 0.006248	 
+
+ cuda sapmling time 0.006754	 
+
+ cuda sapmling time 0.004958	 
+
+ cuda sapmling time 0.005335	 
+
+ cuda sapmling time 0.009162	 
+
+ cuda sapmling time 0.004893	 
+
+ cuda sapmling time 0.003175	 
+
+ cuda sapmling time 0.002223	 
+
+ cuda sapmling time 0.000549	 
+
+ cuda sapmling time 0.000637	 
+
+ cuda sapmling time 0.001277	 
+
+ cuda sapmling time 0.000093	 
+
+ cuda sapmling time 0.000996	 
+
+ cuda sapmling time 0.006700	 
+
+ cuda sapmling time 0.004943	 
+
+ cuda sapmling time 0.005160	 
+
+ cuda sapmling time 0.002739	 
+
+ cuda sapmling time 0.001357	 
+
+ cuda sapmling time 0.001533	 
+
+ cuda sapmling time 0.002087	 
+
+ cuda sapmling time 0.004839	 
+
+ cuda sapmling time 0.006301	 
+
+ cuda sapmling time 0.009739	 
+
+ cuda sapmling time 0.004724	 
+
+ cuda sapmling time 0.005493	 
+
+ cuda sapmling time 0.006692	 
+
+ cuda sapmling time 0.004789	 
+
+ cuda sapmling time 0.005152	 
+
+ cuda sapmling time 0.006704	 
+
+ cuda sapmling time 0.004875	 
+
+ cuda sapmling time 0.005432	 
+
+ cuda sapmling time 0.006517	 
+
+ cuda sapmling time 0.004855	 
+
+ cuda sapmling time 0.003481	 
+
+ cuda sapmling time 0.006489	 
+
+ cuda sapmling time 0.004821	 
+
+ cuda sapmling time 0.005218	 
+
+ cuda sapmling time 0.009271	 
+
+ cuda sapmling time 0.005504	 
+
+ cuda sapmling time 0.005692	 
+
+ cuda sapmling time 0.006738	 
+
+ cuda sapmling time 0.004920	 
+
+ cuda sapmling time 0.005744	 
+
+ cuda sapmling time 0.002517	 
+
+ cuda sapmling time 0.002623	 
+
+ cuda sapmling time 0.000904	 
+
+ cuda sapmling time 0.001439	 
+
+ cuda sapmling time 0.004859	 
+
+ cuda sapmling time 0.006445	 
+
+ cuda sapmling time 0.009229	 
+
+ cuda sapmling time 0.001933	 
+
+ cuda sapmling time 0.001720	 
+
+ cuda sapmling time 0.002251	 
+
+ cuda sapmling time 0.018130	 
+
+ cuda sapmling time 0.018289	 
+
+ cuda sapmling time 0.018762	 
+
+ cuda sapmling time 0.005717	 
+
+ cuda sapmling time 0.006096	 
+
+ cuda sapmling time 0.006655	 
+
+ cuda sapmling time 0.004976	 
+
+ cuda sapmling time 0.006349	 
+
+ cuda sapmling time 0.009167	 
+
+ cuda sapmling time 0.005705	 
+
+ cuda sapmling time 0.005876	 
+
+ cuda sapmling time 0.006765	 
+
+ cuda sapmling time 0.004736	 
+
+ cuda sapmling time 0.005461	 
+
+ cuda sapmling time 0.006747	 
+
+ cuda sapmling time 0.005121	 
+
+ cuda sapmling time 0.009106	 
+
+ cuda sapmling time 0.009637	 
+
+ cuda sapmling time 0.004714	 
+
+ cuda sapmling time 0.005062	 
+
+ cuda sapmling time 0.008359	 
+
+ cuda sapmling time 0.004782	 
+
+ cuda sapmling time 0.003947	 
+
+ cuda sapmling time 0.004597	 
+
+ cuda sapmling time 0.005575	 
+
+ cuda sapmling time 0.005756	 
+
+ cuda sapmling time 0.009257	 
+
+ cuda sapmling time 0.002115	 
+
+ cuda sapmling time 0.000453	 
+
+ cuda sapmling time 0.002176	 
+
+ cuda sapmling time 0.015188	 
+
+ cuda sapmling time 0.015365	 
+
+ cuda sapmling time 0.018271	 
+
+ cuda sapmling time 0.004745	 
+
+ cuda sapmling time 0.005209	 
+
+ cuda sapmling time 0.006697	 
+
+ cuda sapmling time 0.004818	 
+
+ cuda sapmling time 0.005047	 
+
+ cuda sapmling time 0.006738	 
+
+ cuda sapmling time 0.004992	 
+
+ cuda sapmling time 0.006277	 
+
+ cuda sapmling time 0.006751	 
+
+ cuda sapmling time 0.004800	 
+
+ cuda sapmling time 0.005264	 
+
+ cuda sapmling time 0.008112	 
+
+ cuda sapmling time 0.005147	 
+
+ cuda sapmling time 0.006386	 
+
+ cuda sapmling time 0.009229	 
+
+ cuda sapmling time 0.006534	 
+
+ cuda sapmling time 0.006632	 
+
+ cuda sapmling time 0.009590	 
+
+ cuda sapmling time 0.003709	 
+
+ cuda sapmling time 0.001637	 
+
+ cuda sapmling time 0.002169	 
+
+ cuda sapmling time 0.000289	 
+
+ cuda sapmling time 0.005364	 
+
+ cuda sapmling time 0.013108	 
+
+ cuda sapmling time 0.004786	 
+
+ cuda sapmling time 0.006120	 
+
+ cuda sapmling time 0.006578	 
+
+ cuda sapmling time 0.000208	 
+
+ cuda sapmling time 0.001389	 
+
+ cuda sapmling time 0.007035	 
+
+ cuda sapmling time 0.004916	 
+
+ cuda sapmling time 0.005390	 
+
+ cuda sapmling time 0.005888	 
+
+ cuda sapmling time 0.004883	 
+
+ cuda sapmling time 0.006102	 
+
+ cuda sapmling time 0.006734	 
+
+ cuda sapmling time 0.004893	 
+
+ cuda sapmling time 0.005699	 
+
+ cuda sapmling time 0.009189	 
+
+ cuda sapmling time 0.006280	 
+
+ cuda sapmling time 0.006406	 
+
+ cuda sapmling time 0.009317	 
+
+ cuda sapmling time 0.000274	 
+
+ cuda sapmling time 0.005208	 
+
+ cuda sapmling time 0.006676	 
+
+ cuda sapmling time 0.004862	 
+
+ cuda sapmling time 0.006544	 
+
+ cuda sapmling time 0.009442	 
+
+ cuda sapmling time 0.004807	 
+
+ cuda sapmling time 0.005252	 
+
+ cuda sapmling time 0.006750	 
+
+ cuda sapmling time 0.003233	 
+
+ cuda sapmling time 0.000555	 
+
+ cuda sapmling time 0.002137	 
+
+ cuda sapmling time 0.000529	 
+
+ cuda sapmling time 0.000906	 
+
+ cuda sapmling time 0.002097	 
+
+ cuda sapmling time 0.004794	 
+
+ cuda sapmling time 0.005109	 
+
+ cuda sapmling time 0.006643	 
+
+ cuda sapmling time 0.000209	 
+
+ cuda sapmling time 0.001114	 
+
+ cuda sapmling time 0.002035	 
+
+ cuda sapmling time 0.006080	 
+
+ cuda sapmling time 0.006281	 
+
+ cuda sapmling time 0.009208	 
+
+ cuda sapmling time 0.005039	 
+
+ cuda sapmling time 0.005343	 
+
+ cuda sapmling time 0.006629	 
+
+ cuda sapmling time 0.004924	 
+
+ cuda sapmling time 0.005382	 
+
+ cuda sapmling time 0.009342	 
+
+ cuda sapmling time 0.004891	 
+
+ cuda sapmling time 0.005278	 
+
+ cuda sapmling time 0.006255	 
+
+ cuda sapmling time 0.004736	 
+
+ cuda sapmling time 0.013325	 
+
+ cuda sapmling time 0.017467	 
+
+ cuda sapmling time 0.004800	 
+
+ cuda sapmling time 0.006405	 
+
+ cuda sapmling time 0.009110	 
+
+ cuda sapmling time 0.004677	 
+
+ cuda sapmling time 0.005102	 
+
+ cuda sapmling time 0.005893	 
+
+ cuda sapmling time 0.002100	 
+
+ cuda sapmling time 0.000764	 
+
+ cuda sapmling time 0.005886	 
+
+ cuda sapmling time 0.000244	 
+
+ cuda sapmling time 0.000520	 
+
+ cuda sapmling time 0.002081	 
+
+ cuda sapmling time 0.004747	 
+
+ cuda sapmling time 0.005405	 
+
+ cuda sapmling time 0.006672	 
+
+ cuda sapmling time 0.000381	 
+
+ cuda sapmling time 0.001030	 
+
+ cuda sapmling time 0.001511	 
+
+ cuda sapmling time 0.004936	 
+
+ cuda sapmling time 0.005493	 
+
+ cuda sapmling time 0.006753	 
+
+ cuda sapmling time 0.005358	 
+
+ cuda sapmling time 0.006524	 
+
+ cuda sapmling time 0.009238	 
+
+ cuda sapmling time 0.004993	 
+
+ cuda sapmling time 0.006303	 
+
+ cuda sapmling time 0.009357	 
+
+ cuda sapmling time 0.004778	 
+
+ cuda sapmling time 0.005659	 
+
+ cuda sapmling time 0.006199	 
+
+ cuda sapmling time 0.004769	 
+
+ cuda sapmling time 0.003442	 
+
+ cuda sapmling time 0.006709	 
+
+ cuda sapmling time 0.013925	 
+
+ cuda sapmling time 0.014084	 
+
+ cuda sapmling time 0.014327	 
+
+ cuda sapmling time 0.004851	 
+
+ cuda sapmling time 0.005983	 
+
+ cuda sapmling time 0.006715	 
+
+ cuda sapmling time 0.002452	 
+
+ cuda sapmling time 0.001373	 
+
+ cuda sapmling time 0.001979	 
+
+ cuda sapmling time 0.000338	 
+
+ cuda sapmling time 0.001461	 
+
+ cuda sapmling time 0.002005	 
+
+ cuda sapmling time 0.005492	 
+
+ cuda sapmling time 0.005686	 
+
+ cuda sapmling time 0.009167	 
+
+ cuda sapmling time 0.001980	 
+
+ cuda sapmling time 0.000744	 
+
+ cuda sapmling time 0.001232	 
+
+ cuda sapmling time 0.000077	 
+
+ cuda sapmling time 0.004485	 
+
+ cuda sapmling time 0.009243	 
+
+ cuda sapmling time 0.005234	 
+
+ cuda sapmling time 0.006470	 
+
+ cuda sapmling time 0.009264	 
+
+ cuda sapmling time 0.004953	 
+
+ cuda sapmling time 0.005297	 
+
+ cuda sapmling time 0.005891	 
+
+ cuda sapmling time 0.004919	 
+
+ cuda sapmling time 0.005189	 
+
+ cuda sapmling time 0.006722	 
+
+ cuda sapmling time 0.004783	 
+
+ cuda sapmling time 0.005368	 
+
+ cuda sapmling time 0.006746	 
+
+ cuda sapmling time 0.005053	 
+
+ cuda sapmling time 0.006267	 
+
+ cuda sapmling time 0.009201	 
+
+ cuda sapmling time 0.005917	 
+
+ cuda sapmling time 0.006166	 
+
+ cuda sapmling time 0.006671	 
+
+ cuda sapmling time 0.004680	 
+
+ cuda sapmling time 0.006127	 
+
+ cuda sapmling time 0.006393	 
+
+ cuda sapmling time 0.000048	 
+
+ cuda sapmling time 0.000939	 
+
+ cuda sapmling time 0.001729	 
+
+ cuda sapmling time 0.000106	 
+
+ cuda sapmling time 0.003538	 
+
+ cuda sapmling time 0.001822	 
+
+ cuda sapmling time 0.000078	 
+
+ cuda sapmling time 0.000728	 
+
+ cuda sapmling time 0.002043	 
+
+ cuda sapmling time 0.004738	 
+
+ cuda sapmling time 0.005327	 
+
+ cuda sapmling time 0.005773	 
+
+ cuda sapmling time 0.000764	 
+
+ cuda sapmling time 0.002046	 
+
+ cuda sapmling time 0.000619	 
+
+ cuda sapmling time 0.000064	 
+
+ cuda sapmling time 0.006344	 
+
+ cuda sapmling time 0.006445	 
+
+ cuda sapmling time 0.004707	 
+
+ cuda sapmling time 0.006133	 
+
+ cuda sapmling time 0.006448	 
+
+ cuda sapmling time 0.005499	 
+
+ cuda sapmling time 0.005604	 
+
+ cuda sapmling time 0.006436	 
+
+ cuda sapmling time 0.004703	 
+
+ cuda sapmling time 0.005355	 
+
+ cuda sapmling time 0.005668	 
+
+ cuda sapmling time 0.004747	 
+
+ cuda sapmling time 0.005025	 
+
+ cuda sapmling time 0.006350	 
+
+ cuda sapmling time 0.004774	 
+
+ cuda sapmling time 0.005376	 
+
+ cuda sapmling time 0.018331	 
+
+ cuda sapmling time 0.004765	 
+
+ cuda sapmling time 0.005049	 
+
+ cuda sapmling time 0.006427	 
+
+ cuda sapmling time 0.004670	 
+
+ cuda sapmling time 0.006152	 
+
+ cuda sapmling time 0.006396	 
+
+ cuda sapmling time 0.004654	 
+
+ cuda sapmling time 0.004933	 
+
+ cuda sapmling time 0.006418	 
+
+ cuda sapmling time 0.000044	 
+
+ cuda sapmling time 0.000970	 
+
+ cuda sapmling time 0.002649	 
+
+ cuda sapmling time 0.000057	 
+
+ cuda sapmling time 0.000476	 
+
+ cuda sapmling time 0.005202	 
+
+ cuda sapmling time 0.004813	 
+
+ cuda sapmling time 0.006261	 
+
+ cuda sapmling time 0.006559	 
+
+ cuda sapmling time 0.004606	 
+
+ cuda sapmling time 0.002155	 
+
+ cuda sapmling time 0.001793	 
+
+ cuda sapmling time 0.000094	 
+
+ cuda sapmling time 0.004411	 
+
+ cuda sapmling time 0.006280	 
+
+ cuda sapmling time 0.004776	 
+
+ cuda sapmling time 0.004858	 
+
+ cuda sapmling time 0.006361	 
+
+ cuda sapmling time 0.004723	 
+
+ cuda sapmling time 0.004913	 
+
+ cuda sapmling time 0.006469	 
+
+ cuda sapmling time 0.004718	 
+
+ cuda sapmling time 0.004808	 
+
+ cuda sapmling time 0.006422	 
+
+ cuda sapmling time 0.004738	 
+
+ cuda sapmling time 0.004910	 
+
+ cuda sapmling time 0.005378	 
+
+ cuda sapmling time 0.004756	 
+
+ cuda sapmling time 0.005303	 
+
+ cuda sapmling time 0.006450	 
+
+ cuda sapmling time 0.003529	 
+
+ cuda sapmling time 0.006305	 
+
+ cuda sapmling time 0.006379	 
+
+ cuda sapmling time 0.004807	 
+
+ cuda sapmling time 0.005103	 
+
+ cuda sapmling time 0.006360	 
+
+ cuda sapmling time 0.004627	 
+
+ cuda sapmling time 0.006235	 
+
+ cuda sapmling time 0.006403	 
+
+ cuda sapmling time 0.001373	 
+
+ cuda sapmling time 0.000285	 
+
+ cuda sapmling time 0.001830	 
+
+ cuda sapmling time 0.000051	 
+
+ cuda sapmling time 0.004263	 
+
+ cuda sapmling time 0.000892	 
+
+ cuda sapmling time 0.000220	 
+
+ cuda sapmling time 0.002777	 
+
+ cuda sapmling time 0.006697	 
+
+ cuda sapmling time 0.004771	 
+
+ cuda sapmling time 0.006144	 
+
+ cuda sapmling time 0.004421	 
+
+ cuda sapmling time 0.000403	 
+
+ cuda sapmling time 0.003401	 
+
+ cuda sapmling time 0.006672	 
+
+ cuda sapmling time 0.004794	 
+
+ cuda sapmling time 0.005387	 
+
+ cuda sapmling time 0.009367	 
+
+ cuda sapmling time 0.004985	 
+
+ cuda sapmling time 0.005427	 
+
+ cuda sapmling time 0.009711	 
+
+ cuda sapmling time 0.005279	 
+
+ cuda sapmling time 0.006079	 
+
+ cuda sapmling time 0.006644	 
+
+ cuda sapmling time 0.006136	 
+
+ cuda sapmling time 0.006327	 
+
+ cuda sapmling time 0.009210	 
+
+ cuda sapmling time 0.004723	 
+
+ cuda sapmling time 0.005458	 
+
+ cuda sapmling time 0.009280	 
+
+ cuda sapmling time 0.004902	 
+
+ cuda sapmling time 0.013916	 
+
+ cuda sapmling time 0.014583	 
+
+ cuda sapmling time 0.004742	 
+
+ cuda sapmling time 0.005264	 
+
+ cuda sapmling time 0.002269	 
+
+ cuda sapmling time 0.001542	 
+
+ cuda sapmling time 0.001454	 
+
+ cuda sapmling time 0.002071	 
+
+ cuda sapmling time 0.015321	 
+
+ cuda sapmling time 0.015484	 
+
+ cuda sapmling time 0.011652	 
+
+ cuda sapmling time 0.000444	 
+
+ cuda sapmling time 0.001024	 
+
+ cuda sapmling time 0.006855	 
+
+ cuda sapmling time 0.004754	 
+
+ cuda sapmling time 0.005337	 
+
+ cuda sapmling time 0.006265	 
+
+ cuda sapmling time 0.004889	 
+
+ cuda sapmling time 0.005429	 
+
+ cuda sapmling time 0.009197	 
+
+ cuda sapmling time 0.005226	 
+
+ cuda sapmling time 0.005548	 
+
+ cuda sapmling time 0.009411	 
+
+ cuda sapmling time 0.005312	 
+
+ cuda sapmling time 0.005482	 
+
+ cuda sapmling time 0.005970	 
+
+ cuda sapmling time 0.000268	 
+
+ cuda sapmling time 0.005292	 
+
+ cuda sapmling time 0.006181	 
+
+ cuda sapmling time 0.006610	 
+
+ cuda sapmling time 0.006714	 
+
+ cuda sapmling time 0.018633	 
+
+ cuda sapmling time 0.005243	 
+
+ cuda sapmling time 0.005400	 
+
+ cuda sapmling time 0.006737	 
+
+ cuda sapmling time 0.000451	 
+
+ cuda sapmling time 0.000552	 
+
+ cuda sapmling time 0.001962	 
+
+ cuda sapmling time 0.000377	 
+
+ cuda sapmling time 0.000880	 
+
+ cuda sapmling time 0.001385	 
+
+ cuda sapmling time 0.006016	 
+
+ cuda sapmling time 0.006145	 
+
+ cuda sapmling time 0.006761	 
+
+ cuda sapmling time 0.000227	 
+
+ cuda sapmling time 0.000429	 
+
+ cuda sapmling time 0.002092	 
+
+ cuda sapmling time 0.004785	 
+
+ cuda sapmling time 0.005198	 
+
+ cuda sapmling time 0.005837	 
+
+ cuda sapmling time 0.005021	 
+
+ cuda sapmling time 0.006071	 
+
+ cuda sapmling time 0.006714	 
+
+ cuda sapmling time 0.004903	 
+
+ cuda sapmling time 0.006742	 
+
+ cuda sapmling time 0.009622	 
+
+ cuda sapmling time 0.004785	 
+
+ cuda sapmling time 0.005502	 
+
+ cuda sapmling time 0.006701	 
+
+ cuda sapmling time 0.004817	 
+
+ cuda sapmling time 0.002668	 
+
+ cuda sapmling time 0.006613	 
+
+ cuda sapmling time 0.004827	 
+
+ cuda sapmling time 0.005662	 
+
+ cuda sapmling time 0.009317	 
+
+ cuda sapmling time 0.005018	 
+
+ cuda sapmling time 0.006290	 
+
+ cuda sapmling time 0.006764	 
+
+ cuda sapmling time 0.004844	 
+
+ cuda sapmling time 0.006439	 
+
+ cuda sapmling time 0.002353	 
+
+ cuda sapmling time 0.002864	 
+
+ cuda sapmling time 0.000477	 
+
+ cuda sapmling time 0.002115	 
+
+ cuda sapmling time 0.004872	 
+
+ cuda sapmling time 0.006128	 
+
+ cuda sapmling time 0.006746	 
+
+ cuda sapmling time 0.000397	 
+
+ cuda sapmling time 0.001626	 
+
+ cuda sapmling time 0.002221	 
+
+ cuda sapmling time 0.004767	 
+
+ cuda sapmling time 0.005052	 
+
+ cuda sapmling time 0.006752	 
+
+ cuda sapmling time 0.005013	 
+
+ cuda sapmling time 0.006271	 
+
+ cuda sapmling time 0.009270	 
+
+ cuda sapmling time 0.005175	 
+
+ cuda sapmling time 0.005342	 
+
+ cuda sapmling time 0.006676	 
+
+ cuda sapmling time 0.004747	 
+
+ cuda sapmling time 0.005374	 
+
+ cuda sapmling time 0.006712	 
+
+ cuda sapmling time 0.004751	 
+
+ cuda sapmling time 0.002030	 
+
+ cuda sapmling time 0.006687	 
+
+ cuda sapmling time 0.004784	 
+
+ cuda sapmling time 0.005275	 
+
+ cuda sapmling time 0.005810	 
+
+ cuda sapmling time 0.006171	 
+
+ cuda sapmling time 0.006310	 
+
+ cuda sapmling time 0.009130	 
+
+ cuda sapmling time 0.005053	 
+
+ cuda sapmling time 0.006059	 
+
+ cuda sapmling time 0.001989	 
+
+ cuda sapmling time 0.003948	 
+
+ cuda sapmling time 0.001413	 
+
+ cuda sapmling time 0.001860	 
+
+ cuda sapmling time 0.004747	 
+
+ cuda sapmling time 0.005496	 
+
+ cuda sapmling time 0.006731	 
+
+ cuda sapmling time 0.000291	 
+
+ cuda sapmling time 0.000361	 
+
+ cuda sapmling time 0.001098	 
+
+ cuda sapmling time 0.004895	 
+
+ cuda sapmling time 0.005145	 
+
+ cuda sapmling time 0.005632	 
+
+ cuda sapmling time 0.004753	 
+
+ cuda sapmling time 0.005700	 
+
+ cuda sapmling time 0.009258	 
+
+ cuda sapmling time 0.004821	 
+
+ cuda sapmling time 0.005408	 
+
+ cuda sapmling time 0.009237	 
+
+ cuda sapmling time 0.005470	 
+
+ cuda sapmling time 0.006066	 
+
+ cuda sapmling time 0.006565	 
+
+ cuda sapmling time 0.004760	 
+
+ cuda sapmling time 0.002485	 
+
+ cuda sapmling time 0.006536	 
+
+ cuda sapmling time 0.006385	 
+
+ cuda sapmling time 0.015595	 
+
+ cuda sapmling time 0.018342	 
+
+ cuda sapmling time 0.013757	 
+
+ cuda sapmling time 0.013925	 
+
+ cuda sapmling time 0.014454	 
+
+ cuda sapmling time 0.001078	 
+
+ cuda sapmling time 0.001279	 
+
+ cuda sapmling time 0.002035	 
+
+ cuda sapmling time 0.001791	 
+
+ cuda sapmling time 0.001698	 
+
+ cuda sapmling time 0.002143	 
+
+ cuda sapmling time 0.004875	 
+
+ cuda sapmling time 0.006313	 
+
+ cuda sapmling time 0.009165	 
+
+ cuda sapmling time 0.002734	 
+
+ cuda sapmling time 0.001063	 
+
+ cuda sapmling time 0.001599	 
+
+ cuda sapmling time 0.005369	 
+
+ cuda sapmling time 0.006311	 
+
+ cuda sapmling time 0.009208	 
+
+ cuda sapmling time 0.004818	 
+
+ cuda sapmling time 0.005360	 
+
+ cuda sapmling time 0.006702	 
+
+ cuda sapmling time 0.004833	 
+
+ cuda sapmling time 0.005585	 
+
+ cuda sapmling time 0.009140	 
+
+ cuda sapmling time 0.005097	 
+
+ cuda sapmling time 0.005451	 
+
+ cuda sapmling time 0.005920	 
+
+ cuda sapmling time 0.004911	 
+
+ cuda sapmling time 0.005196	 
+
+ cuda sapmling time 0.004840	 
+
+ cuda sapmling time 0.005000	 
+
+ cuda sapmling time 0.005250	 
+
+ cuda sapmling time 0.006696	 
+
+ cuda sapmling time 0.005694	 
+
+ cuda sapmling time 0.005812	 
+
+ cuda sapmling time 0.018795	 
+
+ cuda sapmling time 0.003726	 
+
+ cuda sapmling time 0.000745	 
+
+ cuda sapmling time 0.002235	 
+
+ cuda sapmling time 0.000068	 
+
+ cuda sapmling time 0.000524	 
+
+ cuda sapmling time 0.002147	 
+
+ cuda sapmling time 0.005011	 
+
+ cuda sapmling time 0.006268	 
+
+ cuda sapmling time 0.006750	 
+
+ cuda sapmling time 0.000324	 
+
+ cuda sapmling time 0.000537	 
+
+ cuda sapmling time 0.002095	 
+
+ cuda sapmling time 0.005056	 
+
+ cuda sapmling time 0.006476	 
+
+ cuda sapmling time 0.009567	 
+
+ cuda sapmling time 0.004857	 
+
+ cuda sapmling time 0.005407	 
+
+ cuda sapmling time 0.006746	 
+
+ cuda sapmling time 0.005335	 
+
+ cuda sapmling time 0.009215	 
+
+ cuda sapmling time 0.009736	 
+
+ cuda sapmling time 0.004860	 
+
+ cuda sapmling time 0.005425	 
+
+ cuda sapmling time 0.006679	 
+
+ cuda sapmling time 0.015490	 
+
+ cuda sapmling time 0.018049	 
+
+ cuda sapmling time 0.018652	 
+
+ cuda sapmling time 0.004990	 
+
+ cuda sapmling time 0.005225	 
+
+ cuda sapmling time 0.006714	 
+
+ cuda sapmling time 0.005052	 
+
+ cuda sapmling time 0.005381	 
+
+ cuda sapmling time 0.009365	 
+
+ cuda sapmling time 0.000150	 
+
+ cuda sapmling time 0.001660	 
+
+ cuda sapmling time 0.002151	 
+
+ cuda sapmling time 0.000157	 
+
+ cuda sapmling time 0.000710	 
+
+ cuda sapmling time 0.001913	 
+
+ cuda sapmling time 0.004745	 
+
+ cuda sapmling time 0.006450	 
+
+ cuda sapmling time 0.009351	 
+
+ cuda sapmling time 0.002442	 
+
+ cuda sapmling time 0.001844	 
+
+ cuda sapmling time 0.002422	 
+
+ cuda sapmling time 0.004787	 
+
+ cuda sapmling time 0.006303	 
+
+ cuda sapmling time 0.009302	 
+
+ cuda sapmling time 0.004829	 
+
+ cuda sapmling time 0.005692	 
+
+ cuda sapmling time 0.009656	 
+
+ cuda sapmling time 0.005375	 
+
+ cuda sapmling time 0.005549	 
+
+ cuda sapmling time 0.006112	 
+
+ cuda sapmling time 0.006067	 
+
+ cuda sapmling time 0.006392	 
+
+ cuda sapmling time 0.009489	 
+
+ cuda sapmling time 0.004975	 
+
+ cuda sapmling time 0.005252	 
+
+ cuda sapmling time 0.005593	 
+
+ cuda sapmling time 0.005598	 
+
+ cuda sapmling time 0.005876	 
+
+ cuda sapmling time 0.006335	 
+
+ cuda sapmling time 0.004854	 
+
+ cuda sapmling time 0.005148	 
+
+ cuda sapmling time 0.009066	 
+
+ cuda sapmling time 0.004833	 
+
+ cuda sapmling time 0.001769	 
+
+ cuda sapmling time 0.002236	 
+
+ cuda sapmling time 0.000140	 
+
+ cuda sapmling time 0.001553	 
+
+ cuda sapmling time 0.002135	 
+
+ cuda sapmling time 0.004949	 
+
+ cuda sapmling time 0.018125	 
+
+ cuda sapmling time 0.014801	 
+
+ cuda sapmling time 0.000042	 
+
+ cuda sapmling time 0.001538	 
+
+ cuda sapmling time 0.006802	 
+
+ cuda sapmling time 0.004779	 
+
+ cuda sapmling time 0.006224	 
+
+ cuda sapmling time 0.006399	 
+
+ cuda sapmling time 0.004708	 
+
+ cuda sapmling time 0.005274	 
+
+ cuda sapmling time 0.006427	 
+
+ cuda sapmling time 0.004746	 
+
+ cuda sapmling time 0.006268	 
+
+ cuda sapmling time 0.018288	 
+
+ cuda sapmling time 0.004706	 
+
+ cuda sapmling time 0.005291	 
+
+ cuda sapmling time 0.005801	 
+
+ cuda sapmling time 0.004729	 
+
+ cuda sapmling time 0.006219	 
+
+ cuda sapmling time 0.003748	 
+
+ cuda sapmling time 0.004699	 
+
+ cuda sapmling time 0.005556	 
+
+ cuda sapmling time 0.006363	 
+
+ cuda sapmling time 0.004756	 
+
+ cuda sapmling time 0.005336	 
+
+ cuda sapmling time 0.006439	 
+
+ cuda sapmling time 0.004666	 
+
+ cuda sapmling time 0.006142	 
+
+ cuda sapmling time 0.006429	 
+
+ cuda sapmling time 0.004684	 
+
+ cuda sapmling time 0.000521	 
+
+ cuda sapmling time 0.001765	 
+
+ cuda sapmling time 0.000066	 
+
+ cuda sapmling time 0.000300	 
+
+ cuda sapmling time 0.004108	 
+
+ cuda sapmling time 0.000456	 
+
+ cuda sapmling time 0.000518	 
+
+ cuda sapmling time 0.002034	 
+
+ cuda sapmling time 0.004714	 
+
+ cuda sapmling time 0.005273	 
+
+ cuda sapmling time 0.006429	 
+
+ cuda sapmling time 0.004579	 
+
+ cuda sapmling time 0.002130	 
+
+ cuda sapmling time 0.001772	 
+
+ cuda sapmling time 0.000050	 
+
+ cuda sapmling time 0.001121	 
+
+ cuda sapmling time 0.006400	 
+
+ cuda sapmling time 0.004708	 
+
+ cuda sapmling time 0.005587	 
+
+ cuda sapmling time 0.006412	 
+
+ cuda sapmling time 0.004702	 
+
+ cuda sapmling time 0.004892	 
+
+ cuda sapmling time 0.006338	 
+
+ cuda sapmling time 0.005504	 
+
+ cuda sapmling time 0.005588	 
+
+ cuda sapmling time 0.015600	 
+
+ cuda sapmling time 0.004723	 
+
+ cuda sapmling time 0.004929	 
+
+ cuda sapmling time 0.005209	 
+
+ cuda sapmling time 0.004717	 
+
+ cuda sapmling time 0.004351	 
+
+ cuda sapmling time 0.006378	 
+
+ cuda sapmling time 0.003537	 
+
+ cuda sapmling time 0.004932	 
+
+ cuda sapmling time 0.006444	 
+
+ cuda sapmling time 0.004786	 
+
+ cuda sapmling time 0.006191	 
+
+ cuda sapmling time 0.006379	 
+
+ cuda sapmling time 0.004743	 
+
+ cuda sapmling time 0.004838	 
+
+ cuda sapmling time 0.005612	 
+
+ cuda sapmling time 0.000206	 
+
+ cuda sapmling time 0.000214	 
+
+ cuda sapmling time 0.000632	 
+
+ cuda sapmling time 0.000091	 
+
+ cuda sapmling time 0.001812	 
+
+ cuda sapmling time 0.002223	 
+
+ cuda sapmling time 0.000134	 
+
+ cuda sapmling time 0.001505	 
+
+ cuda sapmling time 0.005983	 
+
+ cuda sapmling time 0.004738	 
+
+ cuda sapmling time 0.006216	 
+
+ cuda sapmling time 0.006466	 
+
+ cuda sapmling time 0.000096	 
+
+ cuda sapmling time 0.000665	 
+
+ cuda sapmling time 0.001729	 
+
+ cuda sapmling time 0.000053	 
+
+ cuda sapmling time 0.004377	 
+
+ cuda sapmling time 0.006386	 
+
+ cuda sapmling time 0.004683	 
+
+ cuda sapmling time 0.004787	 
+
+ cuda sapmling time 0.004839	 
+
+ cuda sapmling time 0.004777	 
+
+ cuda sapmling time 0.005412	 
+
+ cuda sapmling time 0.009208	 
+
+ cuda sapmling time 0.004829	 
+
+ cuda sapmling time 0.005154	 
+
+ cuda sapmling time 0.009215	 
+
+ cuda sapmling time 0.004854	 
+
+ cuda sapmling time 0.009162	 
+
+ cuda sapmling time 0.008950	 
+
+ cuda sapmling time 0.004946	 
+
+ cuda sapmling time 0.005507	 
+
+ cuda sapmling time 0.005911	 
+
+ cuda sapmling time 0.005280	 
+
+ cuda sapmling time 0.009165	 
+
+ cuda sapmling time 0.009724	 
+
+ cuda sapmling time 0.017974	 
+
+ cuda sapmling time 0.015015	 
+
+ cuda sapmling time 0.005774	 
+
+ cuda sapmling time 0.000112	 
+
+ cuda sapmling time 0.001438	 
+
+ cuda sapmling time 0.003849	 
+
+ cuda sapmling time 0.000263	 
+
+ cuda sapmling time 0.001439	 
+
+ cuda sapmling time 0.003024	 
+
+ cuda sapmling time 0.000305	 
+
+ cuda sapmling time 0.000515	 
+
+ cuda sapmling time 0.001317	 
+
+ cuda sapmling time 0.000170	 
+
+ cuda sapmling time 0.000771	 
+
+ cuda sapmling time 0.002068	 
+
+ cuda sapmling time 0.004735	 
+
+ cuda sapmling time 0.006251	 
+
+ cuda sapmling time 0.009222	 
+
+ cuda sapmling time 0.001988	 
+
+ cuda sapmling time 0.001056	 
+
+ cuda sapmling time 0.002239	 
+
+ cuda sapmling time 0.004877	 
+
+ cuda sapmling time 0.005172	 
+
+ cuda sapmling time 0.006672	 
+
+ cuda sapmling time 0.004875	 
+
+ cuda sapmling time 0.005075	 
+
+ cuda sapmling time 0.009161	 
+
+ cuda sapmling time 0.005042	 
+
+ cuda sapmling time 0.006425	 
+
+ cuda sapmling time 0.009392	 
+
+ cuda sapmling time 0.005941	 
+
+ cuda sapmling time 0.006491	 
+
+ cuda sapmling time 0.009317	 
+
+ cuda sapmling time 0.005076	 
+
+ cuda sapmling time 0.003236	 
+
+ cuda sapmling time 0.006647	 
+
+ cuda sapmling time 0.004994	 
+
+ cuda sapmling time 0.006223	 
+
+ cuda sapmling time 0.006712	 
+
+ cuda sapmling time 0.004711	 
+
+ cuda sapmling time 0.005374	 
+
+ cuda sapmling time 0.009144	 
+
+ cuda sapmling time 0.000207	 
+
+ cuda sapmling time 0.000460	 
+
+ cuda sapmling time 0.002260	 
+
+ cuda sapmling time 0.001680	 
+
+ cuda sapmling time 0.005484	 
+
+ cuda sapmling time 0.006715	 
+
+ cuda sapmling time 0.005983	 
+
+ cuda sapmling time 0.003464	 
+
+ cuda sapmling time 0.002148	 
+
+ cuda sapmling time 0.000348	 
+
+ cuda sapmling time 0.003811	 
+
+ cuda sapmling time 0.006220	 
+
+ cuda sapmling time 0.005276	 
+
+ cuda sapmling time 0.005453	 
+
+ cuda sapmling time 0.009158	 
+
+ cuda sapmling time 0.004798	 
+
+ cuda sapmling time 0.005398	 
+
+ cuda sapmling time 0.005898	 
+
+ cuda sapmling time 0.005282	 
+
+ cuda sapmling time 0.006339	 
+
+ cuda sapmling time 0.009175	 
+
+ cuda sapmling time 0.004987	 
+
+ cuda sapmling time 0.006057	 
+
+ cuda sapmling time 0.009187	 
+
+ cuda sapmling time 0.004846	 
+
+ cuda sapmling time 0.004856	 
+
+ cuda sapmling time 0.009254	 
+
+ cuda sapmling time 0.004818	 
+
+ cuda sapmling time 0.006459	 
+
+ cuda sapmling time 0.009391	 
+
+ cuda sapmling time 0.006131	 
+
+ cuda sapmling time 0.004679	 
+
+ cuda sapmling time 0.002157	 
+
+ cuda sapmling time 0.004868	 
+
+ cuda sapmling time 0.005205	 
+
+ cuda sapmling time 0.006054	 
+
+ cuda sapmling time 0.002335	 
+
+ cuda sapmling time 0.002651	 
+
+ cuda sapmling time 0.002101	 
+
+ cuda sapmling time 0.004801	 
+
+ cuda sapmling time 0.005108	 
+
+ cuda sapmling time 0.005868	 
+
+ cuda sapmling time 0.004807	 
+
+ cuda sapmling time 0.005027	 
+
+ cuda sapmling time 0.006759	 
+
+ cuda sapmling time 0.005737	 
+
+ cuda sapmling time 0.005891	 
+
+ cuda sapmling time 0.009297	 
+
+ cuda sapmling time 0.004963	 
+
+ cuda sapmling time 0.005280	 
+
+ cuda sapmling time 0.006729	 
+
+ cuda sapmling time 0.004803	 
+
+ cuda sapmling time 0.004991	 
+
+ cuda sapmling time 0.006666	 
+
+ cuda sapmling time 0.004944	 
+
+ cuda sapmling time 0.005263	 
+
+ cuda sapmling time 0.009364	 
+
+ cuda sapmling time 0.004728	 
+
+ cuda sapmling time 0.006039	 
+
+ cuda sapmling time 0.006555	 
+
+ cuda sapmling time 0.000427	 
+
+ cuda sapmling time 0.001033	 
+
+ cuda sapmling time 0.002177	 
+
+ cuda sapmling time 0.004760	 
+
+ cuda sapmling time 0.005306	 
+
+ cuda sapmling time 0.005865	 
+
+ cuda sapmling time 0.002010	 
+
+ cuda sapmling time 0.001498	 
+
+ cuda sapmling time 0.001875	 
+
+ cuda sapmling time 0.005340	 
+
+ cuda sapmling time 0.005513	 
+
+ cuda sapmling time 0.006698	 
+
+ cuda sapmling time 0.004945	 
+
+ cuda sapmling time 0.005495	 
+
+ cuda sapmling time 0.006055	 
+
+ cuda sapmling time 0.004963	 
+
+ cuda sapmling time 0.005172	 
+
+ cuda sapmling time 0.006697	 
+
+ cuda sapmling time 0.005206	 
+
+ cuda sapmling time 0.006217	 
+
+ cuda sapmling time 0.009337	 
+
+ cuda sapmling time 0.004884	 
+
+ cuda sapmling time 0.005644	 
+
+ cuda sapmling time 0.009526	 
+
+ cuda sapmling time 0.004826	 
+
+ cuda sapmling time 0.005251	 
+
+ cuda sapmling time 0.009341	 
+
+ cuda sapmling time 0.013838	 
+
+ cuda sapmling time 0.013967	 
+
+ cuda sapmling time 0.009255	 
+
+ cuda sapmling time 0.002817	 
+
+ cuda sapmling time 0.006758	 
+
+ cuda sapmling time 0.009683	 
+
+ cuda sapmling time 0.005058	 
+
+ cuda sapmling time 0.002576	 
+
+ cuda sapmling time 0.001188	 
+
+ cuda sapmling time 0.004792	 
+
+ cuda sapmling time 0.005295	 
+
+ cuda sapmling time 0.009351	 
+
+ cuda sapmling time 0.005058	 
+
+ cuda sapmling time 0.005364	 
+
+ cuda sapmling time 0.006731	 
+
+ cuda sapmling time 0.004767	 
+
+ cuda sapmling time 0.005341	 
+
+ cuda sapmling time 0.009770	 
+
+ cuda sapmling time 0.004895	 
+
+ cuda sapmling time 0.006227	 
+
+ cuda sapmling time 0.006629	 
+
+ cuda sapmling time 0.005012	 
+
+ cuda sapmling time 0.004897	 
+
+ cuda sapmling time 0.006687	 
+
+ cuda sapmling time 0.004882	 
+
+ cuda sapmling time 0.005169	 
+
+ cuda sapmling time 0.009223	 
+
+ cuda sapmling time 0.004699	 
+
+ cuda sapmling time 0.005341	 
+
+ cuda sapmling time 0.005791	 
+
+ cuda sapmling time 0.002533	 
+
+ cuda sapmling time 0.005195	 
+
+ cuda sapmling time 0.010166	 
+
+ cuda sapmling time 0.004996	 
+
+ cuda sapmling time 0.005343	 
+
+ cuda sapmling time 0.006577	 
+
+ cuda sapmling time 0.000384	 
+
+ cuda sapmling time 0.000763	 
+
+ cuda sapmling time 0.006957	 
+
+ cuda sapmling time 0.004869	 
+
+ cuda sapmling time 0.006238	 
+
+ cuda sapmling time 0.006749	 
+
+ cuda sapmling time 0.005056	 
+
+ cuda sapmling time 0.013896	 
+
+ cuda sapmling time 0.014468	 
+
+ cuda sapmling time 0.005092	 
+
+ cuda sapmling time 0.018064	 
+
+ cuda sapmling time 0.018648	 
+
+ cuda sapmling time 0.004830	 
+
+ cuda sapmling time 0.006533	 
+
+ cuda sapmling time 0.006199	 
+
+ cuda sapmling time 0.004747	 
+
+ cuda sapmling time 0.005487	 
+
+ cuda sapmling time 0.006767	 
+
+ cuda sapmling time 0.005137	 
+
+ cuda sapmling time 0.005633	 
+
+ cuda sapmling time 0.006064	 
+
+ cuda sapmling time 0.004838	 
+
+ cuda sapmling time 0.002148	 
+
+ cuda sapmling time 0.002207	 
+
+ cuda sapmling time 0.004900	 
+
+ cuda sapmling time 0.005414	 
+
+ cuda sapmling time 0.006587	 
+
+ cuda sapmling time 0.010961	 
+
+ cuda sapmling time 0.005228	 
+
+ cuda sapmling time 0.013754	 
+
+ cuda sapmling time 0.004800	 
+
+ cuda sapmling time 0.006299	 
+
+ cuda sapmling time 0.009255	 
+
+ cuda sapmling time 0.004834	 
+
+ cuda sapmling time 0.005413	 
+
+ cuda sapmling time 0.009150	 
+
+ cuda sapmling time 0.005435	 
+
+ cuda sapmling time 0.006109	 
+
+ cuda sapmling time 0.009232	 
+
+ cuda sapmling time 0.006115	 
+
+ cuda sapmling time 0.006314	 
+
+ cuda sapmling time 0.009227	 
+
+ cuda sapmling time 0.003910	 
+
+ cuda sapmling time 0.006441	 
+
+ cuda sapmling time 0.009347	 
+
+ cuda sapmling time 0.004841	 
+
+ cuda sapmling time 0.005535	 
+
+ cuda sapmling time 0.018513	 
+
+ cuda sapmling time 0.006191	 
+
+ cuda sapmling time 0.004718	 
+
+ cuda sapmling time 0.002331	 
+
+ cuda sapmling time 0.004860	 
+
+ cuda sapmling time 0.005095	 
+
+ cuda sapmling time 0.006515	 
+
+ cuda sapmling time 0.001286	 
+
+ cuda sapmling time 0.002712	 
+
+ cuda sapmling time 0.002436	 
+
+ cuda sapmling time 0.005521	 
+
+ cuda sapmling time 0.005703	 
+
+ cuda sapmling time 0.006208	 
+
+ cuda sapmling time 0.004790	 
+
+ cuda sapmling time 0.005280	 
+
+ cuda sapmling time 0.006664	 
+
+ cuda sapmling time 0.004871	 
+
+ cuda sapmling time 0.006249	 
+
+ cuda sapmling time 0.006743	 
+
+ cuda sapmling time 0.005321	 
+
+ cuda sapmling time 0.006264	 
+
+ cuda sapmling time 0.006770	 
+
+ cuda sapmling time 0.004727	 
+
+ cuda sapmling time 0.005444	 
+
+ cuda sapmling time 0.007245	 
+
+ cuda sapmling time 0.004975	 
+
+ cuda sapmling time 0.006405	 
+
+ cuda sapmling time 0.009244	 
+
+ cuda sapmling time 0.004792	 
+
+ cuda sapmling time 0.006027	 
+
+ cuda sapmling time 0.006453	 
+
+ cuda sapmling time 0.001028	 
+
+ cuda sapmling time 0.001907	 
+
+ cuda sapmling time 0.001911	 
+
+ cuda sapmling time 0.006056	 
+
+ cuda sapmling time 0.006274	 
+
+ cuda sapmling time 0.006733	 
+
+ cuda sapmling time 0.000213	 
+
+ cuda sapmling time 0.001640	 
+
+ cuda sapmling time 0.005621	 
+
+ cuda sapmling time 0.004703	 
+
+ cuda sapmling time 0.005110	 
+
+ cuda sapmling time 0.006336	 
+
+ cuda sapmling time 0.004720	 
+
+ cuda sapmling time 0.004946	 
+
+ cuda sapmling time 0.006399	 
+
+ cuda sapmling time 0.004804	 
+
+ cuda sapmling time 0.004943	 
+
+ cuda sapmling time 0.006524	 
+
+ cuda sapmling time 0.004790	 
+
+ cuda sapmling time 0.004839	 
+
+ cuda sapmling time 0.005763	 
+
+ cuda sapmling time 0.004742	 
+
+ cuda sapmling time 0.006177	 
+
+ cuda sapmling time 0.018107	 
+
+ cuda sapmling time 0.004690	 
+
+ cuda sapmling time 0.004611	 
+
+ cuda sapmling time 0.006528	 
+
+ cuda sapmling time 0.004777	 
+
+ cuda sapmling time 0.004973	 
+
+ cuda sapmling time 0.005144	 
+
+ cuda sapmling time 0.004676	 
+
+ cuda sapmling time 0.005571	 
+
+ cuda sapmling time 0.004319	 
+
+ cuda sapmling time 0.000062	 
+
+ cuda sapmling time 0.000269	 
+
+ cuda sapmling time 0.001725	 
+
+ cuda sapmling time 0.000049	 
+
+ cuda sapmling time 0.001593	 
+
+ cuda sapmling time 0.005367	 
+
+ cuda sapmling time 0.004719	 
+
+ cuda sapmling time 0.004849	 
+
+ cuda sapmling time 0.003957	 
+
+ cuda sapmling time 0.000052	 
+
+ cuda sapmling time 0.001547	 
+
+ cuda sapmling time 0.006267	 
+
+ cuda sapmling time 0.004713	 
+
+ cuda sapmling time 0.004906	 
+
+ cuda sapmling time 0.006434	 
+
+ cuda sapmling time 0.004712	 
+
+ cuda sapmling time 0.004982	 
+
+ cuda sapmling time 0.005603	 
+
+ cuda sapmling time 0.005112	 
+
+ cuda sapmling time 0.005196	 
+
+ cuda sapmling time 0.006402	 
+
+ cuda sapmling time 0.004712	 
+
+ cuda sapmling time 0.005594	 
+
+ cuda sapmling time 0.005833	 
+
+ cuda sapmling time 0.005507	 
+
+ cuda sapmling time 0.005571	 
+
+ cuda sapmling time 0.005714	 
+
+ cuda sapmling time 0.004726	 
+
+ cuda sapmling time 0.005090	 
+
+ cuda sapmling time 0.005320	 
+
+ cuda sapmling time 0.004715	 
+
+ cuda sapmling time 0.006112	 
+
+ cuda sapmling time 0.002123	 
+
+ cuda sapmling time 0.000055	 
+
+ cuda sapmling time 0.001496	 
+
+ cuda sapmling time 0.001804	 
+
+ cuda sapmling time 0.002148	 
+
+ cuda sapmling time 0.000633	 
+
+ cuda sapmling time 0.001748	 
+
+ cuda sapmling time 0.000098	 
+
+ cuda sapmling time 0.001603	 
+
+ cuda sapmling time 0.002005	 
+
+ cuda sapmling time 0.004719	 
+
+ cuda sapmling time 0.006165	 
+
+ cuda sapmling time 0.006420	 
+
+ cuda sapmling time 0.004567	 
+
+ cuda sapmling time 0.002200	 
+
+ cuda sapmling time 0.000828	 
+
+ cuda sapmling time 0.000111	 
+
+ cuda sapmling time 0.000638	 
+
+ cuda sapmling time 0.001742	 
+
+ cuda sapmling time 0.003667	 
+
+ cuda sapmling time 0.004827	 
+
+ cuda sapmling time 0.006404	 
+
+ cuda sapmling time 0.004701	 
+
+ cuda sapmling time 0.006161	 
+
+ cuda sapmling time 0.006451	 
+
+ cuda sapmling time 0.004704	 
+
+ cuda sapmling time 0.006182	 
+
+ cuda sapmling time 0.006381	 
+
+ cuda sapmling time 0.004777	 
+
+ cuda sapmling time 0.005247	 
+
+ cuda sapmling time 0.015640	 
+
+ cuda sapmling time 0.004688	 
+
+ cuda sapmling time 0.004708	 
+
+ cuda sapmling time 0.004845	 
+
+ cuda sapmling time 0.013707	 
+
+ cuda sapmling time 0.014095	 
+
+ cuda sapmling time 0.014581	 
+
+ cuda sapmling time 0.004728	 
+
+ cuda sapmling time 0.005295	 
+
+ cuda sapmling time 0.006702	 
+
+ cuda sapmling time 0.005052	 
+
+ cuda sapmling time 0.005226	 
+
+ cuda sapmling time 0.003978	 
+
+ cuda sapmling time 0.003036	 
+
+ cuda sapmling time 0.000510	 
+
+ cuda sapmling time 0.002086	 
+
+ cuda sapmling time 0.015463	 
+
+ cuda sapmling time 0.015625	 
+
+ cuda sapmling time 0.011561	 
+
+ cuda sapmling time 0.000244	 
+
+ cuda sapmling time 0.001243	 
+
+ cuda sapmling time 0.006750	 
+
+ cuda sapmling time 0.005046	 
+
+ cuda sapmling time 0.006274	 
+
+ cuda sapmling time 0.006779	 
+
+ cuda sapmling time 0.004777	 
+
+ cuda sapmling time 0.006392	 
+
+ cuda sapmling time 0.009211	 
+
+ cuda sapmling time 0.004924	 
+
+ cuda sapmling time 0.005647	 
+
+ cuda sapmling time 0.006188	 
+
+ cuda sapmling time 0.004763	 
+
+ cuda sapmling time 0.006719	 
+
+ cuda sapmling time 0.009751	 
+
+ cuda sapmling time 0.006083	 
+
+ cuda sapmling time 0.006214	 
+
+ cuda sapmling time 0.006741	 
+
+ cuda sapmling time 0.005037	 
+
+ cuda sapmling time 0.006014	 
+
+ cuda sapmling time 0.009267	 
+
+ cuda sapmling time 0.005694	 
+
+ cuda sapmling time 0.005801	 
+
+ cuda sapmling time 0.009076	 
+
+ cuda sapmling time 0.000213	 
+
+ cuda sapmling time 0.011261	 
+
+ cuda sapmling time 0.005528	 
+
+ cuda sapmling time 0.004839	 
+
+ cuda sapmling time 0.005187	 
+
+ cuda sapmling time 0.006720	 
+
+ cuda sapmling time 0.000084	 
+
+ cuda sapmling time 0.000539	 
+
+ cuda sapmling time 0.002087	 
+
+ cuda sapmling time 0.004969	 
+
+ cuda sapmling time 0.005187	 
+
+ cuda sapmling time 0.006744	 
+
+ cuda sapmling time 0.005312	 
+
+ cuda sapmling time 0.006266	 
+
+ cuda sapmling time 0.006706	 
+
+ cuda sapmling time 0.005219	 
+
+ cuda sapmling time 0.005417	 
+
+ cuda sapmling time 0.006611	 
+
+ cuda sapmling time 0.005393	 
+
+ cuda sapmling time 0.006102	 
+
+ cuda sapmling time 0.009244	 
+
+ cuda sapmling time 0.004776	 
+
+ cuda sapmling time 0.002750	 
+
+ cuda sapmling time 0.006231	 
+
+ cuda sapmling time 0.005249	 
+
+ cuda sapmling time 0.006546	 
+
+ cuda sapmling time 0.009582	 
+
+ cuda sapmling time 0.004870	 
+
+ cuda sapmling time 0.005179	 
+
+ cuda sapmling time 0.009180	 
+
+ cuda sapmling time 0.006177	 
+
+ cuda sapmling time 0.006276	 
+
+ cuda sapmling time 0.002258	 
+
+ cuda sapmling time 0.001042	 
+
+ cuda sapmling time 0.000820	 
+
+ cuda sapmling time 0.002016	 
+
+ cuda sapmling time 0.004891	 
+
+ cuda sapmling time 0.006088	 
+
+ cuda sapmling time 0.006656	 
+
+ cuda sapmling time 0.000195	 
+
+ cuda sapmling time 0.000603	 
+
+ cuda sapmling time 0.002145	 
+
+ cuda sapmling time 0.000207	 
+
+ cuda sapmling time 0.001279	 
+
+ cuda sapmling time 0.005604	 
+
+ cuda sapmling time 0.004861	 
+
+ cuda sapmling time 0.005694	 
+
+ cuda sapmling time 0.006605	 
+
+ cuda sapmling time 0.004765	 
+
+ cuda sapmling time 0.005352	 
+
+ cuda sapmling time 0.005830	 
+
+ cuda sapmling time 0.004870	 
+
+ cuda sapmling time 0.013867	 
+
+ cuda sapmling time 0.014505	 
+
+ cuda sapmling time 0.005260	 
+
+ cuda sapmling time 0.005446	 
+
+ cuda sapmling time 0.006750	 
+
+ cuda sapmling time 0.004801	 
+
+ cuda sapmling time 0.006287	 
+
+ cuda sapmling time 0.009229	 
+
+ cuda sapmling time 0.004835	 
+
+ cuda sapmling time 0.006079	 
+
+ cuda sapmling time 0.006568	 
+
+ cuda sapmling time 0.004825	 
+
+ cuda sapmling time 0.006357	 
+
+ cuda sapmling time 0.009336	 
+
+ cuda sapmling time 0.000672	 
+
+ cuda sapmling time 0.001402	 
+
+ cuda sapmling time 0.002372	 
+
+ cuda sapmling time 0.000179	 
+
+ cuda sapmling time 0.002490	 
+
+ cuda sapmling time 0.006745	 
+
+ cuda sapmling time 0.005042	 
+
+ cuda sapmling time 0.005237	 
+
+ cuda sapmling time 0.004484	 
+
+ cuda sapmling time 0.000320	 
+
+ cuda sapmling time 0.003546	 
+
+ cuda sapmling time 0.006634	 
+
+ cuda sapmling time 0.004755	 
+
+ cuda sapmling time 0.006464	 
+
+ cuda sapmling time 0.009284	 
+
+ cuda sapmling time 0.004780	 
+
+ cuda sapmling time 0.005096	 
+
+ cuda sapmling time 0.006505	 
+
+ cuda sapmling time 0.004927	 
+
+ cuda sapmling time 0.005319	 
+
+ cuda sapmling time 0.005955	 
+
+ cuda sapmling time 0.004854	 
+
+ cuda sapmling time 0.005187	 
+
+ cuda sapmling time 0.006734	 
+
+ cuda sapmling time 0.004779	 
+
+ cuda sapmling time 0.005539	 
+
+ cuda sapmling time 0.009340	 
+
+ cuda sapmling time 0.006308	 
+
+ cuda sapmling time 0.006376	 
+
+ cuda sapmling time 0.009178	 
+
+ cuda sapmling time 0.005016	 
+
+ cuda sapmling time 0.006395	 
+
+ cuda sapmling time 0.009089	 
+
+ cuda sapmling time 0.000114	 
+
+ cuda sapmling time 0.001236	 
+
+ cuda sapmling time 0.002536	 
+
+ cuda sapmling time 0.000993	 
+
+ cuda sapmling time 0.005478	 
+
+ cuda sapmling time 0.006630	 
+
+ cuda sapmling time 0.004837	 
+
+ cuda sapmling time 0.003843	 
+
+ cuda sapmling time 0.003905	 
+
+ cuda sapmling time 0.003756	 
+
+ cuda sapmling time 0.006279	 
+
+ cuda sapmling time 0.009237	 
+
+ cuda sapmling time 0.004747	 
+
+ cuda sapmling time 0.006542	 
+
+ cuda sapmling time 0.009470	 
+
+ cuda sapmling time 0.004762	 
+
+ cuda sapmling time 0.006132	 
+
+ cuda sapmling time 0.006758	 
+
+ cuda sapmling time 0.004831	 
+
+ cuda sapmling time 0.005219	 
+
+ cuda sapmling time 0.009236	 
+
+ cuda sapmling time 0.006145	 
+
+ cuda sapmling time 0.003513	 
+
+ cuda sapmling time 0.009354	 
+
+ cuda sapmling time 0.005172	 
+
+ cuda sapmling time 0.005374	 
+
+ cuda sapmling time 0.018749	 
+
+ cuda sapmling time 0.004706	 
+
+ cuda sapmling time 0.005209	 
+
+ cuda sapmling time 0.006671	 
+
+ cuda sapmling time 0.004780	 
+
+ cuda sapmling time 0.001716	 
+
+ cuda sapmling time 0.002147	 
+
+ cuda sapmling time 0.000704	 
+
+ cuda sapmling time 0.001449	 
+
+ cuda sapmling time 0.002691	 
+
+ cuda sapmling time 0.000274	 
+
+ cuda sapmling time 0.001660	 
+
+ cuda sapmling time 0.006736	 
+
+ cuda sapmling time 0.015562	 
+
+ cuda sapmling time 0.011226	 
+
+ cuda sapmling time 0.005609	 
+
+ cuda sapmling time 0.005068	 
+
+ cuda sapmling time 0.005673	 
+
+ cuda sapmling time 0.006677	 
+
+ cuda sapmling time 0.006605	 
+
+ cuda sapmling time 0.006749	 
+
+ cuda sapmling time 0.009747	 
+
+ cuda sapmling time 0.004761	 
+
+ cuda sapmling time 0.005045	 
+
+ cuda sapmling time 0.009698	 
+
+ cuda sapmling time 0.004774	 
+
+ cuda sapmling time 0.005163	 
+
+ cuda sapmling time 0.006662	 
+
+ cuda sapmling time 0.004956	 
+
+ cuda sapmling time 0.004067	 
+
+ cuda sapmling time 0.017449	 
+
+ cuda sapmling time 0.004807	 
+
+ cuda sapmling time 0.006709	 
+
+ cuda sapmling time 0.009574	 
+
+ cuda sapmling time 0.004737	 
+
+ cuda sapmling time 0.005278	 
+
+ cuda sapmling time 0.006559	 
+
+ cuda sapmling time 0.004957	 
+
+ cuda sapmling time 0.001683	 
+
+ cuda sapmling time 0.002143	 
+
+ cuda sapmling time 0.000342	 
+
+ cuda sapmling time 0.000777	 
+
+ cuda sapmling time 0.002166	 
+
+ cuda sapmling time 0.005545	 
+
+ cuda sapmling time 0.006277	 
+
+ cuda sapmling time 0.006735	 
+
+ cuda sapmling time 0.002251	 
+
+ cuda sapmling time 0.000584	 
+
+ cuda sapmling time 0.002166	 
+
+ cuda sapmling time 0.005623	 
+
+ cuda sapmling time 0.006337	 
+
+ cuda sapmling time 0.009259	 
+
+ cuda sapmling time 0.005028	 
+
+ cuda sapmling time 0.005201	 
+
+ cuda sapmling time 0.009215	 
+
+ cuda sapmling time 0.004889	 
+
+ cuda sapmling time 0.005366	 
+
+ cuda sapmling time 0.009210	 
+
+ cuda sapmling time 0.004872	 
+
+ cuda sapmling time 0.006094	 
+
+ cuda sapmling time 0.006714	 
+
+ cuda sapmling time 0.005231	 
+
+ cuda sapmling time 0.003276	 
+
+ cuda sapmling time 0.006732	 
+
+ cuda sapmling time 0.005014	 
+
+ cuda sapmling time 0.006176	 
+
+ cuda sapmling time 0.009701	 
+
+ cuda sapmling time 0.005115	 
+
+ cuda sapmling time 0.006015	 
+
+ cuda sapmling time 0.006500	 
+
+ cuda sapmling time 0.004956	 
+
+ cuda sapmling time 0.002424	 
+
+Training in mixed mode.
+Graph(num_nodes=169343, num_edges=1166243,
+      ndata_schemes={'test_mask': Scheme(shape=(), dtype=torch.uint8), 'val_mask': Scheme(shape=(), dtype=torch.uint8), 'train_mask': Scheme(shape=(), dtype=torch.uint8), 'feat': Scheme(shape=(128,), dtype=torch.float32), 'label': Scheme(shape=(), dtype=torch.int64), 'year': Scheme(shape=(1,), dtype=torch.int64)}
+      edata_schemes={})
+<class 'dgl.heterograph.DGLGraph'>
+partition start
+Convert a graph into a bidirected graph: 0.063 seconds, peak memory: 12.677 GB
+Construct multi-constraint weights: 0.000 seconds, peak memory: 12.677 GB
+Metis partitioning: 0.462 seconds, peak memory: 12.683 GB
+torch.Size([169343])
+Array computation done and passed to neighbour.py line 631
+
+Epoch 00000 | Loss 2.5847 | Accuracy 0.5114 | Time : 6.327898740768433
+
+Epoch 00001 | Loss 1.8879 | Accuracy 0.5571 | Time : 4.096292495727539
+
+Epoch 00002 | Loss 1.7029 | Accuracy 0.5713 | Time : 4.119442701339722
+
+Epoch 00003 | Loss 1.6150 | Accuracy 0.5806 | Time : 4.204984664916992
+
+Epoch 00004 | Loss 1.5612 | Accuracy 0.5901 | Time : 4.19905686378479
+
+Test Accuracy 0.5310
+
+ cuda sapmling time 0.002118	 
+
+ cuda sapmling time 0.000442	 
+
+ cuda sapmling time 0.000554	 
+
+ cuda sapmling time 0.002057	 
+
+ cuda sapmling time 0.005945	 
+
+ cuda sapmling time 0.006095	 
+
+ cuda sapmling time 0.009230	 
+
+ cuda sapmling time 0.001945	 
+
+ cuda sapmling time 0.001620	 
+
+ cuda sapmling time 0.002123	 
+
+ cuda sapmling time 0.006134	 
+
+ cuda sapmling time 0.006335	 
+
+ cuda sapmling time 0.009198	 
+
+ cuda sapmling time 0.004767	 
+
+ cuda sapmling time 0.005710	 
+
+ cuda sapmling time 0.006754	 
+
+ cuda sapmling time 0.005241	 
+
+ cuda sapmling time 0.006241	 
+
+ cuda sapmling time 0.009172	 
+
+ cuda sapmling time 0.004926	 
+
+ cuda sapmling time 0.018339	 
+
+ cuda sapmling time 0.018602	 
+
+ cuda sapmling time 0.005079	 
+
+ cuda sapmling time 0.004179	 
+
+ cuda sapmling time 0.006254	 
+
+ cuda sapmling time 0.004819	 
+
+ cuda sapmling time 0.005817	 
+
+ cuda sapmling time 0.009699	 
+
+ cuda sapmling time 0.004646	 
+
+ cuda sapmling time 0.005215	 
+
+ cuda sapmling time 0.006642	 
+
+ cuda sapmling time 0.000077	 
+
+ cuda sapmling time 0.001573	 
+
+ cuda sapmling time 0.001771	 
+
+ cuda sapmling time 0.001567	 
+
+ cuda sapmling time 0.000630	 
+
+ cuda sapmling time 0.000880	 
+
+ cuda sapmling time 0.000052	 
+
+ cuda sapmling time 0.002769	 
+
+ cuda sapmling time 0.006414	 
+
+ cuda sapmling time 0.004721	 
+
+ cuda sapmling time 0.004849	 
+
+ cuda sapmling time 0.003065	 
+
+ cuda sapmling time 0.000049	 
+
+ cuda sapmling time 0.000413	 
+
+ cuda sapmling time 0.000691	 
+
+ cuda sapmling time 0.000175	 
+
+ cuda sapmling time 0.005189	 
+
+ cuda sapmling time 0.006439	 
+
+ cuda sapmling time 0.004726	 
+
+ cuda sapmling time 0.004944	 
+
+ cuda sapmling time 0.005714	 
+
+ cuda sapmling time 0.004794	 
+
+ cuda sapmling time 0.006253	 
+
+ cuda sapmling time 0.006531	 
+
+ cuda sapmling time 0.004705	 
+
+ cuda sapmling time 0.004907	 
+
+ cuda sapmling time 0.005342	 
+
+ cuda sapmling time 0.004709	 
+
+ cuda sapmling time 0.004872	 
+
+ cuda sapmling time 0.006474	 
+
+ cuda sapmling time 0.004723	 
+
+ cuda sapmling time 0.004784	 
+
+ cuda sapmling time 0.018085	 
+
+ cuda sapmling time 0.004847	 
+
+ cuda sapmling time 0.005296	 
+
+ cuda sapmling time 0.006450	 
+
+ cuda sapmling time 0.004674	 
+
+ cuda sapmling time 0.006180	 
+
+ cuda sapmling time 0.006441	 
+
+ cuda sapmling time 0.004633	 
+
+ cuda sapmling time 0.005262	 
+
+ cuda sapmling time 0.005721	 
+
+ cuda sapmling time 0.000063	 
+
+ cuda sapmling time 0.000154	 
+
+ cuda sapmling time 0.001943	 
+
+ cuda sapmling time 0.001217	 
+
+ cuda sapmling time 0.000178	 
+
+ cuda sapmling time 0.000861	 
+
+ cuda sapmling time 0.000051	 
+
+ cuda sapmling time 0.005360	 
+
+ cuda sapmling time 0.006484	 
+
+ cuda sapmling time 0.004719	 
+
+ cuda sapmling time 0.005195	 
+
+ cuda sapmling time 0.004304	 
+
+ cuda sapmling time 0.000100	 
+
+ cuda sapmling time 0.000694	 
+
+ cuda sapmling time 0.002382	 
+
+ cuda sapmling time 0.005106	 
+
+ cuda sapmling time 0.005218	 
+
+ cuda sapmling time 0.006537	 
+
+ cuda sapmling time 0.004758	 
+
+ cuda sapmling time 0.005322	 
+
+ cuda sapmling time 0.006486	 
+
+ cuda sapmling time 0.004733	 
+
+ cuda sapmling time 0.004909	 
+
+ cuda sapmling time 0.005718	 
+
+ cuda sapmling time 0.004723	 
+
+ cuda sapmling time 0.006200	 
+
+ cuda sapmling time 0.006500	 
+
+ cuda sapmling time 0.005486	 
+
+ cuda sapmling time 0.005576	 
+
+ cuda sapmling time 0.006352	 
+
+ cuda sapmling time 0.000205	 
+
+ cuda sapmling time 0.005109	 
+
+ cuda sapmling time 0.004153	 
+
+ cuda sapmling time 0.004789	 
+
+ cuda sapmling time 0.005180	 
+
+ cuda sapmling time 0.005584	 
+
+ cuda sapmling time 0.004674	 
+
+ cuda sapmling time 0.006192	 
+
+ cuda sapmling time 0.017966	 
+
+ cuda sapmling time 0.004689	 
+
+ cuda sapmling time 0.004764	 
+
+ cuda sapmling time 0.001799	 
+
+ cuda sapmling time 0.000096	 
+
+ cuda sapmling time 0.001616	 
+
+ cuda sapmling time 0.002901	 
+
+ cuda sapmling time 0.000036	 
+
+ cuda sapmling time 0.000031	 
+
+ cuda sapmling time 0.000189	 
