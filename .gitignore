@@ -6,6 +6,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*.tsv
+*.csv
+*.txt
+*.eps
 # C extensions
 *.so
 examples/pytorch/graphsage/training_time/*

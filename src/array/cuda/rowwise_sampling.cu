@@ -4,6 +4,8 @@
  * @brief uniform rowwise sampling
  */
 
+// #include <__clang_cuda_builtin_vars.h>
+// #include <__clang_cuda_builtin_vars.h>
 #include <curand_kernel.h>
 #include <dgl/random.h>
 #include <dgl/runtime/device_api.h>
@@ -192,11 +194,11 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
   curandStatePhilox4_32_10_t rng;
   curand_init(rand_seed * gridDim.x + blockIdx.x, threadIdx.x, 0, &rng);
 
-  if (blockIdx.x==0 && threadIdx.x == 0)
-  {
-    // printf("Kishan define function that passed d_part_array and 1st data is :%ld\n",d_part_array[0]);
-    // printf("out_row: %ld\n", out_row);
-  }
+  // if (blockIdx.x==0 && threadIdx.x == 0)
+  // {
+  //   // printf("Kishan define function that passed d_part_array and 1st data is :%ld\n",d_part_array[0]);
+  //   // printf("out_row: %ld\n", out_row);
+  // }
   while (out_row < last_row) {
     const int64_t row = in_rows[out_row];
     const int64_t in_row_start = in_ptr[row];
@@ -215,161 +217,202 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         out_cols[out_row_start + idx] = in_index[in_idx];
         out_idxs[out_row_start + idx] = data ? data[in_idx] : in_idx;
       }
-    } else {
-      
+    } 
+    else 
+    {
       // Shared memory to store counts for each value and their index
-      __shared__ int counts[4];
+      extern __shared__ int counts[];
       extern __shared__ int index_array[];
       // __shared__ int index_array[10];
       __shared__ int maxCount;
       __shared__ int maxValue;
       __shared__ int pointer_position;
+      // int pointer_position;
+      __shared__ int neighbours[128];
+      __shared__ int part_id[128];
 
       // initilize 0 
-      if (threadIdx.x < 4) {
-        counts[threadIdx.x] = 0;
-        }
-      __syncthreads();
-
-      //count the total repeated values of same partition
-      for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
+      if ( deg < 128)
       {
+        if(threadIdx.x < deg)
+        {
+          neighbours[threadIdx.x] = in_index[in_row_start + threadIdx.x];
+          part_id[threadIdx.x] = d_part_array[in_index[in_row_start + threadIdx.x]];
+        }
+        if (threadIdx.x < num_picks) {
+          counts[threadIdx.x] = 0;
+        }
+        __syncthreads();
         
-        int val = d_part_array[in_index[in_row_start + kk]];
-        // printf(" val : %d\n", val);
-        atomicAdd(&counts[val], 1);
-      }
-      __syncthreads();
-
-      // Find maximum count and corresponding value
-      if (threadIdx.x == 0) {
-        maxCount = 0;
-        pointer_position = 0; 
-
-      // if (blockIdx.x == 0 && threadIdx.x == 0)
-      // {
-      //   printf("row: %ld, in_row_start: %ld, deg: %ld, out_row_start: %ld maxValue: %d, maxCount: %d, pointer_position: %d \n", row, in_row_start, deg, out_row_start, maxValue, maxCount, pointer_position);
-      // }
-
-        for (int i = 0; i < 4; ++i) {
-          if (counts[i] > maxCount) {
-            maxCount = counts[i];
-            maxValue = i;
-          }
-        }
-      }
-      __syncthreads();
-     
-      // Find indices of maximum repeated value
-      if (threadIdx.x == 0)
-      {
-        for(int kk = 0; kk < deg; kk++)
+        if( threadIdx.x < deg)
         {
-          if(d_part_array[in_index[in_row_start + kk]] == maxValue && pointer_position < num_picks)
-          {
-            index_array[pointer_position] = in_index[in_row_start + kk];
-            //printf("index_array :%d, pointer_position: %d, value: %d\n ", index_array[pointer_position], pointer_position, in_index[in_row_start + kk]);
-            pointer_position++;
-            //atomicAdd(&pointer_position, 1);
-          }
+          int val = part_id[threadIdx.x];
+          atomicAdd(&counts[val], 1);
         }
-
-        // for(int ll = 0; ll<num_picks; ll++)
-        // {
-        //   printf("value of index_array: %d\n",index_array[ll]);
-        // }
-      }
-      
-      if (blockIdx.x == 0)
-      {
-        //printf("row: %ld, in_row_start: %ld, in_row_end: %ld, deg: %ld, out_row_start: %ld maxValue: %d, maxCount: %d, pointer_position: %d, index_array: %d, num_picks: %ld, blockIdx: %d, threadIdx: %d\n", row, in_row_start, in_ptr[row + 1], deg, out_row_start, maxValue, maxCount, pointer_position, index_array[threadIdx.x], num_picks, blockIdx.x, threadIdx.x);
-      }
-
-
-      // generate permutation list via reservoir algorithm
-      for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
-        out_idxs[out_row_start + idx] = idx;
-      }
-      __syncthreads();
-
-      // for (int idx = num_picks + threadIdx.x; idx < deg; idx += BLOCK_SIZE) {
-      //   const int num = curand(&rng) % (idx + 1);
-      //   if (num < num_picks) {
-      //     // use max so as to achieve the replacement order the serial
-      //     // algorithm would have
-      //     AtomicMax(out_idxs + out_row_start + num, idx);
-      //   }
-      // }
-      // __syncthreads();
-      // 
-      // copy all vertex if avalible of same partition
-      if (num_picks < maxCount)
-      {
-        for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE)
+        __syncthreads();
+        // Find maximum count and corresponding value
+        if (threadIdx.x == 0) {
+          maxCount = 0;
+          pointer_position = 0; 
+          maxCount = counts[d_part_array[row]];
+          maxValue = d_part_array[row];
+          // printf("maxCount: %d, maxValue: %d, row: %ld\n",maxCount, maxValue, d_part_array[row]);
+        }
+        __syncthreads();
+      // //   // // Find indices of maximum repeated value
+        if (threadIdx.x == 0)
         {
-          const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
-          out_rows[out_row_start + idx] = row;
-          out_cols[out_row_start + idx] = in_index[index_array[idx]];
-          out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
-        }
-      }
-      else {
-      // copy maximum same partition vertex avalible 
-      for (int idx = threadIdx.x; idx < maxCount; idx += BLOCK_SIZE) {
-        const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
-        out_rows[out_row_start + idx] = row;
-        out_cols[out_row_start + idx] = in_index[index_array[idx]];
-        out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
-      }
-        int remining_size = num_picks - maxCount;
-        for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
-        const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
-        out_rows[out_row_start + idx] = row;
-        int counter = 0;
-        for(int i = 0; i < deg && counter < remining_size; i++)
+          for(int kk = 0; kk < deg; kk++)
           {
-            int flag = 0;
-            for (int j = 0; j < maxCount; j++)
+            if(part_id[kk] == maxValue && pointer_position < num_picks)
+            // if(d_part_array[in_index[in_row_start + kk]] == maxValue && pointer_position < num_picks)
             {
-              if ( in_index[i + in_row_start] == in_index[index_array[j]])
+              index_array[pointer_position] = kk;
+              pointer_position++;
+            }
+          }
+        }
+      // //   // generate permutation list via reservoir algorithm
+        for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
+          out_idxs[out_row_start + idx] = idx;
+        }
+        __syncthreads();
+        if (num_picks < maxCount)
+        {
+          for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE)
+          {
+            const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+            out_rows[out_row_start + idx] = row;
+            out_cols[out_row_start + idx] = neighbours[index_array[idx]];
+            out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+          }
+        }
+        else {
+          // copy maximum same partition vertex avalible 
+          for (int idx = threadIdx.x; idx < maxCount; idx += BLOCK_SIZE) {
+            const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+            out_rows[out_row_start + idx] = row;
+            out_cols[out_row_start + idx] = neighbours[index_array[idx]];
+            out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+          }
+          int remining_size = num_picks - maxCount;
+          // printf("the remining size: %d maxCount: %d\n",remining_size,maxCount);
+          for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
+            const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+            out_rows[out_row_start + idx] = row;
+            int counter = 0;
+            for(int i = 0; i < deg && counter < remining_size; i++)
+            {
+              int flag = 0;
+              for (int j = 0; j < maxCount; j++)
               {
-                flag = 1;
-                break;
+                if ( neighbours[i] == neighbours[index_array[j]])
+                {
+                  flag = 1;
+                  break;
+                }
               }
-
+              if (flag == 0)
+              {
+                out_cols[out_row_start + idx] = neighbours[i];
+                counter++;
+              }
             }
-            if (flag == 0)
+            out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+          }
+        }
+      }
+      else
+      {
+        if (threadIdx.x < num_picks) {
+          counts[threadIdx.x] = 0;
+        }
+        // __syncthreads();
+
+        //count the total repeated values of same partition
+        for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
+        {
+
+          int val = d_part_array[in_index[in_row_start + kk]];
+          atomicAdd(&counts[val], 1);
+        }
+        // __syncthreads();
+
+        // Find maximum count and corresponding value
+        if (threadIdx.x == 0) {
+          maxCount = 0;
+          pointer_position = 0; 
+          maxCount = counts[d_part_array[row]];
+          maxValue = d_part_array[row];
+        }
+        // __syncthreads();
+
+        // Find indices of maximum repeated value
+        if (threadIdx.x == 0)
+        {
+          for(int kk = 0; kk < deg; kk++)
+          {
+            if(d_part_array[in_index[in_row_start + kk]] == maxValue && pointer_position < num_picks)
             {
-              out_cols[out_row_start + idx] = in_index[i + in_row_start];
-              counter++;
+              index_array[pointer_position] = in_row_start + kk;
+              // index_array[pointer_position] = in_index[in_row_start + kk];
+              pointer_position++;
             }
           }
-          out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
         }
 
+        // generate permutation list via reservoir algorithm
+        for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
+          out_idxs[out_row_start + idx] = idx;
+        }
+        __syncthreads();
+
+        // copy all vertex if avalible of same partition
+        if (num_picks < maxCount)
+        {
+          for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE)
+          {
+            const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+            out_rows[out_row_start + idx] = row;
+            out_cols[out_row_start + idx] = in_index[index_array[idx]];
+            out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+          }
+        }
+        else {
+          // copy maximum same partition vertex avalible 
+          for (int idx = threadIdx.x; idx < maxCount; idx += BLOCK_SIZE) {
+            const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+            out_rows[out_row_start + idx] = row;
+            out_cols[out_row_start + idx] = in_index[index_array[idx]];
+            out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+          }
+          int remining_size = num_picks - maxCount;
+          for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
+            const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
+            out_rows[out_row_start + idx] = row;
+            int counter = 0;
+            for(int i = 0; i < deg && counter < remining_size; i++)
+            {
+              int flag = 0;
+              for (int j = 0; j < maxCount; j++)
+              {
+                if ( in_index[i + in_row_start] == in_index[index_array[j]])
+                {
+                  flag = 1;
+                  break;
+                }
+
+              }
+              if (flag == 0)
+              {
+                out_cols[out_row_start + idx] = in_index[i + in_row_start];
+                counter++;
+              }
+            }
+            out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
+          }
+        }
       }
-      //   for (int idx = maxCount; idx < num_picks; idx += BLOCK_SIZE) {
-      //   const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
-      //   out_rows[out_row_start + idx] = row;
-      //   if ( in_index[perm_idx] != in_index[index_array[idx]])
-      //     out_cols[out_row_start + idx] = in_index[perm_idx];
-      //   out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
-      // }
-        //if ()
-      // {
-      //   printf("row: %ld, in_row_start: %ld, in_row_end: %ld, deg: %ld, out_row_start: %ld maxValue: %d, maxCount: %d, pointer_position: %d, index_array: %d, num_picks: %ld, blockIdx: %d, threadIdx: %d, remining_size: %d\n", row, in_row_start, in_ptr[row + 1], deg, out_row_start, maxValue, maxCount, pointer_position, index_array[threadIdx.x], num_picks, blockIdx.x, threadIdx.x, remining_size);
-      // }
-      //
-          //
-     // 
-     //  // copy permutation over
-      // for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
-      //   const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
-      //   out_rows[out_row_start + idx] = row;
-      //   out_cols[out_row_start + idx] = in_index[perm_idx];
-      //   out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
-      // }
-      // }
     }
     out_row += 1;
   }
@@ -380,7 +423,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
  * and generate a COO matrix, with replacement.
  *
  * @tparam IdType The ID type used for matrices.
- * @tparam TILE_SIZE The number of rows covered by each threadblock.
+ * @tparam TILE_SIZgE The number of rows covered by each threadblock.
  * @param rand_seed The random seed to use.
  * @param num_picks The number of non-zeros to pick per row.
  * @param num_rows The number of rows to pick.
