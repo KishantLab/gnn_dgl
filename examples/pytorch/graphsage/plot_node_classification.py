@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import dgl
 import time
+import matplotlib.pyplot as plt
 import dgl.nn as dglnn
 import torch
 import torch.nn as nn
@@ -265,6 +266,44 @@ if __name__ == "__main__":
         raise ValueError("Unknown dataset: {}".format(args.dataset))
 
     g = dataset[0]
+    print(g)
+    out_degrees = np.array(g.out_degrees())
+    max_value = np.max(out_degrees)
+    avg_value = np.mean(out_degrees)
+    print("maximum degree : ",max_value)
+    print("Average degree : ",avg_value)
+    # Count the number of nodes with in-degree less than 100
+    num_nodes_less_than_100 = len(out_degrees[out_degrees < 100])
+    num_nodes_less_than_128 = len(out_degrees[out_degrees < 128])
+    print("Total number of nodes with in-degree less than 100:", num_nodes_less_than_100)
+    print("Total number of nodes with in-degree less than 128:", num_nodes_less_than_128)
+    unique_values, frequencies = np.unique(out_degrees, return_counts=True)
+
+    # Create a TSV file
+    output_file = str(args.dataset) + ".tsv"
+    # Write unique values and frequencies to the TSV file
+    np.savetxt(output_file, np.column_stack((unique_values, frequencies)), delimiter='\t', fmt='%d')
+
+    plt.bar(unique_values, frequencies)
+    plt.xlabel('Degree of Vertex', fontsize=12)
+    plt.ylabel('Frequency', fontsize=12)
+    #plt.ylim(0, 200000)
+    #max_y = max(frequencies)
+    highest_y = np.max(frequencies)
+    highest_x = unique_values[np.argmax(frequencies)]
+    plt.annotate(str(highest_y), xy=(highest_x, highest_y), ha='center', va='bottom', fontsize=18)
+
+    # Add text annotation for the highest value
+    #plt.text(unique_values[frequencies.index(max_y)], max_y, str(max_y), ha='center', va='bottom')
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.yscale('log')
+    plt.ylim(1, 10**7)
+    #plt.title('Degree Distribution')
+    plot_name = str(args.dataset) + ".eps"
+    plt.savefig(plot_name, format='eps')
+    
+
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     test_mask=g.ndata['test_mask']
     test_idx = torch.nonzero(test_mask).squeeze()
@@ -284,7 +323,7 @@ if __name__ == "__main__":
 
     # out partion create array 
     #part_array = np.ones(5)
-    part_array = get_part_array(g, args.parts)
+    # part_array = get_part_array(g, args.parts)
 
     # part_array = torch.from_numpy(part_array)
     # model training
@@ -292,7 +331,7 @@ if __name__ == "__main__":
     execution_time1 = 0.0
     start_time1 = time.time()
     #train(args, device, g, dataset, model, num_classes)
-    epoch_lines=train(args, device, g, dataset, model, num_classes)
+    # epoch_lines=train(args, device, g, dataset, model, num_classes)
     end_time1 = time.time()
     execution_time1 = end_time1 - start_time1
     # print("total training time:", execution_time1, "seconds")
@@ -300,15 +339,15 @@ if __name__ == "__main__":
 
     # test the model
     # print("\nTesting...")
-    acc = layerwise_infer(
-        device, g, test_idx, model, num_classes, batch_size=4096
-    )
-    #print("\nTest Accuracy {:.4f}".format(acc.item()))
-    Accuracy = "Test Accuracy {:.4f}".format(acc.item())
-    epoch_lines.append(Accuracy)
-    with open('epoch_data.txt', 'w') as file:
-        for value in epoch_lines:
-            file.write(str(value) + '\n')
-
+    # acc = layerwise_infer(
+    #     device, g, test_idx, model, num_classes, batch_size=4096
+    # )
+    # #print("\nTest Accuracy {:.4f}".format(acc.item()))
+    # Accuracy = "Test Accuracy {:.4f}".format(acc.item())
+    # epoch_lines.append(Accuracy)
+    # with open('epoch_data.txt', 'w') as file:
+    #     for value in epoch_lines:
+    #         file.write(str(value) + '\n')
+    #
 
 
