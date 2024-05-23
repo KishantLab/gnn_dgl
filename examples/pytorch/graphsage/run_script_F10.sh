@@ -6,7 +6,7 @@ dataset=$1
 #batch_size = $3
 epoch=$2
 batch_sizes=(1024 2048 4096 8192)
-fanouts=(10 15 20 30)
+fanouts=(10)
 
 # output=$(python3 node_classification.py --dataset=$1 --batch_size=1024)
 #python3 node_classification.py --dataset=ogbn-products --batch_size=1024

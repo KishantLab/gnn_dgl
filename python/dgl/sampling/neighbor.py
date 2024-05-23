@@ -636,6 +636,8 @@ def _sample_neighbors(
 
     else: 
         part_array = get_part_array(g)
+        # device = torch.device('cuda')
+        # part_array = part_array.to(device)
         # part_array = utils.prepare_tensor_dict(part_array, part_array, "part_array")
         # device = utils.context_of(part_array)
         # ctx = utils.to_dgl_context(device)
