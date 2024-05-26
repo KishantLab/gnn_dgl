@@ -11,6 +11,7 @@ from ..heterograph import DGLBlock, DGLGraph
 from .utils import EidExcluder
 
 _flag_call = None
+
 __all__ = [
     "sample_etype_neighbors",
     "sample_neighbors",

@@ -243,14 +243,14 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         if (threadIdx.x < num_picks) {
           counts[threadIdx.x] = 0;
         }
-        // __syncthreads();
+        __syncthreads();
         
         if( threadIdx.x < deg)
         {
           int val = part_id[threadIdx.x];
           atomicAdd(&counts[val], 1);
         }
-        // __syncthreads();
+        __syncthreads();
         // Find maximum count and corresponding value
         if (threadIdx.x == 0) {
           maxCount = 0;
@@ -259,7 +259,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           maxValue = d_part_array[row];
           // printf("maxCount: %d, maxValue: %d, row: %ld\n",maxCount, maxValue, d_part_array[row]);
         }
-        // __syncthreads();
+        __syncthreads();
       // //   // // Find indices of maximum repeated value
         if (threadIdx.x == 0)
         {
@@ -337,7 +337,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           int val = d_part_array[in_index[in_row_start + kk]];
           atomicAdd(&counts[val], 1);
         }
-        // __syncthreads();
+        __syncthreads();
 
         // Find maximum count and corresponding value
         if (threadIdx.x == 0) {
@@ -346,7 +346,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           maxCount = counts[d_part_array[row]];
           maxValue = d_part_array[row];
         }
-        // __syncthreads();
+        __syncthreads();
 
         // Find indices of maximum repeated value
         if (threadIdx.x == 0)
