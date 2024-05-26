@@ -577,6 +577,11 @@ COOMatrix CSRRowWiseSampling1(
     const NDArray& parts_array,
     NDArray prob_or_mask = NDArray(), bool replace = true);
 
+COOMatrix CSRRowWiseSampling2(
+    CSRMatrix mat, IdArray rows, int64_t num_samples,
+    // const NDArray& parts_array,
+    NDArray prob_or_mask = NDArray(), bool replace = true);
+
 COOMatrix CSRRowWiseSampling(
     CSRMatrix mat, IdArray rows, int64_t num_samples,
     // NDArray parts_array = NDArray(),

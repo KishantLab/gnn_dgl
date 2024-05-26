@@ -208,6 +208,10 @@ template <DGLDeviceType XPU, typename IdType>
 COOMatrix CSRRowWiseSamplingUniform1(
     CSRMatrix mat, IdArray rows, int64_t num_samples, const NDArray& parts_array, bool replace);
 
+template <DGLDeviceType XPU, typename IdType>
+COOMatrix CSRRowWiseSamplingUniform2(
+    CSRMatrix mat, IdArray rows, int64_t num_samples, bool replace);
+
 template <DGLDeviceType XPU, typename IdType, bool map_seed_nodes>
 std::pair<CSRMatrix, IdArray> CSRRowWiseSamplingUniformFused(
     CSRMatrix mat, IdArray rows, IdArray seed_mapping,
