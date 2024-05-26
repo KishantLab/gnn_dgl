@@ -1,3 +1,0 @@
-Epoch 00000 | Loss 2.5577 | Accuracy 0.5056 | Time : 4.369504690170288
-Total Training time 4.3695
-Test Accuracy 0.4409

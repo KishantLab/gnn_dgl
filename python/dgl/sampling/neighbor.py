@@ -10,6 +10,7 @@ from ..base import DGLError, EID
 from ..heterograph import DGLBlock, DGLGraph
 from .utils import EidExcluder
 
+_flag_call = None
 __all__ = [
     "sample_etype_neighbors",
     "sample_neighbors",
@@ -527,6 +528,7 @@ def _sample_neighbors(
 ):
     # print(nodes)
     # print(type(nodes))
+    global _flag_call
     if not isinstance(nodes, dict):
         if len(g.ntypes) > 1:
             raise DGLError(
@@ -650,7 +652,8 @@ def _sample_neighbors(
         # print("array read frome neighbor.py line 631")
         # print(part_array)
         # print(type(part_array))
-        subgidx = _CAPI_DGLSampleNeighbors(
+        if _flag_call is None:
+            subgidx = _CAPI_DGLSampleNeighbors(
             g._graph,
             nodes_all_types,
             fanout_array,
@@ -659,7 +662,20 @@ def _sample_neighbors(
             prob_arrays,
             excluded_edges_all_t,
             replace,
-        )
+            )
+            _flag_call=1
+        else:
+            subgidx = _CAPI_DGLSampleNeighbors2(
+            g._graph,
+            nodes_all_types,
+            fanout_array,
+            # part_array,
+            edge_dir,
+            prob_arrays,
+            excluded_edges_all_t,
+            replace,
+            )
+
         ret = DGLGraph(subgidx.graph, g.ntypes, g.etypes)
         induced_edges = subgidx.induced_edges
 
