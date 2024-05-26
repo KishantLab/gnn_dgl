@@ -375,7 +375,6 @@ HeteroSubgraph SampleNeighbors(
 HeteroSubgraph SampleNeighbors2(
     const HeteroGraphPtr hg, const std::vector<IdArray>& nodes,
     const std::vector<int64_t>& fanouts,
-    // const std::vector<int64_t>& parts_arr, 
     EdgeDir dir,
     const std::vector<NDArray>& prob_or_mask,
     const std::vector<IdArray>& exclude_edges, bool replace) {
