@@ -4,8 +4,6 @@
  * @brief uniform rowwise sampling
  */
 
-// #include <__clang_cuda_builtin_vars.h>
-// #include <__clang_cuda_builtin_vars.h>
 #include <curand_kernel.h>
 #include <dgl/random.h>
 #include <dgl/runtime/device_api.h>
@@ -29,7 +27,7 @@ namespace impl {
 
 namespace {
 
-constexpr int BLOCK_SIZE = 128;
+constexpr int BLOCK_SIZE = 1024;
 int flag = 0;
 int64_t* d_part_array;
 /**
@@ -229,11 +227,11 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
       __shared__ int maxValue;
       __shared__ int pointer_position;
       // int pointer_position;
-      __shared__ int neighbours[128];
-      __shared__ int part_id[128];
+      __shared__ int neighbours[BLOCK_SIZE];
+      __shared__ int part_id[BLOCK_SIZE];
 
       // initilize 0 
-      if ( deg < 128)
+      if ( deg < BLOCK_SIZE)
       {
         if(threadIdx.x < deg)
         {
@@ -243,20 +241,29 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         if (threadIdx.x < num_picks) {
           counts[threadIdx.x] = 0;
         }
+
+        if(threadIdx.x == 0)
+        {
+          maxValue = d_part_array[row];
+        }
         __syncthreads();
         
         if( threadIdx.x < deg)
         {
           int val = part_id[threadIdx.x];
-          atomicAdd(&counts[val], 1);
+          if( val == maxValue)
+          {
+            atomicAdd(&counts[val], 1);
+          }
+          // atomicAdd(&counts[val], 1);
         }
-        __syncthreads();
+        // __syncthreads();
         // Find maximum count and corresponding value
         if (threadIdx.x == 0) {
           maxCount = 0;
           pointer_position = 0; 
-          maxCount = counts[d_part_array[row]];
-          maxValue = d_part_array[row];
+          // maxValue = d_part_array[row];
+          maxCount = counts[maxValue];
           // printf("maxCount: %d, maxValue: %d, row: %ld\n",maxCount, maxValue, d_part_array[row]);
         }
         __syncthreads();
@@ -264,12 +271,18 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         if (threadIdx.x == 0)
         {
           for(int kk = 0; kk < deg; kk++)
+          // for(int kk = threadIdx.x; kk < deg; kk++)
           {
             if(part_id[kk] == maxValue && pointer_position < num_picks)
+            // if(part_id[threadIdx.x] == maxValue && pointer_position < num_picks)
             // if(d_part_array[in_index[in_row_start + kk]] == maxValue && pointer_position < num_picks)
             {
-              index_array[pointer_position] = kk;
+              index_array[pointer_position] = threadIdx.x;
               pointer_position++;
+            }
+            if( pointer_position >= num_picks)
+            {
+              break;
             }
           }
         }
@@ -331,11 +344,19 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         // __syncthreads();
 
         //count the total repeated values of same partition
+        if( threadIdx.x == 0)
+        {
+            maxValue = d_part_array[row];
+        }
         for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
         {
-
+            
           int val = d_part_array[in_index[in_row_start + kk]];
-          atomicAdd(&counts[val], 1);
+          if( val == maxValue)
+          {
+            atomicAdd(&counts[val], 1);
+          }
+          // atomicAdd(&counts[val], 1);
         }
         __syncthreads();
 
@@ -343,8 +364,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         if (threadIdx.x == 0) {
           maxCount = 0;
           pointer_position = 0; 
-          maxCount = counts[d_part_array[row]];
-          maxValue = d_part_array[row];
+          maxCount = counts[maxValue];
         }
         __syncthreads();
 
@@ -358,6 +378,10 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
               index_array[pointer_position] = in_row_start + kk;
               // index_array[pointer_position] = in_index[in_row_start + kk];
               pointer_position++;
+            }
+            if( pointer_position >= num_picks)
+            {
+              break;
             }
           }
         }
@@ -575,7 +599,8 @@ COOMatrix _CSRRowWiseSamplingUniform(
   			cudaEvent_t start,stop;
 				cudaEventCreate(&start);
 				cudaEventCreate(&stop);
-  constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
+  // constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
+  constexpr int TILE_SIZE = BLOCK_SIZE / BLOCK_SIZE;
   cudaEventRecord(start);
   if (replace) {  // with replacement
     const dim3 block(BLOCK_SIZE);
@@ -727,7 +752,8 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   cudaEvent_t start,stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
-  constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
+  constexpr int TILE_SIZE = BLOCK_SIZE / BLOCK_SIZE;
+  // constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
   cudaEventRecord(start);
   if (replace) {  // with replacement
     const dim3 block(BLOCK_SIZE);
@@ -887,7 +913,8 @@ COOMatrix _CSRRowWiseSamplingUniform2(
   cudaEvent_t start,stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
-  constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
+  constexpr int TILE_SIZE = BLOCK_SIZE / BLOCK_SIZE;
+  // constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
   cudaEventRecord(start);
   if (replace) {  // with replacement
     const dim3 block(BLOCK_SIZE);
