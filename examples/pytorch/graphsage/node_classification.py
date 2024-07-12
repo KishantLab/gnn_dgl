@@ -265,12 +265,13 @@ if __name__ == "__main__":
         raise ValueError("Unknown dataset: {}".format(args.dataset))
 
     g = dataset[0]
+    part_array = get_part_array(g, args.parts)
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
+    device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     test_mask=g.ndata['test_mask']
-    test_idx = torch.nonzero(test_mask).squeeze()
+    test_idx = torch.nonzero(test_mask).squeeze().to(device)
 
     num_classes = dataset.num_classes
-    device = torch.device("cpu" if args.mode == "cpu" else "cuda")
 
     # create GraphSAGE model)
     in_size = g.ndata["feat"].shape[1]
@@ -284,7 +285,6 @@ if __name__ == "__main__":
 
     # out partion create array 
     #part_array = np.ones(5)
-    part_array = get_part_array(g, args.parts)
 
     # part_array = torch.from_numpy(part_array)
     # model training
