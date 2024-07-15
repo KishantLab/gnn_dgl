@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 import dgl
+import cupy as cp
+import dgl.backend as F
 _computed_array = None
 
 def metis_partition(G, parts=None, method=None):
@@ -17,7 +19,17 @@ def metis_partition(G, parts=None, method=None):
 
         # print(g)
         _computed_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
-        print(_computed_array.shape)
+        # print(_computed_array.shape)
+        # dgl_ndarray = F.zerocopy_from_numpy(_computed_array.numpy())
+        # print(type(dgl_ndarray))
+        # print(_computed_array)
+        # print(dgl_ndarray)
+        # Step 4: Transfer the underlying PyTorch tensor to GPU
+        # dgl_ndarray_torch = dgl_ndarray.to(device)
+
+        # Convert back to DGL NDArray (if needed)
+        # _computed_array = F.zerocopy_from_tensor(dgl_ndarray_torch)
+
         # context = dgl.cuda.get_context(0)
         # context = dgl.cuda.context(0)
         # _computed_array = np.random.rand(10)
@@ -26,7 +38,7 @@ def metis_partition(G, parts=None, method=None):
         # _computed_array = torch.from_numpy(_computed_array)
         # _computed_array = _computed_array.to(device)
         _computed_array = dgl.ndarray.array(_computed_array)
-        # _computed_array = _computed_array.to(device)
+        # _computed_array = cp.asarray(_computed_array)
         # Convert NumPy array to DGL tensor
         # _computed_array = dgl.tensor(_computed_array)
         # device = "cuda" if dgl.cuda.is_available() else "cpu"
@@ -37,5 +49,9 @@ def metis_partition(G, parts=None, method=None):
 
 def get_part_array(G, parts=None, method=None):
     # print("array passed")
+<<<<<<< HEAD
     return metis_partition(G, parts, method)
 
+=======
+    return metis_partition(G, parts)
+>>>>>>> origin/sampling
