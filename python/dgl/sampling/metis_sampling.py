@@ -3,7 +3,7 @@ import torch
 import dgl
 _computed_array = None
 
-def metis_partition(G, parts=None):
+def metis_partition(G, parts=None, method=None):
     global _computed_array
     if _computed_array is None:
         # Perform computation here
@@ -35,7 +35,7 @@ def metis_partition(G, parts=None):
         print("Array computation done and passed to neighbour.py line 631")
     return _computed_array
 
-def get_part_array(G, parts=None):
+def get_part_array(G, parts=None, method=None):
     # print("array passed")
-    return metis_partition(G, parts)
+    return metis_partition(G, parts, method)
 
