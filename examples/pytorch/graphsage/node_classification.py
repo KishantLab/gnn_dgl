@@ -269,7 +269,7 @@ if __name__ == "__main__":
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     test_mask=g.ndata['test_mask']
-    test_idx = torch.nonzero(test_mask).squeeze().to(device)
+    test_idx = torch.nonzero(test_mask).squeeze()
 
     num_classes = dataset.num_classes
 
