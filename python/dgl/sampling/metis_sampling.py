@@ -11,12 +11,23 @@ def metis_partition(G, parts=None, method=None):
         print(G)
         print(type(G))
         print("partition start")
-        
+        Nodes = G.num_nodes() 
         # dgl.distributed.partition_graph(G, 'test', 4, num_hops=1, part_method='metis', out_path='output/', balance_ntypes=G.ndata['train_mask'], balance_edges=True)
         # ( g, node_feats, edge_feats, gpb, graph_name, ntypes_list, etypes_list,) = dgl.distributed.load_partition('output/test.json', 0)
 
         # print(g)
-        _computed_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
+        if method is None:
+            _computed_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
+        elif method == "rm":
+            _computed_array = np.random.randint(0, parts, size=Nodes)
+        elif method == "contig":
+            l = Nodes // parts   # calculate the number of repeated values for each number
+            _computed_array = np.zeros(Nodes, dtype=int)  # create an array of size n filled with zeros
+            for i in range(parts):
+                _computed_array[i*l:(i+1)*l] = i  # fill each part of the array with the corresponding number
+        elif method == "metis":
+            _computed_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
+        # _computed_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
         print(_computed_array.shape)
         # context = dgl.cuda.get_context(0)
         # context = dgl.cuda.context(0)
