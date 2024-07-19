@@ -233,6 +233,13 @@ if __name__ == "__main__":
         default="1",
         help="batch_size for train",
     )
+    parser.add_argument(
+        "--method",
+        type=str,
+        default = None,
+        choices=["metis", "rm", "contig"],
+        help="Partition method for sampling"
+    )
     parser.add_argument("--fan_out", type=str, default="10,10,10")
     parser.add_argument("--parts", type=int, default=10)
     args = parser.parse_args()
@@ -265,7 +272,7 @@ if __name__ == "__main__":
         raise ValueError("Unknown dataset: {}".format(args.dataset))
 
     g = dataset[0]
-    part_array = get_part_array(g, args.parts)
+    part_array = get_part_array(g, args.parts, args.method)
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     test_mask=g.ndata['test_mask']
