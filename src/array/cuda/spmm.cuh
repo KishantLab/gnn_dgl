@@ -210,6 +210,7 @@ void CusparseCsrmm2(
   const int nnz = csr.indices->shape[0];
   const DType alpha = 1.0;
   const DType beta = 0.0;
+  static float spmm_time = 0;
   // device
   auto device = runtime::DeviceAPI::Get(ctx);
   auto* thr_entry = runtime::CUDAThreadEntry::ThreadLocal();
@@ -486,6 +487,213 @@ __global__ void ArgSpMMCooKernel(
  *       Threadblocks on the x-axis are responsible for the computation on
  *       different positions in feature dimension.
  */
+
+
+__device__ __forceinline__ float sum_reduce(float acc, float x) {
+  return acc + x;
+}
+
+__device__ __forceinline__ float sum_init() {
+  return 0;
+}
+
+template <typename Idx, typename DType>
+__global__ void topoCacheCoarsenSPMMKernel(
+  int m, int k, const Idx* A_indptr, const Idx* A_indices, const DType* B, DType* C
+) {
+  extern __shared__ int sh[];
+  int sm_offset = (threadIdx.y<<5);
+  int thread_idx = sm_offset+threadIdx.x;
+
+  int rid = blockDim.y*blockIdx.x+threadIdx.y;
+  if (rid<m) {
+//	if(rid==0 && threadIdx.x==0)
+//		printf("hello");
+
+    int cid = (blockIdx.y<<6)+threadIdx.x;
+    int lb = A_indptr[rid];
+    int hb = A_indptr[rid+1];
+    int ptr = lb+threadIdx.x;
+    int offset;
+    float acc1 = sum_init();
+    float acc2 = sum_init();
+    if (blockIdx.y != gridDim.y-1) {
+      for (int jj=lb; jj<hb; jj+=32) {
+        if (ptr<hb) {
+          sh[thread_idx] = A_indices[ptr]*k;
+          // sh[thread_idx] = __ldg(A_indices+ptr)*k;
+        }
+        __syncwarp();
+        ptr += 32;
+        for (int kk=0; kk<32&&jj+kk<hb; kk++) {
+          offset = sh[(sm_offset+kk)] + cid;
+          acc1 = sum_reduce(acc1, B[offset]);
+          acc2 = sum_reduce(acc2, B[(offset+32)]);
+          // acc1 = sum_reduce(acc1, __ldg(B+offset));
+          // acc2 = sum_reduce(acc2, __ldg(B+offset+32));
+        }
+        __syncwarp();
+      }
+      offset = rid*k+cid;
+      C[offset] = acc1;
+      C[offset+32] = acc2;
+    }
+    else { // threadIdx.y==blockDim.y-1
+      int nout = (k-cid+31)/32;
+      for (int jj=lb; jj<hb; jj+=32) {
+        if (ptr<hb) {
+          sh[thread_idx] = A_indices[ptr]*k;
+          // sh[thread_idx] = __ldg(A_indices+ptr)*k;
+        }
+        __syncwarp();
+        ptr += 32;
+        for (int kk=0; kk<32&&jj+kk<hb; kk++) {
+          offset = sh[(sm_offset+kk)] + cid;
+          if (nout>0) {
+          acc1 = sum_reduce(acc1, B[offset]);}
+          // acc1 = sum_reduce(acc1, __ldg(B+offset)); }
+          if (nout>1) {
+          acc2 = sum_reduce(acc2, B[(offset+32)]);}
+          // acc2 = sum_reduce(acc2, __ldg(B+offset+32));}
+        }
+        __syncwarp();
+      }
+      offset = rid*k+cid;
+      if (nout>0) {
+      C[offset] = acc1;}
+      if (nout>1) {
+      C[offset+32] = acc2;}
+    }
+  }
+} 
+template <typename Idx, typename DType>
+__global__ void topoCacheSPMMKernel(
+  int m, int k, const Idx* A_indptr, const Idx* A_indices, const DType* B, DType* C 
+) {
+  extern __shared__ int sh[];
+  int sm_offset = (threadIdx.y<<5);
+  int thread_idx = sm_offset + threadIdx.x;
+  
+  int cid = (blockIdx.y<<5)+threadIdx.x;
+  int rid = blockDim.y*blockIdx.x+threadIdx.y;
+     //if(rid==0 && threadIdx.x==0)
+       //         printf("hello");
+
+  if (rid<m) {
+    int lb = A_indptr[rid];
+    int hb = A_indptr[(rid+1)];
+    int offset;
+    int ptr = lb+threadIdx.x;
+    float acc1 = sum_init();
+    if (blockIdx.y != gridDim.y-1) {
+      for (int jj=lb; jj<hb; jj+=32) {
+        if (ptr<hb) {
+          sh[thread_idx] = A_indices[ptr]*k;
+          // sh[thread_idx] = __ldg(A_indices+ptr)*k;
+        }
+        __syncwarp();
+        ptr += 32;
+        for (int kk=0; kk<32&&jj+kk<hb; kk++) {
+          offset = sh[sm_offset+kk]+cid;
+          acc1 = sum_reduce(acc1, B[offset]);
+          // acc1 = sum_reduce(acc1, __ldg(B+offset));
+        }
+        __syncwarp();
+      }
+      offset = rid*k+cid;
+      C[offset] = acc1;
+     // if(rid==0)
+       //       printf("%f\t %d\n",C[offset],offset);
+
+    }
+    else { // threadIdx.y==blockDim.y-1
+      int nout = (k-cid+31)/32;
+      for (int jj=lb; jj<hb; jj+=32) {
+        if (ptr<hb) {
+          sh[thread_idx] = A_indices[ptr]*k;
+          // sh[thread_idx] = __ldg(A_indices+ptr)*k;
+        }
+        __syncwarp();
+        ptr += 32;
+        for (int kk=0; kk<32&&jj+kk<hb; kk++) {
+          offset = sh[(sm_offset+kk)] + cid;
+          if (nout>0) {
+          acc1 = sum_reduce(acc1, B[offset]);}
+          // acc1 = sum_reduce(acc1, __ldg(B+offset)); }
+        }
+        __syncwarp();
+      }
+      offset = rid*k+cid;
+      if (nout>0) {
+      C[offset] = acc1;
+     // if(rid==0)
+//	      printf("%f\t %d\n",C[offset],offset);
+      }
+    }
+  }
+}
+template <typename Idx, typename DType>
+__global__ void topoSimpleSPMMKernel(
+  int m, int k, const Idx* A_indptr, const Idx* A_indices, const DType* B, DType* C 
+) {
+  int rid = blockDim.y*blockIdx.x+threadIdx.y;
+   //if(rid==0 && threadIdx.x==0)
+     //           printf("hello");
+
+  if (rid<m) {
+    int lb = A_indptr[rid];
+    int hb = A_indptr[(rid+1)];
+    float acc1 = sum_init();
+    int offset;
+    for (int ptr=lb; ptr<hb; ptr++) {
+      // offset = __ldg(A_indices+ptr)*k+threadIdx.x;
+      // acc1 = sum_reduce(acc1, __ldg(B+offset));
+      offset = A_indices[ptr]*k+threadIdx.x;
+      acc1 = sum_reduce(acc1, B[offset]);
+    }
+    C[(rid*k+threadIdx.x)] = acc1;
+    //if(rid==0)
+      //        printf("%f\t %d\n",C[(rid*k+threadIdx.x)],(rid*k+threadIdx.x));
+
+  }
+}
+
+template <typename Idx, typename DType>
+void la_spmm(const int m, const int n, Idx* A_indptr, const Idx* A_indices, const DType* B_data, DType* C_data, int M, int W_SIZE)
+{
+    static float summation=0;
+    float elapsed_time;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+	if (n<32) {
+    const int row_per_block = 128/n;
+    const int n_block = (m+row_per_block-1)/row_per_block;
+    topoSimpleSPMMKernel<Idx,DType><<< dim3(n_block,1,1),dim3(n, row_per_block, 1), 0>>>(m,n,A_indptr,A_indices,B_data,C_data);
+  }
+  if (n<64 && n>32) {
+    const int tile_k = (n+31)/32;
+    const int n_block = (m+3)/4;
+    topoCacheSPMMKernel<Idx,DType><<< dim3(n_block,tile_k,1), dim3(32,4,1), 128*sizeof(int)>>>(m,n,A_indptr,A_indices,B_data,C_data);
+  }
+  else {
+    const int tile_k = (n+63)/64;
+    const int n_block = (m+8-1)/8;
+    topoCacheCoarsenSPMMKernel<Idx,DType><<< dim3(n_block,tile_k,1), dim3(32,8,1), 8*32*sizeof(int)>>>(m,n,A_indptr,A_indices,B_data,C_data);
+  }
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&elapsed_time, start, stop);
+  summation+=elapsed_time/1000;
+  printf("spmm time %.6f\t \n",summation);
+  // printf("sum = %f\n",summation);
+
+}
+
+
+
+
 template <
     typename Idx, typename DType, typename BinaryOp, typename ReduceOp,
     bool UseBcast = false, bool UseIdx = false>
@@ -690,6 +898,30 @@ void SpMMCoo(
  *        destination nodes. It's useful in computing gradients of Min/Max
  * reducer.
  */
+
+template <typename Idx, typename DType>
+void CustomCsr(const BcastOff& bcast,
+    const CSRMatrix& csr,
+    const DType* B_data, const DType* A_data,
+    DType* C_data,
+    int x_length){
+	 const int m = csr.num_rows;
+         const int n = x_length;
+	 int W_SIZE=1024;
+         int T_MBlock;
+         T_MBlock=m/W_SIZE;
+         if(m%W_SIZE)
+            T_MBlock+=1;
+
+        T_MBlock *= W_SIZE;
+        la_spmm<Idx,DType>(m,n,static_cast<Idx*>(csr.indptr->data),static_cast<Idx*>(csr.indices->data),B_data,C_data,T_MBlock,W_SIZE);
+	//la_spmm<int64_t,float>(m,n,static_cast<Idx*>(csr.indptr->data),static_cast<Idx*>(csr.indices->data),B_data,C_data,T_MBlock,W_SIZE);
+	//la_spmm<int32_t,double>(m,n,static_cast<Idx*>(csr.indptr->data),static_cast<Idx*>(csr.indices->data),B_data,C_data,T_MBlock,W_SIZE);
+	//la_spmm<int64_t,double>(m,n,static_cast<Idx*>(csr.indptr->data),static_cast<Idx*>(csr.indices->data),B_data,C_data,T_MBlock,W_SIZE);
+
+}
+
+
 template <typename Idx, typename DType, typename BinaryOp, typename ReduceOp>
 void SpMMCsr(
     const BcastOff& bcast, const CSRMatrix& csr, NDArray ufeat, NDArray efeat,

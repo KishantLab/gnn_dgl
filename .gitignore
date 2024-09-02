@@ -33,6 +33,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+examples/pytorch/graphsage/metis*
 
 # Whitelist some distribution / package non-related directories
 !tests/dist

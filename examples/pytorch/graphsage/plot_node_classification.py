@@ -266,45 +266,62 @@ if __name__ == "__main__":
         raise ValueError("Unknown dataset: {}".format(args.dataset))
 
     g = dataset[0]
+    g = g.to("cuda")
+    print(type(g))
     print(g)
-    out_degrees = np.array(g.out_degrees())
-    max_value = np.max(out_degrees)
-    avg_value = np.mean(out_degrees)
-    print("maximum degree : ",max_value)
-    print("Average degree : ",avg_value)
-    # Count the number of nodes with in-degree less than 100
-    num_nodes_less_than_100 = len(out_degrees[out_degrees < 100])
-    num_nodes_less_than_128 = len(out_degrees[out_degrees < 128])
-    print("Total number of nodes with in-degree less than 100:", num_nodes_less_than_100)
-    print("Total number of nodes with in-degree less than 128:", num_nodes_less_than_128)
-    unique_values, frequencies = np.unique(out_degrees, return_counts=True)
 
-    # Create a TSV file
-    output_file = str(args.dataset) + ".tsv"
-    # Write unique values and frequencies to the TSV file
-    np.savetxt(output_file, np.column_stack((unique_values, frequencies)), delimiter='\t', fmt='%d')
+    #---------find cosin similarity of graph--------------
+    # Extract node features for all edges
+    src, dst = g.edges()
+    src_features = g.ndata['feat'][src]
+    dst_features = g.ndata['feat'][dst]
 
-    plt.bar(unique_values, frequencies)
-    plt.xlabel('Degree of Vertex', fontsize=12)
-    plt.ylabel('Frequency', fontsize=12)
-    #plt.ylim(0, 200000)
-    #max_y = max(frequencies)
-    highest_y = np.max(frequencies)
-    highest_x = unique_values[np.argmax(frequencies)]
-    plt.annotate(str(highest_y), xy=(highest_x, highest_y), ha='center', va='bottom', fontsize=18)
-
-    # Add text annotation for the highest value
-    #plt.text(unique_values[frequencies.index(max_y)], max_y, str(max_y), ha='center', va='bottom')
-    plt.xticks(fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.yscale('log')
-    plt.ylim(1, 10**7)
-    #plt.title('Degree Distribution')
-    plot_name = str(args.dataset) + ".eps"
-    plt.savefig(plot_name, format='eps')
+    # Compute cosine similarity for all edges
+    cosine_similarities = F.cosine_similarity(src_features, dst_features)
+    print(type(cosine_similarities))
+    print(cosine_similarities)
+    # Print the results
+    # for (s, d), sim in zip(zip(src.tolist(), dst.tolist()), cosine_similarities.tolist()):
+    #     print(f"Edge ({s}, {d}) - Cosine Similarity: {sim}")
+    #
+    # out_degrees = np.array(g.out_degrees())
+    # max_value = np.max(out_degrees)
+    # avg_value = np.mean(out_degrees)
+    # print("maximum degree : ",max_value)
+    # print("Average degree : ",avg_value)
+    # # Count the number of nodes with in-degree less than 100
+    # num_nodes_less_than_100 = len(out_degrees[out_degrees < 100])
+    # num_nodes_less_than_128 = len(out_degrees[out_degrees < 128])
+    # print("Total number of nodes with in-degree less than 100:", num_nodes_less_than_100)
+    # print("Total number of nodes with in-degree less than 128:", num_nodes_less_than_128)
+    # unique_values, frequencies = np.unique(out_degrees, return_counts=True)
+    #
+    # # Create a TSV file
+    # output_file = str(args.dataset) + ".tsv"
+    # # Write unique values and frequencies to the TSV file
+    # np.savetxt(output_file, np.column_stack((unique_values, frequencies)), delimiter='\t', fmt='%d')
+    #
+    # plt.bar(unique_values, frequencies)
+    # plt.xlabel('Degree of Vertex', fontsize=12)
+    # plt.ylabel('Frequency', fontsize=12)
+    # #plt.ylim(0, 200000)
+    # #max_y = max(frequencies)
+    # highest_y = np.max(frequencies)
+    # highest_x = unique_values[np.argmax(frequencies)]
+    # plt.annotate(str(highest_y), xy=(highest_x, highest_y), ha='center', va='bottom', fontsize=18)
+    #
+    # # Add text annotation for the highest value
+    # #plt.text(unique_values[frequencies.index(max_y)], max_y, str(max_y), ha='center', va='bottom')
+    # plt.xticks(fontsize=12)
+    # plt.yticks(fontsize=12)
+    # plt.yscale('log')
+    # plt.ylim(1, 10**7)
+    # #plt.title('Degree Distribution')
+    # plot_name = str(args.dataset) + ".eps"
+    # plt.savefig(plot_name, format='eps')
     
 
-    g = g.to("cuda" if args.mode == "puregpu" else "cpu")
+    # g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     test_mask=g.ndata['test_mask']
     test_idx = torch.nonzero(test_mask).squeeze()
 

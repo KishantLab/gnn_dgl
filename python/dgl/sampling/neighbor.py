@@ -651,6 +651,7 @@ def _sample_neighbors(
         # print("array read frome neighbor.py line 631")
         # print(part_array)
         # print(type(part_array))
+        # print("graph send to CAPI",g._graph)
         if _flag_call is None:
             subgidx = _CAPI_DGLSampleNeighbors(
             g._graph,
@@ -677,6 +678,7 @@ def _sample_neighbors(
 
         ret = DGLGraph(subgidx.graph, g.ntypes, g.etypes)
         induced_edges = subgidx.induced_edges
+        # print("returnd ret",ret)
 
     # handle features
     # (TODO) (BarclayII) DGL distributed fails with bus error, freezes, or other
@@ -713,7 +715,7 @@ def _sample_neighbors(
     else:
         for i, etype in enumerate(ret.canonical_etypes):
             ret.edges[etype].data[EID] = induced_edges[i]
-
+    # print("final_ret",ret)
     return ret
 
 
