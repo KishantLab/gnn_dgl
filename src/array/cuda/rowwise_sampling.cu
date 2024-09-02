@@ -10,6 +10,7 @@
 #include <dgl/runtime/tensordispatch.h>
 
 #include <cstdint>
+#include <iostream>
 #include <numeric>
 
 #include "../../array/cuda/atomic.cuh"
@@ -27,9 +28,10 @@ namespace impl {
 
 namespace {
 
-constexpr int BLOCK_SIZE = 1024;
+constexpr int BLOCK_SIZE = 512;
 int flag = 0;
 int64_t* d_part_array;
+float sampling_time = 0.0;
 /**
  * @brief Compute the size of each row in the sampled CSR, without replacement.
  *
@@ -43,16 +45,16 @@ int64_t* d_part_array;
  */
 template <typename IdType>
 __global__ void _CSRRowWiseSampleDegreeKernel(
-    const int64_t num_picks, const int64_t num_rows,
-    const IdType* const in_rows, const IdType* const in_ptr,
-    IdType* const out_deg) {
+  const int64_t num_picks, const int64_t num_rows,
+  const IdType* const in_rows, const IdType* const in_ptr,
+  IdType* const out_deg) {
   const int tIdx = threadIdx.x + blockIdx.x * blockDim.x;
 
   if (tIdx < num_rows) {
     const int in_row = in_rows[tIdx];
     const int out_row = tIdx;
     out_deg[out_row] = min(
-        static_cast<IdType>(num_picks), in_ptr[in_row + 1] - in_ptr[in_row]);
+      static_cast<IdType>(num_picks), in_ptr[in_row + 1] - in_ptr[in_row]);
 
     if (out_row == num_rows - 1) {
       // make the prefixsum work
@@ -74,9 +76,9 @@ __global__ void _CSRRowWiseSampleDegreeKernel(
  */
 template <typename IdType>
 __global__ void _CSRRowWiseSampleDegreeReplaceKernel(
-    const int64_t num_picks, const int64_t num_rows,
-    const IdType* const in_rows, const IdType* const in_ptr,
-    IdType* const out_deg) {
+  const int64_t num_picks, const int64_t num_rows,
+  const IdType* const in_rows, const IdType* const in_ptr,
+  IdType* const out_deg) {
   const int tIdx = threadIdx.x + blockIdx.x * blockDim.x;
 
   if (tIdx < num_rows) {
@@ -95,7 +97,6 @@ __global__ void _CSRRowWiseSampleDegreeReplaceKernel(
     }
   }
 }
-
 /**
  * @brief Perform row-wise uniform sampling on a CSR matrix,
  * and generate a COO matrix, without replacement.
@@ -116,17 +117,17 @@ __global__ void _CSRRowWiseSampleDegreeReplaceKernel(
  */
 template <typename IdType, int TILE_SIZE>
 __global__ void _CSRRowWiseSampleUniformKernel(
-    const uint64_t rand_seed, const int64_t num_picks, const int64_t num_rows,
-    const IdType* const in_rows, const IdType* const in_ptr,
-    const IdType* const in_index, const IdType* const data,
-    const IdType* const out_ptr, IdType* const out_rows, IdType* const out_cols,
-    IdType* const out_idxs) {
+  const uint64_t rand_seed, const int64_t num_picks, const int64_t num_rows,
+  const IdType* const in_rows, const IdType* const in_ptr,
+  const IdType* const in_index, const IdType* const data,
+  const IdType* const out_ptr, IdType* const out_rows, IdType* const out_cols,
+  IdType* const out_idxs) {
   // we assign one warp per row
   assert(blockDim.x == BLOCK_SIZE);
 
   int64_t out_row = blockIdx.x * TILE_SIZE;
   const int64_t last_row =
-      min(static_cast<int64_t>(blockIdx.x + 1) * TILE_SIZE, num_rows);
+    min(static_cast<int64_t>(blockIdx.x + 1) * TILE_SIZE, num_rows);
 
   curandStatePhilox4_32_10_t rng;
   curand_init(rand_seed * gridDim.x + blockIdx.x, threadIdx.x, 0, &rng);
@@ -178,17 +179,17 @@ __global__ void _CSRRowWiseSampleUniformKernel(
 
 template <typename IdType, int TILE_SIZE>
 __global__ void _CSRRowWiseSampleUniformKernel1(
-    const uint64_t rand_seed, const int64_t num_picks, const int64_t num_rows,
-    const IdType* const in_rows, const IdType* const in_ptr,
-    const IdType* const in_index, const IdType* const data,
-    const IdType* const out_ptr, IdType* const out_rows, IdType* const out_cols,
-    IdType* const out_idxs, int64_t* d_part_array) {
+  const uint64_t rand_seed, const int64_t num_picks, const int64_t num_rows,
+  const IdType* const in_rows, const IdType* const in_ptr,
+  const IdType* const in_index, const IdType* const data,
+  const IdType* const out_ptr, IdType* const out_rows, IdType* const out_cols,
+  IdType* const out_idxs, int64_t* d_part_array) {
   // we assign one warp per row
   assert(blockDim.x == BLOCK_SIZE);
 
   int64_t out_row = blockIdx.x * TILE_SIZE;
   const int64_t last_row =
-      min(static_cast<int64_t>(blockIdx.x + 1) * TILE_SIZE, num_rows);
+    min(static_cast<int64_t>(blockIdx.x + 1) * TILE_SIZE, num_rows);
 
   curandStatePhilox4_32_10_t rng;
   curand_init(rand_seed * gridDim.x + blockIdx.x, threadIdx.x, 0, &rng);
@@ -203,7 +204,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
     const int64_t in_row_start = in_ptr[row];
     const int64_t deg = in_ptr[row + 1] - in_row_start;
     const int64_t out_row_start = out_ptr[out_row];
-    
+
     if(blockIdx.x ==0 && threadIdx.x ==0)
     {
       // printf("row: %ld, in_row_start: %ld, deg: %ld, out_row_start: %ld\n", row, in_row_start, deg, out_row_start);
@@ -218,7 +219,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
       }
     } 
     else 
-    {
+  {
       // Shared memory to store counts for each value and their index
       extern __shared__ int counts[];
       extern __shared__ int index_array[];
@@ -247,7 +248,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           maxValue = d_part_array[row];
         }
         __syncthreads();
-        
+
         if( threadIdx.x < deg)
         {
           int val = part_id[threadIdx.x];
@@ -267,7 +268,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           // printf("maxCount: %d, maxValue: %d, row: %ld\n",maxCount, maxValue, d_part_array[row]);
         }
         __syncthreads();
-      // //   // // Find indices of maximum repeated value
+        // //   // // Find indices of maximum repeated value
         if (threadIdx.x == 0)
         {
           for(int kk = 0; kk < deg; kk++)
@@ -286,7 +287,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
             }
           }
         }
-      // //   // generate permutation list via reservoir algorithm
+        // //   // generate permutation list via reservoir algorithm
         for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
           out_idxs[out_row_start + idx] = idx;
         }
@@ -337,7 +338,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         }
       }
       else
-      {
+    {
         if (threadIdx.x < num_picks) {
           counts[threadIdx.x] = 0;
         }
@@ -346,11 +347,11 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         //count the total repeated values of same partition
         if( threadIdx.x == 0)
         {
-            maxValue = d_part_array[row];
+          maxValue = d_part_array[row];
         }
         for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
         {
-            
+
           int val = d_part_array[in_index[in_row_start + kk]];
           if( val == maxValue)
           {
@@ -463,17 +464,17 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
  */
 template <typename IdType, int TILE_SIZE>
 __global__ void _CSRRowWiseSampleUniformReplaceKernel(
-    const uint64_t rand_seed, const int64_t num_picks, const int64_t num_rows,
-    const IdType* const in_rows, const IdType* const in_ptr,
-    const IdType* const in_index, const IdType* const data,
-    const IdType* const out_ptr, IdType* const out_rows, IdType* const out_cols,
-    IdType* const out_idxs) {
+  const uint64_t rand_seed, const int64_t num_picks, const int64_t num_rows,
+  const IdType* const in_rows, const IdType* const in_ptr,
+  const IdType* const in_index, const IdType* const data,
+  const IdType* const out_ptr, IdType* const out_rows, IdType* const out_cols,
+  IdType* const out_idxs) {
   // we assign one warp per row
   assert(blockDim.x == BLOCK_SIZE);
 
   int64_t out_row = blockIdx.x * TILE_SIZE;
   const int64_t last_row =
-      min(static_cast<int64_t>(blockIdx.x + 1) * TILE_SIZE, num_rows);
+    min(static_cast<int64_t>(blockIdx.x + 1) * TILE_SIZE, num_rows);
 
   curandStatePhilox4_32_10_t rng;
   curand_init(rand_seed * gridDim.x + blockIdx.x, threadIdx.x, 0, &rng);
@@ -492,7 +493,7 @@ __global__ void _CSRRowWiseSampleUniformReplaceKernel(
         out_rows[out_idx] = row;
         out_cols[out_idx] = in_index[in_row_start + edge];
         out_idxs[out_idx] =
-            data ? data[in_row_start + edge] : in_row_start + edge;
+          data ? data[in_row_start + edge] : in_row_start + edge;
       }
     }
     out_row += 1;
@@ -505,7 +506,7 @@ __global__ void _CSRRowWiseSampleUniformReplaceKernel(
 
 template <DGLDeviceType XPU, typename IdType>
 COOMatrix _CSRRowWiseSamplingUniform(
-    CSRMatrix mat, IdArray rows, const int64_t num_picks, const bool replace) {
+  CSRMatrix mat, IdArray rows, const int64_t num_picks, const bool replace) {
   const auto& ctx = rows->ctx;
   auto device = runtime::DeviceAPI::Get(ctx);
   cudaStream_t stream = runtime::getCurrentCUDAStream();
@@ -514,11 +515,11 @@ COOMatrix _CSRRowWiseSamplingUniform(
   const IdType* const slice_rows = static_cast<const IdType*>(rows->data);
 
   IdArray picked_row =
-      NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
+    NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
   IdArray picked_col =
-      NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
+    NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
   IdArray picked_idx =
-      NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
+    NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
   IdType* const out_rows = static_cast<IdType*>(picked_row->data);
   IdType* const out_cols = static_cast<IdType*>(picked_col->data);
   IdType* const out_idxs = static_cast<IdType*>(picked_idx->data);
@@ -526,9 +527,9 @@ COOMatrix _CSRRowWiseSamplingUniform(
   const IdType* in_ptr = static_cast<IdType*>(GetDevicePointer(mat.indptr));
   const IdType* in_cols = static_cast<IdType*>(GetDevicePointer(mat.indices));
   const IdType* data = CSRHasData(mat)
-                           ? static_cast<IdType*>(GetDevicePointer(mat.data))
-                           : nullptr;
-  
+    ? static_cast<IdType*>(GetDevicePointer(mat.data))
+    : nullptr;
+
 
   // size_t size = parts_array->shape[0];
   // int64_t* part_array = static_cast<int64_t*>(parts_array->data);
@@ -539,37 +540,37 @@ COOMatrix _CSRRowWiseSamplingUniform(
   //     std::cout << part_array[i] << " ";
   // }
   // // int64_t* d_part_array;
-    // cudaMalloc(&d_part_array, size * sizeof(int64_t));
+  // cudaMalloc(&d_part_array, size * sizeof(int64_t));
 
-      // cudaMemcpy(cuda_array, data_ptr, size * sizeof(int64_t), cudaMemcpyHostToDevice);
+  // cudaMemcpy(cuda_array, data_ptr, size * sizeof(int64_t), cudaMemcpyHostToDevice);
 
 
   // compute degree
   IdType* out_deg = static_cast<IdType*>(
-      device->AllocWorkspace(ctx, (num_rows + 1) * sizeof(IdType)));
+    device->AllocWorkspace(ctx, (num_rows + 1) * sizeof(IdType)));
   if (replace) {
     const dim3 block(512);
     const dim3 grid((num_rows + block.x - 1) / block.x);
     CUDA_KERNEL_CALL(
-        _CSRRowWiseSampleDegreeReplaceKernel, grid, block, 0, stream, num_picks,
-        num_rows, slice_rows, in_ptr, out_deg);
+      _CSRRowWiseSampleDegreeReplaceKernel, grid, block, 0, stream, num_picks,
+      num_rows, slice_rows, in_ptr, out_deg);
   } else {
     const dim3 block(512);
     const dim3 grid((num_rows + block.x - 1) / block.x);
     CUDA_KERNEL_CALL(
-        _CSRRowWiseSampleDegreeKernel, grid, block, 0, stream, num_picks,
-        num_rows, slice_rows, in_ptr, out_deg);
+      _CSRRowWiseSampleDegreeKernel, grid, block, 0, stream, num_picks,
+      num_rows, slice_rows, in_ptr, out_deg);
   }
 
   // fill out_ptr
   IdType* out_ptr = static_cast<IdType*>(
-      device->AllocWorkspace(ctx, (num_rows + 1) * sizeof(IdType)));
+    device->AllocWorkspace(ctx, (num_rows + 1) * sizeof(IdType)));
   size_t prefix_temp_size = 0;
   CUDA_CALL(cub::DeviceScan::ExclusiveSum(
-      nullptr, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
+    nullptr, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
   void* prefix_temp = device->AllocWorkspace(ctx, prefix_temp_size);
   CUDA_CALL(cub::DeviceScan::ExclusiveSum(
-      prefix_temp, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
+    prefix_temp, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
   device->FreeWorkspace(ctx, prefix_temp);
   device->FreeWorkspace(ctx, out_deg);
 
@@ -579,26 +580,26 @@ COOMatrix _CSRRowWiseSamplingUniform(
   NDArray new_len_tensor;
   if (TensorDispatcher::Global()->IsAvailable()) {
     new_len_tensor = NDArray::PinnedEmpty(
-        {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
+      {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
   } else {
     // use pageable memory, it will unecessarily block but be functional
     new_len_tensor = NDArray::Empty(
-        {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
+      {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
   }
 
   // copy using the internal current stream
   CUDA_CALL(cudaMemcpyAsync(
-      new_len_tensor->data, out_ptr + num_rows, sizeof(IdType),
-      cudaMemcpyDeviceToHost, stream));
+    new_len_tensor->data, out_ptr + num_rows, sizeof(IdType),
+    cudaMemcpyDeviceToHost, stream));
   CUDA_CALL(cudaEventRecord(copyEvent, stream));
 
   const uint64_t random_seed = RandomEngine::ThreadLocal()->RandInt(1000000000);
 
   // select edges
   // the number of rows each thread block will cover
-  			cudaEvent_t start,stop;
-				cudaEventCreate(&start);
-				cudaEventCreate(&stop);
+  cudaEvent_t start,stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
   // constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
   constexpr int TILE_SIZE = BLOCK_SIZE / BLOCK_SIZE;
   cudaEventRecord(start);
@@ -608,24 +609,24 @@ COOMatrix _CSRRowWiseSamplingUniform(
 
     // cudaEventRecord(start);
     CUDA_KERNEL_CALL(
-        (_CSRRowWiseSampleUniformReplaceKernel<IdType, TILE_SIZE>), grid, block,
-        0, stream, random_seed, num_picks, num_rows, slice_rows, in_ptr,
-        in_cols, data, out_ptr, out_rows, out_cols, out_idxs);
+      (_CSRRowWiseSampleUniformReplaceKernel<IdType, TILE_SIZE>), grid, block,
+      0, stream, random_seed, num_picks, num_rows, slice_rows, in_ptr,
+      in_cols, data, out_ptr, out_rows, out_cols, out_idxs);
     // cudaEventRecord(stop);
   } else {  // without replacement
     const dim3 block(BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
     CUDA_KERNEL_CALL(
-        (_CSRRowWiseSampleUniformKernel<IdType, TILE_SIZE>), grid, block, 0,
-        stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
-        data, out_ptr, out_rows, out_cols, out_idxs);
+      (_CSRRowWiseSampleUniformKernel<IdType, TILE_SIZE>), grid, block, 0,
+      stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
+      data, out_ptr, out_rows, out_cols, out_idxs);
   }
-				cudaDeviceSynchronize();
+  cudaDeviceSynchronize();
   cudaEventRecord(stop);
-				cudaEventSynchronize(stop);
+  cudaEventSynchronize(stop);
   device->FreeWorkspace(ctx, out_ptr);
   float milliseconds = 0;
-  	cudaEventElapsedTime(&milliseconds, start, stop);
+  cudaEventElapsedTime(&milliseconds, start, stop);
   // printf("cuda sapmling time: %.6f\n", milliseconds/1000);
 
   // wait for copying `new_len` to finish
@@ -638,16 +639,16 @@ COOMatrix _CSRRowWiseSamplingUniform(
   picked_idx = picked_idx.CreateView({new_len}, picked_idx->dtype);
 
   return COOMatrix(
-      mat.num_rows, mat.num_cols, picked_row, picked_col, picked_idx);
+    mat.num_rows, mat.num_cols, picked_row, picked_col, picked_idx);
 }
 
 template <DGLDeviceType XPU, typename IdType>
 COOMatrix _CSRRowWiseSamplingUniform1(
-    CSRMatrix mat, IdArray rows, const int64_t num_picks, NDArray part_array, const bool replace) {
+  CSRMatrix mat, IdArray rows, const int64_t num_picks, NDArray part_array, const bool replace) {
   const auto& ctx = rows->ctx;
   auto device = runtime::DeviceAPI::Get(ctx);
   cudaStream_t stream = runtime::getCurrentCUDAStream();
-  
+
   size_t size = part_array->shape[0];
   int64_t* parts_array = static_cast<int64_t*>(part_array->data);
 
@@ -656,8 +657,8 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   {
     // printf("flag activated");
     flag = 1;
-  // allocate gpu memory
-  // IdType* d_part_array = static_cast<IdType*>(device->AllocWorkspace(ctx, (size) * sizeof(IdType)));
+    // allocate gpu memory
+    // IdType* d_part_array = static_cast<IdType*>(device->AllocWorkspace(ctx, (size) * sizeof(IdType)));
     cudaMalloc(&d_part_array, size * sizeof(int64_t));
 
     cudaMemcpy(d_part_array, parts_array, size * sizeof(int64_t), cudaMemcpyHostToDevice);
@@ -668,11 +669,11 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   const IdType* const slice_rows = static_cast<const IdType*>(rows->data);
 
   IdArray picked_row =
-      NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
+    NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
   IdArray picked_col =
-      NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
+    NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
   IdArray picked_idx =
-      NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
+    NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
   IdType* const out_rows = static_cast<IdType*>(picked_row->data);
   IdType* const out_cols = static_cast<IdType*>(picked_col->data);
   IdType* const out_idxs = static_cast<IdType*>(picked_idx->data);
@@ -680,9 +681,9 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   const IdType* in_ptr = static_cast<IdType*>(GetDevicePointer(mat.indptr));
   const IdType* in_cols = static_cast<IdType*>(GetDevicePointer(mat.indices));
   const IdType* data = CSRHasData(mat)
-                           ? static_cast<IdType*>(GetDevicePointer(mat.data))
-                           : nullptr;
-  
+    ? static_cast<IdType*>(GetDevicePointer(mat.data))
+    : nullptr;
+
 
   // size_t size = parts_array->shape[0];
   // int64_t* part_array = static_cast<int64_t*>(parts_array->data);
@@ -693,9 +694,9 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   //     std::cout << part_array[i] << " ";
   // }
   // // int64_t* d_part_array;
-    // cudaMalloc(&d_part_array, size * sizeof(int64_t));
+  // cudaMalloc(&d_part_array, size * sizeof(int64_t));
 
-      // cudaMemcpy(cuda_array, data_ptr, size * sizeof(int64_t), cudaMemcpyHostToDevice);
+  // cudaMemcpy(cuda_array, data_ptr, size * sizeof(int64_t), cudaMemcpyHostToDevice);
 
 
   // compute degree
@@ -704,25 +705,25 @@ COOMatrix _CSRRowWiseSamplingUniform1(
     const dim3 block(512);
     const dim3 grid((num_rows + block.x - 1) / block.x);
     CUDA_KERNEL_CALL(
-        _CSRRowWiseSampleDegreeReplaceKernel, grid, block, 0, stream, num_picks,
-        num_rows, slice_rows, in_ptr, out_deg);
+      _CSRRowWiseSampleDegreeReplaceKernel, grid, block, 0, stream, num_picks,
+      num_rows, slice_rows, in_ptr, out_deg);
   } else {
     const dim3 block(512);
     const dim3 grid((num_rows + block.x - 1) / block.x);
     CUDA_KERNEL_CALL(
-        _CSRRowWiseSampleDegreeKernel, grid, block, 0, stream, num_picks,
-        num_rows, slice_rows, in_ptr, out_deg);
+      _CSRRowWiseSampleDegreeKernel, grid, block, 0, stream, num_picks,
+      num_rows, slice_rows, in_ptr, out_deg);
   }
 
   // fill out_ptr
   IdType* out_ptr = static_cast<IdType*>(
-      device->AllocWorkspace(ctx, (num_rows + 1) * sizeof(IdType)));
+    device->AllocWorkspace(ctx, (num_rows + 1) * sizeof(IdType)));
   size_t prefix_temp_size = 0;
   CUDA_CALL(cub::DeviceScan::ExclusiveSum(
-      nullptr, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
+    nullptr, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
   void* prefix_temp = device->AllocWorkspace(ctx, prefix_temp_size);
   CUDA_CALL(cub::DeviceScan::ExclusiveSum(
-      prefix_temp, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
+    prefix_temp, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
   device->FreeWorkspace(ctx, prefix_temp);
   device->FreeWorkspace(ctx, out_deg);
 
@@ -732,17 +733,17 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   NDArray new_len_tensor;
   if (TensorDispatcher::Global()->IsAvailable()) {
     new_len_tensor = NDArray::PinnedEmpty(
-        {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
+      {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
   } else {
     // use pageable memory, it will unecessarily block but be functional
     new_len_tensor = NDArray::Empty(
-        {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
+      {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
   }
 
   // copy using the internal current stream
   CUDA_CALL(cudaMemcpyAsync(
-      new_len_tensor->data, out_ptr + num_rows, sizeof(IdType),
-      cudaMemcpyDeviceToHost, stream));
+    new_len_tensor->data, out_ptr + num_rows, sizeof(IdType),
+    cudaMemcpyDeviceToHost, stream));
   CUDA_CALL(cudaEventRecord(copyEvent, stream));
 
   const uint64_t random_seed = RandomEngine::ThreadLocal()->RandInt(1000000000);
@@ -761,9 +762,9 @@ COOMatrix _CSRRowWiseSamplingUniform1(
 
     // cudaEventRecord(start);
     CUDA_KERNEL_CALL(
-        (_CSRRowWiseSampleUniformReplaceKernel<IdType, TILE_SIZE>), grid, block,
-        0, stream, random_seed, num_picks, num_rows, slice_rows, in_ptr,
-        in_cols, data, out_ptr, out_rows, out_cols, out_idxs);
+      (_CSRRowWiseSampleUniformReplaceKernel<IdType, TILE_SIZE>), grid, block,
+      0, stream, random_seed, num_picks, num_rows, slice_rows, in_ptr,
+      in_cols, data, out_ptr, out_rows, out_cols, out_idxs);
     // cudaEventRecord(stop);
   } else {  // without replacement
     // const dim3 block(BLOCK_SIZE);
@@ -773,24 +774,25 @@ COOMatrix _CSRRowWiseSamplingUniform1(
     //     stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
     //     data, out_ptr, out_rows, out_cols, out_idxs);
     //
-     const dim3 block(BLOCK_SIZE);
+    const dim3 block(BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
     CUDA_KERNEL_CALL(
-        (_CSRRowWiseSampleUniformKernel1<IdType, TILE_SIZE>), grid, block, num_picks,
-        stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
-        data, out_ptr, out_rows, out_cols, out_idxs, d_part_array);
+      (_CSRRowWiseSampleUniformKernel1<IdType, TILE_SIZE>), grid, block, num_picks,
+      stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
+      data, out_ptr, out_rows, out_cols, out_idxs, d_part_array);
 
   }
   device->FreeWorkspace(ctx, out_ptr);
   // cudaDeviceSynchronize();
-   // wait for copying `new_len` to finish
+  // wait for copying `new_len` to finish
   CUDA_CALL(cudaEventSynchronize(copyEvent));
   CUDA_CALL(cudaEventDestroy(copyEvent));
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);
   float milliseconds = 0;
   cudaEventElapsedTime(&milliseconds, start, stop);
-  printf("\n cuda sapmling time %.6f\t \n", milliseconds/1000);
+  sampling_time += milliseconds/1000;
+  printf("cuda sapmling time %.6f\n", sampling_time);
   // cudaFree(d_part_array);
 
   const IdType new_len = static_cast<const IdType*>(new_len_tensor->data)[0];
@@ -798,42 +800,48 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   picked_col = picked_col.CreateView({new_len}, picked_col->dtype);
   picked_idx = picked_idx.CreateView({new_len}, picked_idx->dtype);
 
+  // std::cout
+  // std::cout<<"new_len: "<<new_len<<"\n";
+  // std::cout<<"picked_row: "<<picked_row<<"\n";
+  // std::cout<<"picked_col: "<<picked_col<<"\n";
+  // std::cout<<"picked_idx: "<<picked_idx<<"\n";
+
   return COOMatrix(
-      mat.num_rows, mat.num_cols, picked_row, picked_col, picked_idx);
+    mat.num_rows, mat.num_cols, picked_row, picked_col, picked_idx);
 }
 
 template <DGLDeviceType XPU, typename IdType>
 COOMatrix _CSRRowWiseSamplingUniform2(
-    CSRMatrix mat, IdArray rows, const int64_t num_picks, const bool replace) {
+  CSRMatrix mat, IdArray rows, const int64_t num_picks, const bool replace) {
   const auto& ctx = rows->ctx;
   auto device = runtime::DeviceAPI::Get(ctx);
   cudaStream_t stream = runtime::getCurrentCUDAStream();
-  
+
   // size_t size = part_array->shape[0];
   // int64_t* parts_array = static_cast<int64_t*>(part_array->data);
 
   // printf("data from _CSRRowWiseSamplingUniform2 function line 448");
   // if(flag == 0)
   // {
-    // printf("flag activated");
-    // flag = 1;
+  // printf("flag activated");
+  // flag = 1;
   // allocate gpu memory
   // IdType* d_part_array = static_cast<IdType*>(device->AllocWorkspace(ctx, (size) * sizeof(IdType)));
-    // cudaMalloc(&d_part_array, size * sizeof(int64_t));
+  // cudaMalloc(&d_part_array, size * sizeof(int64_t));
 
-    // cudaMemcpy(d_part_array, parts_array, size * sizeof(int64_t), cudaMemcpyHostToDevice);
-    // printf("Cudamemcpy called");
-    // flag = 1;
+  // cudaMemcpy(d_part_array, parts_array, size * sizeof(int64_t), cudaMemcpyHostToDevice);
+  // printf("Cudamemcpy called");
+  // flag = 1;
   // }
   const int64_t num_rows = rows->shape[0];
   const IdType* const slice_rows = static_cast<const IdType*>(rows->data);
 
   IdArray picked_row =
-      NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
+    NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
   IdArray picked_col =
-      NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
+    NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
   IdArray picked_idx =
-      NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
+    NewIdArray(num_rows * num_picks, ctx, sizeof(IdType) * 8);
   IdType* const out_rows = static_cast<IdType*>(picked_row->data);
   IdType* const out_cols = static_cast<IdType*>(picked_col->data);
   IdType* const out_idxs = static_cast<IdType*>(picked_idx->data);
@@ -841,9 +849,9 @@ COOMatrix _CSRRowWiseSamplingUniform2(
   const IdType* in_ptr = static_cast<IdType*>(GetDevicePointer(mat.indptr));
   const IdType* in_cols = static_cast<IdType*>(GetDevicePointer(mat.indices));
   const IdType* data = CSRHasData(mat)
-                           ? static_cast<IdType*>(GetDevicePointer(mat.data))
-                           : nullptr;
-  
+    ? static_cast<IdType*>(GetDevicePointer(mat.data))
+    : nullptr;
+
 
   // size_t size = parts_array->shape[0];
   // int64_t* part_array = static_cast<int64_t*>(parts_array->data);
@@ -854,9 +862,9 @@ COOMatrix _CSRRowWiseSamplingUniform2(
   //     std::cout << part_array[i] << " ";
   // }
   // // int64_t* d_part_array;
-    // cudaMalloc(&d_part_array, size * sizeof(int64_t));
+  // cudaMalloc(&d_part_array, size * sizeof(int64_t));
 
-      // cudaMemcpy(cuda_array, data_ptr, size * sizeof(int64_t), cudaMemcpyHostToDevice);
+  // cudaMemcpy(cuda_array, data_ptr, size * sizeof(int64_t), cudaMemcpyHostToDevice);
 
 
   // compute degree
@@ -865,25 +873,25 @@ COOMatrix _CSRRowWiseSamplingUniform2(
     const dim3 block(512);
     const dim3 grid((num_rows + block.x - 1) / block.x);
     CUDA_KERNEL_CALL(
-        _CSRRowWiseSampleDegreeReplaceKernel, grid, block, 0, stream, num_picks,
-        num_rows, slice_rows, in_ptr, out_deg);
+      _CSRRowWiseSampleDegreeReplaceKernel, grid, block, 0, stream, num_picks,
+      num_rows, slice_rows, in_ptr, out_deg);
   } else {
     const dim3 block(512);
     const dim3 grid((num_rows + block.x - 1) / block.x);
     CUDA_KERNEL_CALL(
-        _CSRRowWiseSampleDegreeKernel, grid, block, 0, stream, num_picks,
-        num_rows, slice_rows, in_ptr, out_deg);
+      _CSRRowWiseSampleDegreeKernel, grid, block, 0, stream, num_picks,
+      num_rows, slice_rows, in_ptr, out_deg);
   }
 
   // fill out_ptr
   IdType* out_ptr = static_cast<IdType*>(
-      device->AllocWorkspace(ctx, (num_rows + 1) * sizeof(IdType)));
+    device->AllocWorkspace(ctx, (num_rows + 1) * sizeof(IdType)));
   size_t prefix_temp_size = 0;
   CUDA_CALL(cub::DeviceScan::ExclusiveSum(
-      nullptr, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
+    nullptr, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
   void* prefix_temp = device->AllocWorkspace(ctx, prefix_temp_size);
   CUDA_CALL(cub::DeviceScan::ExclusiveSum(
-      prefix_temp, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
+    prefix_temp, prefix_temp_size, out_deg, out_ptr, num_rows + 1, stream));
   device->FreeWorkspace(ctx, prefix_temp);
   device->FreeWorkspace(ctx, out_deg);
 
@@ -893,17 +901,17 @@ COOMatrix _CSRRowWiseSamplingUniform2(
   NDArray new_len_tensor;
   if (TensorDispatcher::Global()->IsAvailable()) {
     new_len_tensor = NDArray::PinnedEmpty(
-        {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
+      {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
   } else {
     // use pageable memory, it will unecessarily block but be functional
     new_len_tensor = NDArray::Empty(
-        {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
+      {1}, DGLDataTypeTraits<IdType>::dtype, DGLContext{kDGLCPU, 0});
   }
 
   // copy using the internal current stream
   CUDA_CALL(cudaMemcpyAsync(
-      new_len_tensor->data, out_ptr + num_rows, sizeof(IdType),
-      cudaMemcpyDeviceToHost, stream));
+    new_len_tensor->data, out_ptr + num_rows, sizeof(IdType),
+    cudaMemcpyDeviceToHost, stream));
   CUDA_CALL(cudaEventRecord(copyEvent, stream));
 
   const uint64_t random_seed = RandomEngine::ThreadLocal()->RandInt(1000000000);
@@ -922,9 +930,9 @@ COOMatrix _CSRRowWiseSamplingUniform2(
 
     // cudaEventRecord(start);
     CUDA_KERNEL_CALL(
-        (_CSRRowWiseSampleUniformReplaceKernel<IdType, TILE_SIZE>), grid, block,
-        0, stream, random_seed, num_picks, num_rows, slice_rows, in_ptr,
-        in_cols, data, out_ptr, out_rows, out_cols, out_idxs);
+      (_CSRRowWiseSampleUniformReplaceKernel<IdType, TILE_SIZE>), grid, block,
+      0, stream, random_seed, num_picks, num_rows, slice_rows, in_ptr,
+      in_cols, data, out_ptr, out_rows, out_cols, out_idxs);
     // cudaEventRecord(stop);
   } else {  // without replacement
     // const dim3 block(BLOCK_SIZE);
@@ -934,24 +942,25 @@ COOMatrix _CSRRowWiseSamplingUniform2(
     //     stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
     //     data, out_ptr, out_rows, out_cols, out_idxs);
     //
-     const dim3 block(BLOCK_SIZE);
+    const dim3 block(BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
     CUDA_KERNEL_CALL(
-        (_CSRRowWiseSampleUniformKernel1<IdType, TILE_SIZE>), grid, block, num_picks,
-        stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
-        data, out_ptr, out_rows, out_cols, out_idxs, d_part_array);
+      (_CSRRowWiseSampleUniformKernel1<IdType, TILE_SIZE>), grid, block, num_picks,
+      stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
+      data, out_ptr, out_rows, out_cols, out_idxs, d_part_array);
 
   }
   device->FreeWorkspace(ctx, out_ptr);
   // cudaDeviceSynchronize();
-   // wait for copying `new_len` to finish
+  // wait for copying `new_len` to finish
   CUDA_CALL(cudaEventSynchronize(copyEvent));
   CUDA_CALL(cudaEventDestroy(copyEvent));
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);
   float milliseconds = 0;
   cudaEventElapsedTime(&milliseconds, start, stop);
-  printf("\n cuda sapmling time %.6f\t \n", milliseconds/1000);
+  sampling_time += milliseconds/1000;
+  printf("\ncuda sapmling time %.6f\t \n", sampling_time);
   // cudaFree(d_part_array);
 
   const IdType new_len = static_cast<const IdType*>(new_len_tensor->data)[0];
@@ -959,40 +968,46 @@ COOMatrix _CSRRowWiseSamplingUniform2(
   picked_col = picked_col.CreateView({new_len}, picked_col->dtype);
   picked_idx = picked_idx.CreateView({new_len}, picked_idx->dtype);
 
+  // std::cout<<"U2 new_len: "<<new_len<<"\n";
+  // std::cout<<"U2 picked_row: "<<picked_row<<"\n";
+  // std::cout<<"U2 picked_col: "<<picked_col<<"\n";
+  // std::cout<<"U2 picked_idx: "<<picked_idx<<"\n";
+
+
   return COOMatrix(
-      mat.num_rows, mat.num_cols, picked_row, picked_col, picked_idx);
+    mat.num_rows, mat.num_cols, picked_row, picked_col, picked_idx);
 }
 
 
 template <DGLDeviceType XPU, typename IdType>
 COOMatrix CSRRowWiseSamplingUniform(
-    CSRMatrix mat, IdArray rows, const int64_t num_picks, const bool replace) {
-  
+  CSRMatrix mat, IdArray rows, const int64_t num_picks, const bool replace) {
+
   // size_t size = parts_array->shape[0];
   // int64_t* part_array = static_cast<int64_t*>(parts_array->data);
-  
+
   // printf("data from rowwise_sampling.cu line 265\n");
   // for(int i=0; i< size; i++)
   // {
-      // std::cout << part_array[i] << " ";
+  // std::cout << part_array[i] << " ";
   // }
- 
+
   if (num_picks == -1) {
     // Basically this is UnitGraph::InEdges().
     COOMatrix coo = CSRToCOO(CSRSliceRows(mat, rows), false);
     IdArray sliced_rows = IndexSelect(rows, coo.row);
     return COOMatrix(
-        mat.num_rows, mat.num_cols, sliced_rows, coo.col, coo.data);
+      mat.num_rows, mat.num_cols, sliced_rows, coo.col, coo.data);
   } else {
     return _CSRRowWiseSamplingUniform<XPU, IdType>(
-        mat, rows, num_picks, replace);
+      mat, rows, num_picks, replace);
   }
 }
 
 template <DGLDeviceType XPU, typename IdType>
 COOMatrix CSRRowWiseSamplingUniform1(
-    CSRMatrix mat, IdArray rows, const int64_t num_picks, const NDArray& parts_array, const bool replace) {
-   
+  CSRMatrix mat, IdArray rows, const int64_t num_picks, const NDArray& parts_array, const bool replace) {
+
 
   // size_t size = parts_array->shape[0];
   // IdArray* part_array = static_cast<IdArray*>(parts_array->data);
@@ -1004,55 +1019,55 @@ COOMatrix CSRRowWiseSamplingUniform1(
 
   // size_t size = parts_array->shape[0];
   // int64_t* part_array = static_cast<int64_t*>(parts_array->data);
-  
+
   // printf("data from rowwise_sampling.cu line 265\n");
   // for(int i=0; i< size; i++)
   // {
-      // std::cout << "data :" << part_array[i] << " ";
+  // std::cout << "data :" << part_array[i] << " ";
   // }
   // dgl::IdArray part_array = dgl::aten::AsIdArray(parts_array);
   // dgl::IdArray part_array = dgl::IdArray::FromDLPack(parts_array.ToDLPack());
- 
+
   if (num_picks == -1) {
     // Basically this is UnitGraph::InEdges().
     COOMatrix coo = CSRToCOO(CSRSliceRows(mat, rows), false);
     IdArray sliced_rows = IndexSelect(rows, coo.row);
     return COOMatrix(
-        mat.num_rows, mat.num_cols, sliced_rows, coo.col, coo.data);
+      mat.num_rows, mat.num_cols, sliced_rows, coo.col, coo.data);
   } else {
     return _CSRRowWiseSamplingUniform1<XPU, IdType>(
-        mat, rows, num_picks, parts_array, replace);
+      mat, rows, num_picks, parts_array, replace);
   }
 }
 
 template <DGLDeviceType XPU, typename IdType>
 COOMatrix CSRRowWiseSamplingUniform2(
-    CSRMatrix mat, IdArray rows, const int64_t num_picks, const bool replace) {
-    if (num_picks == -1) {
+  CSRMatrix mat, IdArray rows, const int64_t num_picks, const bool replace) {
+  if (num_picks == -1) {
     // Basically this is UnitGraph::InEdges().
     COOMatrix coo = CSRToCOO(CSRSliceRows(mat, rows), false);
     IdArray sliced_rows = IndexSelect(rows, coo.row);
     return COOMatrix(
-        mat.num_rows, mat.num_cols, sliced_rows, coo.col, coo.data);
+      mat.num_rows, mat.num_cols, sliced_rows, coo.col, coo.data);
   } else {
     return _CSRRowWiseSamplingUniform2<XPU, IdType>(
-        mat, rows, num_picks, replace);
+      mat, rows, num_picks, replace);
   }
 }
 
 
 template COOMatrix CSRRowWiseSamplingUniform<kDGLCUDA, int32_t>(
-    CSRMatrix, IdArray, int64_t, bool);
+  CSRMatrix, IdArray, int64_t, bool);
 template COOMatrix CSRRowWiseSamplingUniform<kDGLCUDA, int64_t>(
-    CSRMatrix, IdArray, int64_t, bool);
+  CSRMatrix, IdArray, int64_t, bool);
 template COOMatrix CSRRowWiseSamplingUniform1<kDGLCUDA, int32_t>(
-    CSRMatrix, IdArray, int64_t, const NDArray& , bool);
+  CSRMatrix, IdArray, int64_t, const NDArray& , bool);
 template COOMatrix CSRRowWiseSamplingUniform1<kDGLCUDA, int64_t>(
-    CSRMatrix, IdArray, int64_t, const NDArray& , bool);
+  CSRMatrix, IdArray, int64_t, const NDArray& , bool);
 template COOMatrix CSRRowWiseSamplingUniform2<kDGLCUDA, int32_t>(
-    CSRMatrix, IdArray, int64_t, bool);
+  CSRMatrix, IdArray, int64_t, bool);
 template COOMatrix CSRRowWiseSamplingUniform2<kDGLCUDA, int64_t>(
-    CSRMatrix, IdArray, int64_t, bool);
+  CSRMatrix, IdArray, int64_t, bool);
 
 }  // namespace impl
 }  // namespace aten
