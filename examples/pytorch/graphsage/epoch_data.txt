@@ -1,4 +1,13 @@
-Epoch 00000 | Loss 3.2612 | Accuracy 0.7026 | Time : 12.2513 | loop 5.7556 | Model 6.4953 | x_y_time 0.0031 | pred 5.2206 | loss_time 0.0078
+Epoch 00000 | Loss 2.6481 | Accuracy 0.4855 | Time : 2.7522 | loop 0.5863 | Model 2.1657 | x_y_time 0.0022 | pred 1.5236 | loss_time 0.0062
+Epoch 00001 | Loss 1.9481 | Accuracy 0.5524 | Time : 1.3542 | loop 0.4675 | Model 0.8865 | x_y_time 0.0019 | pred 0.3335 | loss_time 0.0062
+Epoch 00002 | Loss 1.7392 | Accuracy 0.5690 | Time : 1.3522 | loop 0.4675 | Model 0.8845 | x_y_time 0.0019 | pred 0.3314 | loss_time 0.0062
+Epoch 00003 | Loss 1.6382 | Accuracy 0.5762 | Time : 1.3567 | loop 0.4678 | Model 0.8887 | x_y_time 0.0019 | pred 0.3355 | loss_time 0.0062
+Epoch 00004 | Loss 1.5819 | Accuracy 0.5782 | Time : 1.3469 | loop 0.4610 | Model 0.8857 | x_y_time 0.0019 | pred 0.3338 | loss_time 0.0062
+Epoch 00005 | Loss 1.5409 | Accuracy 0.5842 | Time : 1.3601 | loop 0.4682 | Model 0.8917 | x_y_time 0.0019 | pred 0.3344 | loss_time 0.0063
+Epoch 00006 | Loss 1.5045 | Accuracy 0.5932 | Time : 1.3574 | loop 0.4621 | Model 0.8951 | x_y_time 0.0019 | pred 0.3367 | loss_time 0.0061
+Epoch 00007 | Loss 1.4849 | Accuracy 0.5942 | Time : 1.3696 | loop 0.4705 | Model 0.8988 | x_y_time 0.0019 | pred 0.3372 | loss_time 0.0064
+Epoch 00008 | Loss 1.4621 | Accuracy 0.5931 | Time : 1.3576 | loop 0.4623 | Model 0.8950 | x_y_time 0.0019 | pred 0.3360 | loss_time 0.0064
+Epoch 00009 | Loss 1.4502 | Accuracy 0.5935 | Time : 1.3727 | loop 0.4717 | Model 0.9008 | x_y_time 0.0019 | pred 0.3392 | loss_time 0.0063
 total for loop time, total model time, total loss time, total_training_time
-5.7556, 6.4953, 0.0078, 12.2513
-Test Accuracy 0.7901
+4.7850, 10.1923, 0.0627, 14.9796
+Test Accuracy 0.5338
