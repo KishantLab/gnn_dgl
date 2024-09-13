@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics.functional as MF
 import tqdm
+import pymetis
 from dgl.sampling.metis_sampling import *
 from dgl.data import AsNodePredDataset
 from dgl.dataloading import (
@@ -267,15 +268,28 @@ if __name__ == "__main__":
 
     g = dataset[0]
     print(g)
+    g = dgl.remove_self_loop(g)
+    g = dgl.to_bidirected(g)
+    isolated_nodes = ((g.in_degrees() == 0) & (g.out_degrees() == 0)).nonzero().squeeze(1)
+    g.remove_nodes(isolated_nodes)
+    print(g)
     row_ptr_G = np.array(g.adj_tensors('csr')[0])
     col_idx_G = np.array(g.adj_tensors('csr')[1])
     Nodes = g.num_nodes()
     Edges = g.num_edges()
+    
+    num_parts = int(Nodes/1024)
+    print("num_parts: ",num_parts)
 
+    n_cuts, membership = pymetis.part_graph(num_parts, xadj=row_ptr_G, adjncy=col_idx_G)
+    # n_cuts, membership = pymetis.part_graph(4, xadj=row_ptr, adjncy=col_idx)
+    print("Number_of_cuts: ",n_cuts)
+    
     suffix_csr = "_output.csr"
     out_filename2 = args.dataset + suffix_csr
     file = open(out_filename2,'w')
 
+    print("Start csr wrriting")
     file.write("%i " % Nodes)
     file.write("%i " % Edges)
     file.write("%i " % len(row_ptr_G))
@@ -287,9 +301,20 @@ if __name__ == "__main__":
     for data in range(len(col_idx_G)):
         file.write("%i " % col_idx_G[data])
     file.write("\n")
+    
+    #-----------------------------------------Writing node_parts_weight INTO file---------------------------------------#
+    #np.savetxt(out_filename2, node_parts_weight, delimiter=' ')
+    print("start parts wrriting")
+    out_filename2 = args.dataset + "_reorder." + str(num_parts) + ".csv"
+    node_parts = list(map(int, membership))
+    x = [[d, i] for i, d in enumerate(node_parts, 0)]
+    x.sort()
+    with open(out_filename2, "w") as f:
+        for c in x:
+            f.write(str(c[1]) + "\n")
 
 
-
+    print("Preprocess Done !!!!!")
     # out_degrees = np.array(g.out_degrees())
     # max_value = np.max(out_degrees)
     # avg_value = np.mean(out_degrees)
@@ -327,22 +352,22 @@ if __name__ == "__main__":
     # plt.savefig(plot_name, format='eps')
     
 
-    g = g.to("cuda" if args.mode == "puregpu" else "cpu")
-    test_mask=g.ndata['test_mask']
-    test_idx = torch.nonzero(test_mask).squeeze()
-
-    num_classes = dataset.num_classes
-    device = torch.device("cpu" if args.mode == "cpu" else "cuda")
-
-    # create GraphSAGE model)
-    in_size = g.ndata["feat"].shape[1]
-    out_size = dataset.num_classes
-    model = SAGE(in_size, 256, out_size).to(device)
-
-    # convert model and graph to bfloat16 if needed
-    if args.dt == "bfloat16":
-        g = dgl.to_bfloat16(g)
-        model = model.to(dtype=torch.bfloat16)
+    # g = g.to("cuda" if args.mode == "puregpu" else "cpu")
+    # test_mask=g.ndata['test_mask']
+    # test_idx = torch.nonzero(test_mask).squeeze()
+    #
+    # num_classes = dataset.num_classes
+    # device = torch.device("cpu" if args.mode == "cpu" else "cuda")
+    #
+    # # create GraphSAGE model)
+    # in_size = g.ndata["feat"].shape[1]
+    # out_size = dataset.num_classes
+    # model = SAGE(in_size, 256, out_size).to(device)
+    #
+    # # convert model and graph to bfloat16 if needed
+    # if args.dt == "bfloat16":
+    #     g = dgl.to_bfloat16(g)
+    #     model = model.to(dtype=torch.bfloat16)
 
     # out partion create array 
     #part_array = np.ones(5)

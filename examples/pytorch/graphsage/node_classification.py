@@ -1,3 +1,4 @@
+#!/data/kishan/anaconda3/envs/dgl-dev-gpu-117/bin/python3
 import argparse
 import numpy as np
 import dgl
