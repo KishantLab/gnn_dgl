@@ -18,6 +18,8 @@
 #include "./dgl_cub.cuh"
 #include "./utils.h"
 
+#include "../../array/cuda/global_array.h"
+
 using namespace dgl::cuda;
 using namespace dgl::aten::cuda;
 using TensorDispatcher = dgl::runtime::TensorDispatcher;

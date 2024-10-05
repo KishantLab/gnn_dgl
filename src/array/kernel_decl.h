@@ -27,6 +27,25 @@ void SpMMCsr(
     std::vector<NDArray> out_aux);
 
 /**
+ * @brief Generalized Sparse Matrix Dense Matrix Multiplication on Csr format with reorderd matrix.
+ */
+template <int XPU, typename IdType, typename DType>
+void ReSpMMCsr(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const aten::CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray part_array);
+
+/**
+ * @brief Generalized Sparse Matrix Dense Matrix Multiplication on Csr format.
+ */
+template <int XPU, typename IdType, typename DType>
+void GESpMMCsr(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const aten::CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+
+
+/**
  * @brief Generalized Sparse Matrix Dense Matrix Multiplication on Csr format
  * with heterograph support.
  */

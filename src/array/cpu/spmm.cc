@@ -41,6 +41,69 @@ void SpMMCsr(
   }
 }
 
+/** @brief Generalized SpMM on Csr format with reorderd spmm. */
+template <int XPU, typename IdType, typename DType>
+void ReSpMMCsr(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array) {
+  const int64_t dim = bcast.out_len;
+  if (reduce == "sum") {
+    SWITCH_OP(op, Op, {
+      cpu::SpMMSumCsr<IdType, DType, Op>(bcast, csr, ufeat, efeat, out);
+    });
+  } else if (reduce == "max" || reduce == "min") {
+    SWITCH_OP(op, Op, {
+      DType* out_off = out.Ptr<DType>();
+      if (reduce == "max") {
+        std::fill(
+            out_off, out_off + csr.num_rows * dim, cpu::op::Max<DType>::zero);
+        cpu::SpMMCmpCsr<IdType, DType, Op, cpu::op::Max<DType>>(
+            bcast, csr, ufeat, efeat, out, out_aux[0], out_aux[1]);
+      } else {
+        std::fill(
+            out_off, out_off + csr.num_rows * dim, cpu::op::Min<DType>::zero);
+        cpu::SpMMCmpCsr<IdType, DType, Op, cpu::op::Min<DType>>(
+            bcast, csr, ufeat, efeat, out, out_aux[0], out_aux[1]);
+      }
+    });
+  } else {
+    LOG(FATAL) << "Unsupported SpMM reducer: " << reduce;
+  }
+}
+
+/** @brief Generalized GESpMM on Csr format. */
+template <int XPU, typename IdType, typename DType>
+void GESpMMCsr(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux) {
+  const int64_t dim = bcast.out_len;
+  if (reduce == "sum") {
+    SWITCH_OP(op, Op, {
+      cpu::SpMMSumCsr<IdType, DType, Op>(bcast, csr, ufeat, efeat, out);
+    });
+  } else if (reduce == "max" || reduce == "min") {
+    SWITCH_OP(op, Op, {
+      DType* out_off = out.Ptr<DType>();
+      if (reduce == "max") {
+        std::fill(
+            out_off, out_off + csr.num_rows * dim, cpu::op::Max<DType>::zero);
+        cpu::SpMMCmpCsr<IdType, DType, Op, cpu::op::Max<DType>>(
+            bcast, csr, ufeat, efeat, out, out_aux[0], out_aux[1]);
+      } else {
+        std::fill(
+            out_off, out_off + csr.num_rows * dim, cpu::op::Min<DType>::zero);
+        cpu::SpMMCmpCsr<IdType, DType, Op, cpu::op::Min<DType>>(
+            bcast, csr, ufeat, efeat, out, out_aux[0], out_aux[1]);
+      }
+    });
+  } else {
+    LOG(FATAL) << "Unsupported SpMM reducer: " << reduce;
+  }
+}
+
+
 /** @brief Generalized SpMM on Csr format. */
 template <int XPU, typename IdType, typename DType>
 void SpMMCsrHetero(
@@ -148,6 +211,57 @@ template void SpMMCsr<kDGLCPU, int64_t, double>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
     std::vector<NDArray> out_aux);
+
+template void ReSpMMCsr<kDGLCPU, int32_t, BFloat16>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCPU, int64_t, BFloat16>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCPU, int32_t, float>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCPU, int64_t, float>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCPU, int32_t, double>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCPU, int64_t, double>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+
+template void GESpMMCsr<kDGLCPU, int32_t, BFloat16>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCPU, int64_t, BFloat16>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCPU, int32_t, float>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCPU, int64_t, float>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCPU, int32_t, double>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCPU, int64_t, double>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+
 
 template void SpMMCsrHetero<kDGLCPU, int32_t, BFloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,

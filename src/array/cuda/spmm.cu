@@ -4,11 +4,13 @@
  * @brief SPMM C APIs and definitions.
  */
 #include <dgl/array.h>
+#include <cstdint>
 
 #include "../../runtime/cuda/cuda_common.h"
 #include "./functor.cuh"
 #include "./ge_spmm.cuh"
 #include "./spmm.cuh"
+#include "global_array.h"
 
 namespace dgl {
 
@@ -53,7 +55,7 @@ void CustomCsr(const std::string& op, const std::string& reduce,
       });*/
       // SWITCH_BITS(bits, DType, {
         SWITCH_OP(op, Op, {
-                        printf("before call 2");
+                        // printf("before call 2");
           cuda::CustomCsr<IdType, DType >(bcast,
                 csr, static_cast<DType*>(ufeat->data),
             nullptr,
@@ -65,6 +67,50 @@ void CustomCsr(const std::string& op, const std::string& reduce,
   }
 }
 
+// template <int XPU, typename IdType, typename DType>
+// void reorderd_Csr(const std::string& op, const std::string& reduce,
+//              const BcastOff& bcast,
+//              const CSRMatrix& csr,
+//              NDArray ufeat,
+//              NDArray efeat,
+//              NDArray out,
+//              std::vector<NDArray> out_aux,
+//                   int64_t* d_part_array
+//                   ) {
+//   //bool is_scalar_efeat = efeat.NumElements() == csr.indices->shape[0];
+//   //bool use_efeat = op != "copy_lhs";
+//
+//   if (reduce == "sum") {
+//     //bool more_nnz = (csr.indices->shape[0] > csr.num_rows * csr.num_cols);
+//     if (op == "copy_lhs") {
+//       // cusparse
+//       int64_t x_length = 1;
+//       for (int i = 1; i < ufeat->ndim; ++i)
+//         x_length *= ufeat->shape[i];
+//     /*  SWITCH_BITS(bits, DType, {
+//         printf("before call 0");
+// 	cuda::reorderd_Csr<DType, IdType>(
+//             csr,
+//             static_cast<DType*>(ufeat->data),
+//             nullptr,
+//             static_cast<DType*>(out->data),
+//             x_length);
+//         printf("after call 0");
+//       });*/
+//       // SWITCH_BITS(bits, DType, {
+//         SWITCH_OP(op, Op, {
+//                         printf("before call 2");
+//           cuda::reorderd_Csr<IdType, DType >(bcast,
+//                 csr, static_cast<DType*>(ufeat->data),
+//             nullptr,
+//             static_cast<DType*>(out->data),
+//             x_length,
+//             d_part_array );
+//         });
+//       // });
+//     }
+//   }
+// }
 
 
 template <int XPU, typename IdType, typename DType>
@@ -84,13 +130,112 @@ void SpMMCsr(
       for (int i = 1; i < ufeat->ndim; ++i) x_length *= ufeat->shape[i];
       
       // SWITCH_OP(op, Op {
-      cuda::CustomCsr<IdType, DType>(
+      //--------------------------- custome CSR starts-------------------
+      // cuda::CustomCsr<IdType, DType>(                                 // function avalible in spmm.cuh
+      //   bcast, csr, static_cast<DType*>(ufeat->data),
+      //   nullptr, 
+      //   static_cast<DType*>(out->data),
+      //   x_length
+      // );
+      // });
+    
+      //--------------------------- reorderd_Csr CSR starts-------------------
+      // cuda::reorderd_Csr<IdType, DType>(                                 // function avalible in spmm.cuh
+      //   bcast, csr, static_cast<DType*>(ufeat->data),
+      //   nullptr, 
+      //   static_cast<DType*>(out->data),
+      //   x_length,
+      //     d_part_array
+      // );
+
+
+      CusparseCsrmm2<DType, IdType>(
+          ufeat->ctx, csr, static_cast<DType*>(ufeat->data), nullptr,
+          static_cast<DType*>(out->data), x_length);
+    } else if (
+        op == "mul" && is_scalar_efeat &&
+        cusparse_available<DType, IdType>(more_nnz)) {
+      // cusparse
+      int64_t x_length = 1;
+      for (int i = 1; i < ufeat->ndim; ++i) x_length *= ufeat->shape[i];
+      if (!IsNullArray(csr.data)) {
+        efeat = IndexSelect(efeat, csr.data);
+      }
+      // printf("CusparseCsrmm2 called op= mul\n");
+      CusparseCsrmm2<DType, IdType>(
+          ufeat->ctx, csr, static_cast<DType*>(ufeat->data),
+          static_cast<DType*>(efeat->data), static_cast<DType*>(out->data),
+          x_length);
+    } else {  // general kernel
+      SWITCH_OP(op, Op, {
+        cuda::SpMMCsr<IdType, DType, Op, cuda::reduce::Sum<IdType, DType> >(
+            bcast, csr, ufeat, efeat, out, NullArray(), NullArray());
+      });
+    }
+  } else if (reduce == "max") {
+    SWITCH_OP(op, Op, {
+      cuda::SpMMCsr<IdType, DType, Op, cuda::reduce::Max<IdType, DType> >(
+          bcast, csr, ufeat, efeat, out, out_aux[0], out_aux[1]);
+    });
+  } else if (reduce == "min") {
+    SWITCH_OP(op, Op, {
+      cuda::SpMMCsr<IdType, DType, Op, cuda::reduce::Min<IdType, DType> >(
+          bcast, csr, ufeat, efeat, out, out_aux[0], out_aux[1]);
+    });
+  } else {
+    LOG(FATAL) << "Not implemented";
+  }
+}
+
+template <int XPU, typename IdType, typename DType>
+void ReSpMMCsr(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array) {
+  bool is_scalar_efeat = efeat.NumElements() == csr.indices->shape[0];
+  bool use_efeat = op != "copy_lhs";
+
+  if (reduce == "sum") {
+    bool more_nnz = (csr.indices->shape[0] > csr.num_rows * csr.num_cols);
+    if (op == "copy_lhs" && cusparse_available<DType, IdType>(more_nnz)) {
+      // cusparse
+      int64_t x_length = 1;
+      // printf("CusparseCsrmm2 called op=sum\n");
+      for (int i = 1; i < ufeat->ndim; ++i) x_length *= ufeat->shape[i];
+
+      // int row_size = csr.num_rows;
+      // int col_size = csr.num_cols;
+      // int indices_size = csr.indices->shape[0];
+      // int indptr_size = csr.indptr->shape[0];
+      // printf("row_size: %d, col_size: %d, indices_size: %d, indptr_size: %d\n",row_size, col_size, indices_size, indptr_size);
+
+      // int64_t *row_data = static_cast<int64_t*>(csr.indptr->data);
+      // printf("data copied\n");
+      // for (int i=0; i<indptr_size; i++)
+      // {
+      //   printf("%ld ",row_data[i]);
+      // }
+      // printf("\n");
+      
+      // SWITCH_OP(op, Op {
+      //--------------------------- custome CSR starts-------------------
+      // cuda::CustomCsr<IdType, DType>(                                 // function avalible in spmm.cuh
+      //   bcast, csr, static_cast<DType*>(ufeat->data),
+      //   nullptr, 
+      //   static_cast<DType*>(out->data),
+      //   x_length
+      // );
+      // });
+    
+      //--------------------------- reorderd_Csr CSR starts-------------------
+      cuda::reorderd_Csr<IdType, DType>(                                 // function avalible in spmm.cuh
         bcast, csr, static_cast<DType*>(ufeat->data),
         nullptr, 
         static_cast<DType*>(out->data),
-        x_length
+        x_length,
+          static_cast<IdType*>(d_part_array->data)
       );
-      // });
+
 
       // CusparseCsrmm2<DType, IdType>(
       //     ufeat->ctx, csr, static_cast<DType*>(ufeat->data), nullptr,
@@ -129,6 +274,81 @@ void SpMMCsr(
     LOG(FATAL) << "Not implemented";
   }
 }
+
+template <int XPU, typename IdType, typename DType>
+void GESpMMCsr(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux) {
+  bool is_scalar_efeat = efeat.NumElements() == csr.indices->shape[0];
+  bool use_efeat = op != "copy_lhs";
+
+  if (reduce == "sum") {
+    bool more_nnz = (csr.indices->shape[0] > csr.num_rows * csr.num_cols);
+    if (op == "copy_lhs" && cusparse_available<DType, IdType>(more_nnz)) {
+      // cusparse
+      int64_t x_length = 1;
+      // printf("CusparseCsrmm2 called op=sum\n");
+      for (int i = 1; i < ufeat->ndim; ++i) x_length *= ufeat->shape[i];
+      
+      // SWITCH_OP(op, Op {
+      //--------------------------- custome CSR starts-------------------
+      cuda::CustomCsr<IdType, DType>(                                 // function avalible in spmm.cuh
+        bcast, csr, static_cast<DType*>(ufeat->data),
+        nullptr, 
+        static_cast<DType*>(out->data),
+        x_length
+      );
+      // });
+    
+      //--------------------------- reorderd_Csr CSR starts-------------------
+      // cuda::reorderd_Csr<IdType, DType>(                                 // function avalible in spmm.cuh
+      //   bcast, csr, static_cast<DType*>(ufeat->data),
+      //   nullptr, 
+      //   static_cast<DType*>(out->data),
+      //   x_length,
+      //     d_part_array
+      // );
+
+
+      // CusparseCsrmm2<DType, IdType>(
+      //     ufeat->ctx, csr, static_cast<DType*>(ufeat->data), nullptr,
+      //     static_cast<DType*>(out->data), x_length);
+    } else if (
+        op == "mul" && is_scalar_efeat &&
+        cusparse_available<DType, IdType>(more_nnz)) {
+      // cusparse
+      int64_t x_length = 1;
+      for (int i = 1; i < ufeat->ndim; ++i) x_length *= ufeat->shape[i];
+      if (!IsNullArray(csr.data)) {
+        efeat = IndexSelect(efeat, csr.data);
+      }
+      // printf("CusparseCsrmm2 called op= mul\n");
+      CusparseCsrmm2<DType, IdType>(
+          ufeat->ctx, csr, static_cast<DType*>(ufeat->data),
+          static_cast<DType*>(efeat->data), static_cast<DType*>(out->data),
+          x_length);
+    } else {  // general kernel
+      SWITCH_OP(op, Op, {
+        cuda::SpMMCsr<IdType, DType, Op, cuda::reduce::Sum<IdType, DType> >(
+            bcast, csr, ufeat, efeat, out, NullArray(), NullArray());
+      });
+    }
+  } else if (reduce == "max") {
+    SWITCH_OP(op, Op, {
+      cuda::SpMMCsr<IdType, DType, Op, cuda::reduce::Max<IdType, DType> >(
+          bcast, csr, ufeat, efeat, out, out_aux[0], out_aux[1]);
+    });
+  } else if (reduce == "min") {
+    SWITCH_OP(op, Op, {
+      cuda::SpMMCsr<IdType, DType, Op, cuda::reduce::Min<IdType, DType> >(
+          bcast, csr, ufeat, efeat, out, out_aux[0], out_aux[1]);
+    });
+  } else {
+    LOG(FATAL) << "Not implemented";
+  }
+}
+
 
 /**
  * @brief CUDA implementation of g-SpMM on Coo format.
@@ -229,6 +449,36 @@ template void CustomCsr<kDGLCUDA, int64_t, double>(
     const std::string& op, const std::string& reduce,
     const BcastOff& bcast, const CSRMatrix& csr,
     NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux);
+
+// template void reorderd_Csr<kDGLCUDA, int32_t, __half>(
+//     const std::string& op, const std::string& reduce,
+//     const BcastOff& bcast, const CSRMatrix& csr,
+//     NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux, int64_t* d_part_array);
+//
+// template void reorderd_Csr<kDGLCUDA, int64_t, __half>(
+//     const std::string& op, const std::string& reduce,
+//     const BcastOff& bcast, const CSRMatrix& csr,
+//     NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux, int64_t* d_part_array);
+//
+// template void reorderd_Csr<kDGLCUDA, int32_t, float>(
+//     const std::string& op, const std::string& reduce,
+//     const BcastOff& bcast, const CSRMatrix& csr,
+//     NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux, int64_t* d_part_array);
+// template void reorderd_Csr<kDGLCUDA, int64_t, float>(
+//     const std::string& op, const std::string& reduce,
+//     const BcastOff& bcast, const CSRMatrix& csr,
+//     NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux, int64_t* d_part_array);
+//
+// template void reorderd_Csr<kDGLCUDA, int32_t, double>(
+//     const std::string& op, const std::string& reduce,
+//     const BcastOff& bcast, const CSRMatrix& csr,
+//     NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux, int64_t* d_part_array);
+// template void reorderd_Csr<kDGLCUDA, int64_t, double>(
+//     const std::string& op, const std::string& reduce,
+//     const BcastOff& bcast, const CSRMatrix& csr,
+//     NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux, int64_t* d_part_array);
+
+
 //
 // template void CoustomCsr<kDGLCUDA, int32_t, __half>(
 //     const std::string& op, const std::string& reduce, const BcastOff& bcast,
@@ -249,6 +499,26 @@ template void SpMMCsr<kDGLCUDA, int64_t, __half>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
     std::vector<NDArray> out_aux);
+
+template void ReSpMMCsr<kDGLCUDA, int32_t, __half>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCUDA, int64_t, __half>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+
+template void GESpMMCsr<kDGLCUDA, int32_t, __half>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCUDA, int64_t, __half>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+
+
 #if BF16_ENABLED
 template void SpMMCsr<kDGLCUDA, int32_t, __nv_bfloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
@@ -259,6 +529,25 @@ template void SpMMCsr<kDGLCUDA, int64_t, __nv_bfloat16>(
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
     std::vector<NDArray> out_aux);
 
+template void ReSpMMCsr<kDGLCUDA, int32_t, __nv_bfloat16>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCUDA, int64_t, __nv_bfloat16>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+
+template void GESpMMCsr<kDGLCUDA, int32_t, __nv_bfloat16>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCUDA, int64_t, __nv_bfloat16>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+
+
 template void CustomCsr<kDGLCUDA, int32_t, __nv_bfloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
@@ -267,6 +556,15 @@ template void CustomCsr<kDGLCUDA, int64_t, __nv_bfloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
     std::vector<NDArray> out_aux);
+
+// template void reorderd_Csr<kDGLCUDA, int32_t, __nv_bfloat16>(
+//     const std::string& op, const std::string& reduce, const BcastOff& bcast,
+//     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+//     std::vector<NDArray> out_aux, int64_t* d_part_array);
+// template void reorderd_Csr<kDGLCUDA, int64_t, __nv_bfloat16>(
+//     const std::string& op, const std::string& reduce, const BcastOff& bcast,
+//     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+//     std::vector<NDArray> out_aux, int64_t* d_part_array);
 
 
 #endif  // BF16_ENABLED
@@ -286,6 +584,41 @@ template void SpMMCsr<kDGLCUDA, int64_t, double>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
     std::vector<NDArray> out_aux);
+
+template void ReSpMMCsr<kDGLCUDA, int32_t, float>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCUDA, int64_t, float>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCUDA, int32_t, double>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+template void ReSpMMCsr<kDGLCUDA, int64_t, double>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux, NDArray d_part_array);
+
+template void GESpMMCsr<kDGLCUDA, int32_t, float>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCUDA, int64_t, float>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCUDA, int32_t, double>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+template void GESpMMCsr<kDGLCUDA, int64_t, double>(
+    const std::string& op, const std::string& reduce, const BcastOff& bcast,
+    const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
+    std::vector<NDArray> out_aux);
+
 
 template void SpMMCoo<kDGLCUDA, int32_t, __half>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,

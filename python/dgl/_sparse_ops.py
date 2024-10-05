@@ -1,11 +1,21 @@
 """Module for sparse matrix operators."""
 # pylint: disable= invalid-name
+
 from __future__ import absolute_import
 
-from . import backend as F, ndarray as nd
+from .import backend as F, ndarray as nd
 from ._ffi.function import _init_api
 from .base import DGLError
+from .metis_sampling import *
 
+# from dgl import DGLHeteroGraph
+import torch as th
+device = th.device('cuda')
+# part_array = spmm_part_array()
+# if part_array is None:
+#     part_array = torch.ones(10)
+# part_array = th.tensor(part_array)
+# part_array = part_array.to(device)
 
 def infer_broadcast_shape(op, shp1, shp2):
     r"""Check the shape validity, and infer the output shape given input shape and operator.
@@ -235,17 +245,61 @@ def _gspmm(gidx, op, reduce_op, u, e):
             arg_e = F.zeros(v_shp, idtype, ctx)
     arg_u_nd = to_dgl_nd_for_write(arg_u)
     arg_e_nd = to_dgl_nd_for_write(arg_e)
+    
+    part_array, spmm_method = spmm_part_array()
+    if part_array is None:
+        part_array = torch.ones(10)
+    # print(spmm_method)
+    # spmm_method=2
+    # print(gidx)
+    # print(type(gidx))
+    # num_nodes = gidx.num_nodes()  # Get number of nodes
+    # num_edges = gidx.num_edges()  # Get number of edges
+    # print(f"Number of nodes: {num_nodes}")
+    # print(f"Number of edges: {num_edges}")
+    
+    # You can also explore other methods available in gidx to extract edges and nodes
+    # for etype_idx in range(gidx.num_edge_types()):
+        # src, dst = gidx.edges(etype_idx)  # Get the edges (source, destination)
+        # print(f"Edges of type {etype_idx}: {list(zip(src, dst))}")
+
+
     if gidx.num_edges(0) > 0:
-        _CAPI_DGLKernelSpMM(
-            gidx,
-            op,
-            reduce_op,
-            to_dgl_nd(u if use_u else None),
-            to_dgl_nd(e if use_e else None),
-            to_dgl_nd_for_write(v),
-            arg_u_nd,
-            arg_e_nd,
-        )
+        if spmm_method == 0:
+            _CAPI_DGLKernelSpMM(
+                gidx,
+                op,
+                reduce_op,
+                to_dgl_nd(u if use_u else None),
+                to_dgl_nd(e if use_e else None),
+                to_dgl_nd_for_write(v),
+                arg_u_nd,
+                arg_e_nd,
+            )
+        if spmm_method == 1:
+            _CAPI_DGLKernelReSpMM(
+                gidx,
+                op,
+                reduce_op,
+                to_dgl_nd(u if use_u else None),
+                to_dgl_nd(e if use_e else None),
+                to_dgl_nd_for_write(v),
+                arg_u_nd,
+                arg_e_nd,
+                to_dgl_nd(part_array)
+            )
+        if spmm_method == 2:
+            _CAPI_DGLKernelGESpMM(
+                gidx,
+                op,
+                reduce_op,
+                to_dgl_nd(u if use_u else None),
+                to_dgl_nd(e if use_e else None),
+                to_dgl_nd_for_write(v),
+                arg_u_nd,
+                arg_e_nd,
+            )
+
     # NOTE(zihao): actually we can avoid the following step, because arg_*_nd
     # refers to the data that stores arg_*. After we call _CAPI_DGLKernelSpMM,
     # arg_* should have already been changed. But we found this doesn't work

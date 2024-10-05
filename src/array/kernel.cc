@@ -43,6 +43,60 @@ void SpMM(
   });
 }
 
+/** @brief Generalized Sparse Matrix-Matrix Multiplication with reorderd vertex. */
+void ReSpMM(
+    const std::string& op, const std::string& reduce, HeteroGraphPtr graph,
+    NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux, NDArray part_array) {
+  // TODO(zihao): format tuning
+  SparseFormat format = graph->SelectFormat(0, CSC_CODE);
+  const auto& bcast = CalcBcastOff(op, ufeat, efeat);
+
+  ATEN_XPU_SWITCH_CUDA(graph->Context().device_type, XPU, "SpMM", {
+    ATEN_ID_TYPE_SWITCH(graph->DataType(), IdType, {
+      ATEN_FLOAT_TYPE_SWITCH_16BITS(out->dtype, Dtype, XPU, "Feature data", {
+        if (format == SparseFormat::kCSC) {
+          ReSpMMCsr<XPU, IdType, Dtype>(
+              op, reduce, bcast, graph->GetCSCMatrix(0), ufeat, efeat, out,
+              out_aux, part_array);
+        } else if (format == SparseFormat::kCOO) {
+          SpMMCoo<XPU, IdType, Dtype>(
+              op, reduce, bcast, graph->GetCOOMatrix(0), ufeat, efeat, out,
+              out_aux);
+        } else {
+          LOG(FATAL) << "SpMM only supports CSC and COO formats";
+        }
+      });
+    });
+  });
+}
+
+void GESpMM(
+    const std::string& op, const std::string& reduce, HeteroGraphPtr graph,
+    NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux) {
+  // TODO(zihao): format tuning
+  SparseFormat format = graph->SelectFormat(0, CSC_CODE);
+  const auto& bcast = CalcBcastOff(op, ufeat, efeat);
+
+  ATEN_XPU_SWITCH_CUDA(graph->Context().device_type, XPU, "SpMM", {
+    ATEN_ID_TYPE_SWITCH(graph->DataType(), IdType, {
+      ATEN_FLOAT_TYPE_SWITCH_16BITS(out->dtype, Dtype, XPU, "Feature data", {
+        if (format == SparseFormat::kCSC) {
+          GESpMMCsr<XPU, IdType, Dtype>(
+              op, reduce, bcast, graph->GetCSCMatrix(0), ufeat, efeat, out,
+              out_aux);
+        } else if (format == SparseFormat::kCOO) {
+          SpMMCoo<XPU, IdType, Dtype>(
+              op, reduce, bcast, graph->GetCOOMatrix(0), ufeat, efeat, out,
+              out_aux);
+        } else {
+          LOG(FATAL) << "SpMM only supports CSC and COO formats";
+        }
+      });
+    });
+  });
+}
+
+
 /** @brief Generalized segmented dense Matrix-Matrix Multiplication. */
 void SegmentMM(
     const NDArray A, const NDArray B, NDArray C, const NDArray seglen_A,
@@ -480,6 +534,7 @@ DGL_REGISTER_GLOBAL("sparse._CAPI_DGLKernelSpMM")
       NDArray V = args[5];
       NDArray ArgU = args[6];
       NDArray ArgE = args[7];
+      // NDArray part_array = args[8];
       CheckCtx(
           graph->Context(), {U, E, V, ArgU, ArgE},
           {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
@@ -497,6 +552,65 @@ DGL_REGISTER_GLOBAL("sparse._CAPI_DGLKernelSpMM")
           {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
       SpMM(op, reduce_op, graph.sptr(), U, E, V, {ArgU, ArgE});
     });
+
+DGL_REGISTER_GLOBAL("sparse._CAPI_DGLKernelReSpMM")
+    .set_body([](DGLArgs args, DGLRetValue* rv) {
+      HeteroGraphRef graph = args[0];
+      const std::string op = args[1];
+      const std::string reduce_op = args[2];
+      NDArray U = args[3];
+      NDArray E = args[4];
+      NDArray V = args[5];
+      NDArray ArgU = args[6];
+      NDArray ArgE = args[7];
+      NDArray part_array = args[8];
+      CheckCtx(
+          graph->Context(), {U, E, V, ArgU, ArgE},
+          {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
+      CheckContiguous(
+          {U, E, V, ArgU, ArgE}, {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
+      CHECK_EQ(graph->NumEdgeTypes(), 1);
+      auto pair =
+          graph->meta_graph()->FindEdge(0);  // only one etype in the graph.
+      const dgl_type_t src_vtype = pair.first;
+      const dgl_type_t dst_vtype = pair.second;
+      CheckShape(
+          {graph->NumVertices(src_vtype), graph->NumEdges(0),
+           graph->NumVertices(dst_vtype)},
+          {0, 1, 2, 2, 2}, {U, E, V, ArgU, ArgE},
+          {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
+      ReSpMM(op, reduce_op, graph.sptr(), U, E, V, {ArgU, ArgE}, part_array);
+    });
+
+DGL_REGISTER_GLOBAL("sparse._CAPI_DGLKernelGESpMM")
+    .set_body([](DGLArgs args, DGLRetValue* rv) {
+      HeteroGraphRef graph = args[0];
+      const std::string op = args[1];
+      const std::string reduce_op = args[2];
+      NDArray U = args[3];
+      NDArray E = args[4];
+      NDArray V = args[5];
+      NDArray ArgU = args[6];
+      NDArray ArgE = args[7];
+      // NDArray part_array = args[8];
+      CheckCtx(
+          graph->Context(), {U, E, V, ArgU, ArgE},
+          {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
+      CheckContiguous(
+          {U, E, V, ArgU, ArgE}, {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
+      CHECK_EQ(graph->NumEdgeTypes(), 1);
+      auto pair =
+          graph->meta_graph()->FindEdge(0);  // only one etype in the graph.
+      const dgl_type_t src_vtype = pair.first;
+      const dgl_type_t dst_vtype = pair.second;
+      CheckShape(
+          {graph->NumVertices(src_vtype), graph->NumEdges(0),
+           graph->NumVertices(dst_vtype)},
+          {0, 1, 2, 2, 2}, {U, E, V, ArgU, ArgE},
+          {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
+      GESpMM(op, reduce_op, graph.sptr(), U, E, V, {ArgU, ArgE});
+    });
+
 
 DGL_REGISTER_GLOBAL("sparse._CAPI_DGLKernelGATHERMM")
     .set_body([](DGLArgs args, DGLRetValue* rv) {

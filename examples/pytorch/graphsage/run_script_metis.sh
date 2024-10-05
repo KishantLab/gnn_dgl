@@ -22,7 +22,7 @@ for fanout in "${fanouts[@]}"; do
     add_spmm_time=true
 
     output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2)
-    filename="training_time/metis/$1/$1_F${fanout}_B${batch_size}_${epoch}_SMEM_SPMM.txt"
+    filename="training_time/metis/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling.txt"
     echo "Dataset = $1, batch_size = $batch_size" > $filename
     #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
     #Loop through the output lines
@@ -31,11 +31,11 @@ for fanout in "${fanouts[@]}"; do
         add_spmm_time=false
       fi
       # Check if the line contains the string "cuda,sapmling"
-      if [[ $line == spmm\ time* ]] && $add_spmm_time; then
+      if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
         # Extract the time value and add it to the sampling time
         #echo $line
         # spmm_time_value=$(echo $line | awk '{print $3}')
-        last_spmm_time=$(echo $line | awk '{print $3}')
+        last_spmm_time=$(echo $line | awk '{print $4}')
 
         #echo $time_value
         # spmm_time=$(echo "$spmm_time + $spmm_time_value" | bc -l)
