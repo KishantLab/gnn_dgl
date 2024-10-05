@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics.functional as MF
 import tqdm
-from dgl.sampling.metis_sampling import *
+from dgl.metis_sampling import *
 from dgl.data import AsNodePredDataset
 from dgl.dataloading import (
     DataLoader,
@@ -17,8 +17,11 @@ from dgl.dataloading import (
     NeighborSampler,
 )
 from ogb.nodeproppred import DglNodePropPredDataset
-from dgl.data import CoraGraphDataset,RedditDataset,FlickrDataset
 
+from dgl.data import CoraGraphDataset,RedditDataset,FlickrDataset, YelpDataset
+
+
+print("at the top")
 
 class SAGE(nn.Module):
     def __init__(self, in_size, hid_size, out_size):
@@ -182,22 +185,43 @@ def train(args, device, g, dataset, model, num_classes):
         for it, (input_nodes, output_nodes, blocks) in enumerate(
             train_dataloader
         ):
+            # print("blocks: ",blocks)
+            # print("input nodes: ",input_nodes)
+            # print("output nodes: ",output_nodes)
             end_loop_time = time.time()
             start_model_time = time.time()
             start_x_y_time = time.time()
             x = blocks[0].srcdata["feat"]
             # print("X shape",blocks[0])
+            # print("X:",x)
             y = blocks[-1].dstdata["label"]
+            # print("dst nodes of block -1: ",blocks[-1].dstdata)
             end_x_y_time = time.time()
             # print("Y shape", blocks[-1])
+            # print("Y: ",y)
 
             start_pred_time = time.time()
             y_hat = model(blocks, x)
+            # print(type(y_hat))
+            # print("y_hat: ", y_hat)
+            # print("len: ", len(y_hat))
             end_pred_time = time.time()
             
             start_loss_time = time.time()
+            # y = y.float()
             y = y.long()
+            # print("y :", y)
+            # print("type: ", type(y))
+            # print("len: ", len(y))
+            # print("y_hat type:", y_hat.dtype)
+            # print("y type:", y.dtype)
+            # print("y_hat shape:", y_hat.shape)
+            # print("y shape:", y.shape)
+            #
+            # y = torch.argmax(y, dim=1)
+
             loss = F.cross_entropy(y_hat, y)
+            # loss = F.binary_cross_entropy_with_logits(y_hat, y)
             opt.zero_grad()
             loss.backward()
             opt.step()
@@ -240,6 +264,8 @@ def train(args, device, g, dataset, model, num_classes):
         
 
 if __name__ == "__main__":
+
+    print("inside the main")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--mode",
@@ -280,6 +306,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--fan_out", type=str, default="10,10,10")
     parser.add_argument("--parts", type=int, default=10)
+    parser.add_argument("--spmm", default="cusparse")
     args = parser.parse_args()
     if not torch.cuda.is_available():
         args.mode = "cpu"
@@ -301,6 +328,8 @@ if __name__ == "__main__":
         dataset = FlickrDataset()
     elif args.dataset == "reddit":
         dataset = RedditDataset()
+    elif args.dataset == "yelp":
+        dataset = YelpDataset()
     elif args.dataset == "ogbn-products":
         dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-products"))
     elif args.dataset == "ogbn-arxiv":
@@ -309,8 +338,18 @@ if __name__ == "__main__":
         dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
         # raise ValueError("Unknown dataset: {}".format(args.dataset))
 
+    if args.spmm == "cusparse":
+        spmm_method = 0.
+    elif args.spmm == "respmm":
+        spmm_method = 1
+    elif args.spmm == "gespmm":
+        spmm_method = 2
+    else:
+        print("please provide valid spmm mathod like respmm or gespmm. default value is cusparse")
+
     g = dataset[0]
-    part_array = get_part_array(g, args.parts, args.method)
+    print("metis partition called")
+    part_array = get_part_array(g, args.parts, args.method, spmm_method)
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     test_mask=g.ndata['test_mask']

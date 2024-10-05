@@ -23,6 +23,7 @@ def main(args, task):
     # 2. put the model on gpu in training phase, and put the model on cpu in validation/testing phase
     # We need to judge cpu_flag and cuda (below) simultaneously when shift model between cpu and gpu
     if args.dataset in ["amazon"]:
+
         cpu_flag = True
     else:
         cpu_flag = False

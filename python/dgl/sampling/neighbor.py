@@ -3,7 +3,7 @@
 import os
 
 import torch
-from .metis_sampling import *
+from ..metis_sampling import *
 from .. import backend as F, ndarray as nd, utils
 from .._ffi.function import _init_api
 from ..base import DGLError, EID
@@ -679,6 +679,8 @@ def _sample_neighbors(
         ret = DGLGraph(subgidx.graph, g.ntypes, g.etypes)
         induced_edges = subgidx.induced_edges
         # print("returnd ret",ret)
+        # print(type(ret))
+        
 
     # handle features
     # (TODO) (BarclayII) DGL distributed fails with bus error, freezes, or other
@@ -716,6 +718,7 @@ def _sample_neighbors(
         for i, etype in enumerate(ret.canonical_etypes):
             ret.edges[etype].data[EID] = induced_edges[i]
     # print("final_ret",ret)
+    # print(type(ret))
     return ret
 
 
