@@ -249,19 +249,31 @@ def _gspmm(gidx, op, reduce_op, u, e):
     part_array, spmm_method = spmm_part_array()
     if part_array is None:
         part_array = torch.ones(10)
-    # print(spmm_method)
-    # spmm_method=2
+
+    # Print number of nodes
     # print(gidx)
-    # print(type(gidx))
-    # num_nodes = gidx.num_nodes()  # Get number of nodes
-    # num_edges = gidx.num_edges()  # Get number of edges
-    # print(f"Number of nodes: {num_nodes}")
-    # print(f"Number of edges: {num_edges}")
-    
-    # You can also explore other methods available in gidx to extract edges and nodes
-    # for etype_idx in range(gidx.num_edge_types()):
-        # src, dst = gidx.edges(etype_idx)  # Get the edges (source, destination)
-        # print(f"Edges of type {etype_idx}: {list(zip(src, dst))}")
+    # for ntype in range(gidx.number_of_ntypes()):
+    #     print(f"Number of nodes of type {ntype}: {gidx.num_nodes(ntype)}")
+    #     # node_ids = gidx.node_ids(ntype)  # Retrieve the original node IDs
+    #     # print(f"Nodes of type {ntype}:")
+    #     # for node_id in node_ids:
+    #     #     print(f"Node ID (original): {node_id}")
+    #
+    # # Print number of edges
+    # for etype in range(gidx.number_of_etypes()):
+    #     print(f"Number of edges of type {etype}: {gidx.num_edges(etype)}")
+    #
+    # # Print source and destination node types for each edge type
+    # for etype in range(gidx.number_of_etypes()):
+    #     srctype, dsttype = gidx.metagraph.find_edge(etype)
+    #     print(f"Edge type {etype}: Source node type: {srctype}, Destination node type: {dsttype}")
+    #     # Print the edges with original node IDs
+    #
+    # for etype in range(gidx.number_of_etypes()):
+    #     src, dst = gidx.edges(etype)[:2]  # Get source and destination nodes of the edges
+    #     print(f"Edges of type {etype}:")
+    #     for edge_id in range(gidx.num_edges(etype)):
+    #         print(f"Edge {edge_id}: Source: {src[edge_id]}, Destination: {dst[edge_id]}")
 
 
     if gidx.num_edges(0) > 0:

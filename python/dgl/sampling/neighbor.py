@@ -676,10 +676,13 @@ def _sample_neighbors(
             replace,
             )
 
+        # print("sub graph after sampling: ",subgidx.graph)
         ret = DGLGraph(subgidx.graph, g.ntypes, g.etypes)
         induced_edges = subgidx.induced_edges
         # print("returnd ret",ret)
         # print(type(ret))
+        # print("edata: ",ret.edata)  # Print all edge data (including weights if they exist)
+
         
 
     # handle features

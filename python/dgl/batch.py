@@ -170,6 +170,8 @@ def batch(graphs, ndata=ALL, edata=ALL):
     ntype_ids = [graphs[0].get_ntype_id(n) for n in ntypes]
     etypes = [etype for _, etype, _ in relations]
 
+    print("gidx create batch.py line 171")
+
     gidx = disjoint_union(
         graphs[0]._graph.metagraph, [g._graph for g in graphs]
     )

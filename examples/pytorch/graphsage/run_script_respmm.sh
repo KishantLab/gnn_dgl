@@ -21,8 +21,8 @@ for fanout in "${fanouts[@]}"; do
     last_cuda_sampling_time=""
     add_spmm_time=true
 
-    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2)
-    filename="training_time/metis/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling.txt"
+    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2 --spmm=respmm)
+    filename="training_time/metis/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm.txt"
     echo "Dataset = $1, batch_size = $batch_size" > $filename
     #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
     #Loop through the output lines
