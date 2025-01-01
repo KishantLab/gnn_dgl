@@ -60,6 +60,7 @@ class HeteroGraphData(ObjectBase):
         ntype_names = list(_CAPI_GetNtypesFromHeteroGraphData(self))
         etype_names = list(_CAPI_GetEtypesFromHeteroGraphData(self))
         gidx = _CAPI_GetGindexFromHeteroGraphData(self)
+        print("gidx pointer of graph creates heterograph_serialize.py line 63")
         nframes = []
         eframes = []
         for ntid, ntensor in enumerate(ntensor_list):

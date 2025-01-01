@@ -713,8 +713,8 @@ template <typename IdType, typename DType>
 __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdType* A_indices, const DType* B, DType* C, IdType *reorderd_arr)
 // __global__ void dkernel_ksn(int m, int k, int* A_indptr, int* A_indices, int* B, int* C)
 {
-  int rid = reorderd_arr[blockIdx.x];
-  // int rid = blockIdx.x;
+  // int rid = reorderd_arr[blockIdx.x];
+  int rid = blockIdx.x;
   __shared__ int Neb[Shared_mem_size];    //initilize the shared memory
   // extern __shared__ int result[];         //initilize external/ dynamic shared memory
   // __shared__ int start;

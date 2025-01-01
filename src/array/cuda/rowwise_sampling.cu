@@ -30,7 +30,7 @@ namespace impl {
 
 namespace {
 
-constexpr int BLOCK_SIZE = 512;
+constexpr int BLOCK_SIZE = 256;
 int flag = 0;
 int64_t* d_part_array;
 float sampling_time = 0.0;
@@ -238,8 +238,11 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
       {
         if(threadIdx.x < deg)
         {
-          neighbours[threadIdx.x] = in_index[in_row_start + threadIdx.x];
-          part_id[threadIdx.x] = d_part_array[in_index[in_row_start + threadIdx.x]];
+          int neb_data = in_index[in_row_start + threadIdx.x];
+          // neighbours[threadIdx.x] = in_index[in_row_start + threadIdx.x];
+          neighbours[threadIdx.x] = neb_data;
+          part_id[threadIdx.x] = d_part_array[neb_data];
+          // part_id[threadIdx.x] = d_part_array[in_index[in_row_start + threadIdx.x]];
         }
         if (threadIdx.x < num_picks) {
           counts[threadIdx.x] = 0;
@@ -251,15 +254,32 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         }
         __syncthreads();
 
-        if( threadIdx.x < deg)
+        for(int kk= threadIdx.x; kk < deg; kk+=BLOCK_SIZE)
         {
           int val = part_id[threadIdx.x];
           if( val == maxValue)
           {
             atomicAdd(&counts[val], 1);
           }
-          // atomicAdd(&counts[val], 1);
+          if (counts[val] >= num_picks)
+          {
+            break;
+          }
+
         }
+        // if( threadIdx.x < deg)
+        // {
+        //   int val = part_id[threadIdx.x];
+        //   if( val == maxValue)
+        //   {
+        //     atomicAdd(&counts[val], 1);
+        //   }
+        //   // if (counts[val] >= num_picks)
+        //   // {
+        //     // break;
+        //   // }
+        //   // atomicAdd(&counts[val], 1);
+        // }
         // __syncthreads();
         // Find maximum count and corresponding value
         if (threadIdx.x == 0) {
@@ -358,6 +378,10 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           if( val == maxValue)
           {
             atomicAdd(&counts[val], 1);
+          }
+          if (counts[val] >= num_picks)
+          {
+            break;
           }
           // atomicAdd(&counts[val], 1);
         }

@@ -96,6 +96,7 @@ class DGLGraph(object):
             (sparse_fmt, arrays), num_src, num_dst = utils.graphdata2tensors(
                 gidx
             )
+            print("gidx from heterogrph.py line 99")
             if sparse_fmt == "coo":
                 gidx = heterograph_index.create_unitgraph_from_coo(
                     1,
