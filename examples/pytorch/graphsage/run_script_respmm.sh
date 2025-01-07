@@ -36,7 +36,6 @@ for fanout in "${fanouts[@]}"; do
         #echo $line
         # spmm_time_value=$(echo $line | awk '{print $3}')
         last_spmm_time=$(echo $line | awk '{print $4}')
-
         #echo $time_value
         # spmm_time=$(echo "$spmm_time + $spmm_time_value" | bc -l)
         # fi
@@ -48,6 +47,8 @@ for fanout in "${fanouts[@]}"; do
         #echo $time_value
         # sampling_time=$(echo "$sampling_time + $time_value" | bc -l)
       fi
+      echo $last_spmm_time
+      echo $last_cuda_sampling_time
 
     done <<< "$output"
 
