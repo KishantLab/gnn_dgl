@@ -40,7 +40,7 @@ def metis_partition(G, parts=None, method=None, spmm_reorderd=0):
         if spmm_reorderd == 1:
             _spmm_method = 1
             num_parts = int(Nodes/1024)
-            _part_array = dgl.metis_partition_assignment(G, num_parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
+            _part_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
             # _part_array = _computed_array
             _part_array = list(map(int, _part_array))
             _part_array = [[d, i] for i, d in enumerate(_part_array, 0)]

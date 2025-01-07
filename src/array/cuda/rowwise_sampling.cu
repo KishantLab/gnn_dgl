@@ -225,6 +225,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
       // Shared memory to store counts for each value and their index
       extern __shared__ int counts[];
       extern __shared__ int index_array[];
+      extern __shared__ int non_part_vertex[];
       // __shared__ int index_array[10];
       __shared__ int maxCount;
       __shared__ int maxValue;
@@ -250,7 +251,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
 
         if(threadIdx.x == 0)
         {
-          maxValue = d_part_array[row];
+          maxValue = d_part_array[row]; //source node part id
         }
         __syncthreads();
 
@@ -293,6 +294,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         // //   // // Find indices of maximum repeated value
         if (threadIdx.x == 0)
         {
+          int non_part_vertex_pointer=0;
           for(int kk = 0; kk < deg; kk++)
           // for(int kk = threadIdx.x; kk < deg; kk++)
           {
@@ -303,7 +305,12 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
               index_array[pointer_position] = threadIdx.x;
               pointer_position++;
             }
-            if( pointer_position >= num_picks)
+            if(part_id[kk] != maxValue && non_part_vertex_pointer < num_picks)
+            {
+              non_part_vertex[non_part_vertex_pointer] = threadIdx.x;
+              non_part_vertex_pointer++;
+            }
+            if( pointer_position >= num_picks || non_part_vertex_pointer >= num_picks)
             {
               break;
             }
@@ -333,28 +340,30 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
             out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
           }
           int remining_size = num_picks - maxCount;
-          // printf("the remining size: %d maxCount: %d\n",remining_size,maxCount);
+          // printf("remining size: %d maxCount: %d\n",remining_size,maxCount);
           for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
-            int counter = 0;
-            for(int i = 0; i < deg && counter < remining_size; i++)
-            {
-              int flag = 0;
-              for (int j = 0; j < maxCount; j++)
-              {
-                if ( neighbours[i] == neighbours[index_array[j]])
-                {
-                  flag = 1;
-                  break;
-                }
-              }
-              if (flag == 0)
-              {
-                out_cols[out_row_start + idx] = neighbours[i];
-                counter++;
-              }
-            }
+            out_cols[out_row_start + idx] = neighbours[non_part_vertex[threadIdx.x]];
+            // int counter = 0;
+            // for(int i = 0; i < deg && counter < remining_size; i++)
+            // {
+            //   int flag = 0;
+            //   // printf("Bid: %d, threadIdx: %d, row: %d \n", blockIdx.x, threadIdx.x,row);
+            //   for (int j = 0; j < maxCount; j++)
+            //   {
+            //     if ( neighbours[i] == neighbours[index_array[j]])
+            //     {
+            //       flag = 1;
+            //       break;
+            //     }
+            //   }
+            //   if (flag == 0)
+            //   {
+            //     out_cols[out_row_start + idx] = neighbours[i];
+            //     counter++;
+            //   }
+            // }
             out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
           }
         }
@@ -398,6 +407,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         // Find indices of maximum repeated value
         if (threadIdx.x == 0)
         {
+          int non_part_vertex_pointer=0;
           for(int kk = 0; kk < deg; kk++)
           {
             if(d_part_array[in_index[in_row_start + kk]] == maxValue && pointer_position < num_picks)
@@ -406,7 +416,14 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
               // index_array[pointer_position] = in_index[in_row_start + kk];
               pointer_position++;
             }
-            if( pointer_position >= num_picks)
+            if(d_part_array[in_index[in_row_start + kk]] != maxValue && non_part_vertex_pointer < num_picks)
+            {
+              non_part_vertex[non_part_vertex_pointer] = in_row_start + kk;
+              non_part_vertex_pointer++;
+            }
+            if( pointer_position >= num_picks || non_part_vertex_pointer >= num_picks)
+
+            // if( pointer_position >= num_picks)
             {
               break;
             }
@@ -439,28 +456,31 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
             out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
           }
           int remining_size = num_picks - maxCount;
+          // printf("remining size: %d maxCount: %d\n",remining_size,maxCount);
           for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
-            int counter = 0;
-            for(int i = 0; i < deg && counter < remining_size; i++)
-            {
-              int flag = 0;
-              for (int j = 0; j < maxCount; j++)
-              {
-                if ( in_index[i + in_row_start] == in_index[index_array[j]])
-                {
-                  flag = 1;
-                  break;
-                }
-
-              }
-              if (flag == 0)
-              {
-                out_cols[out_row_start + idx] = in_index[i + in_row_start];
-                counter++;
-              }
-            }
+            out_cols[out_row_start + idx] = in_index[non_part_vertex[threadIdx.x]];
+            // int counter = 0;
+            // for(int i = 0; i < deg && counter < remining_size; i++)
+            // {
+            //   int flag = 0;
+            //   // printf("Bid: %d, threadIdx: %d, row: %d \n", blockIdx.x, threadIdx.x,row);
+            //   for (int j = 0; j < maxCount; j++)
+            //   {
+            //     if ( in_index[i + in_row_start] == in_index[index_array[j]])
+            //     {
+            //       flag = 1;
+            //       break;
+            //     }
+            //
+            //   }
+            //   if (flag == 0)
+            //   {
+            //     out_cols[out_row_start + idx] = in_index[i + in_row_start];
+            //     counter++;
+            //   }
+            // }
             out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
           }
         }
@@ -819,7 +839,7 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   cudaEventElapsedTime(&milliseconds, start, stop);
   sampling_time += milliseconds/1000;
   printf("cuda sapmling time %.6f\n", sampling_time);
-  // cudaFree(d_part_array);
+  // cudaFree(d_part_array);samplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsampling
 
   const IdType new_len = static_cast<const IdType*>(new_len_tensor->data)[0];
   picked_row = picked_row.CreateView({new_len}, picked_row->dtype);

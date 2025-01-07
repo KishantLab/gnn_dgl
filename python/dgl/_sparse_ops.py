@@ -274,7 +274,9 @@ def _gspmm(gidx, op, reduce_op, u, e):
     #     print(f"Edges of type {etype}:")
     #     for edge_id in range(gidx.num_edges(etype)):
     #         print(f"Edge {edge_id}: Source: {src[edge_id]}, Destination: {dst[edge_id]}")
-
+    # Print edge data (weights or attributes)
+    
+    # print(dir(gidx))
 
     if gidx.num_edges(0) > 0:
         if spmm_method == 0:
@@ -874,7 +876,7 @@ def _csrmm(A, A_weights, B, B_weights, num_vtypes):
 
     Parameters
     ----------
-    A : HeteroGraphIndex
+   A : HeteroGraphIndex
         The input graph index as left operand.
     A_weights : Tensor
         The edge weights of graph A as 1D tensor.
