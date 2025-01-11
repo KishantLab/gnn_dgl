@@ -18,6 +18,7 @@ def metis_partition(G, parts=None, method=None, spmm_reorderd=0):
         print(type(G))
         print("partition start")
         Nodes = G.num_nodes() 
+        num_parts = int(Nodes/1024)
         # dgl.distributed.partition_graph(G, 'test', 4, num_hops=1, part_method='metis', out_path='output/', balance_ntypes=G.ndata['train_mask'], balance_edges=True)
         # ( g, node_feats, edge_feats, gpb, graph_name, ntypes_list, etypes_list,) = dgl.distributed.load_partition('output/test.json', 0)
 
@@ -39,9 +40,9 @@ def metis_partition(G, parts=None, method=None, spmm_reorderd=0):
         #-------------spmm methos is reorderd then it executed-----------------------------------
         if spmm_reorderd == 1:
             _spmm_method = 1
-            num_parts = int(Nodes/1024)
-            _part_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
-            # _part_array = _computed_array
+            # num_parts = int(Nodes/1024)
+            # _part_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
+            _part_array = _computed_array
             _part_array = list(map(int, _part_array))
             _part_array = [[d, i] for i, d in enumerate(_part_array, 0)]
             _part_array.sort()

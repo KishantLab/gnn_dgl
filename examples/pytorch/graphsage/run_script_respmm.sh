@@ -21,21 +21,22 @@ for fanout in "${fanouts[@]}"; do
     last_cuda_sampling_time=""
     add_spmm_time=true
 
-    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2 --spmm=respmm)
-    filename="training_time/metis/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm.txt"
+    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2 --spmm=respmm --parts=$fanout)
+    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm.txt"
     echo "Dataset = $1, batch_size = $batch_size" > $filename
     #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
     #Loop through the output lines
     while read -r line; do
-      if [[ $line == Testing...* ]]; then
+      if [[ $line == Testing...\* ]]; then
         add_spmm_time=false
       fi
       # Check if the line contains the string "cuda,sapmling"
-      if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
+      # if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
+      if [[ $line == re_orderd_spmm\ time* ]] && $add_spmm_time; then
         # Extract the time value and add it to the sampling time
         #echo $line
         # spmm_time_value=$(echo $line | awk '{print $3}')
-        last_spmm_time=$(echo $line | awk '{print $4}')
+        last_spmm_time=$(echo $line | awk '{print $3}')
         #echo $time_value
         # spmm_time=$(echo "$spmm_time + $spmm_time_value" | bc -l)
         # fi
@@ -47,11 +48,10 @@ for fanout in "${fanouts[@]}"; do
         #echo $time_value
         # sampling_time=$(echo "$sampling_time + $time_value" | bc -l)
       fi
-      echo $last_spmm_time
-      echo $last_cuda_sampling_time
 
     done <<< "$output"
 
+      echo "last_spmm_time: $last_spmm_time , last_cuda_sampling_time: $last_cuda_sampling_time"
         # Check if epoch_data.txt exists
         if [ -f "epoch_data.txt" ]; then
           cat "epoch_data.txt" >> $filename

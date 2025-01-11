@@ -207,10 +207,10 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
     const int64_t deg = in_ptr[row + 1] - in_row_start;
     const int64_t out_row_start = out_ptr[out_row];
 
-    if(blockIdx.x ==0 && threadIdx.x ==0)
-    {
+    // if(blockIdx.x ==0 && threadIdx.x ==0)
+    // {
       // printf("row: %ld, in_row_start: %ld, deg: %ld, out_row_start: %ld\n", row, in_row_start, deg, out_row_start);
-    }
+    // }
     if (deg <= num_picks) {
       // just copy row when there is not enough nodes to sample.
       for (int idx = threadIdx.x; idx < deg; idx += BLOCK_SIZE) {
@@ -223,13 +223,14 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
     else 
   {
       // Shared memory to store counts for each value and their index
-      extern __shared__ int counts[];
+      // extern __shared__ int counts[];
       extern __shared__ int index_array[];
       extern __shared__ int non_part_vertex[];
       // __shared__ int index_array[10];
       __shared__ int maxCount;
       __shared__ int maxValue;
       __shared__ int pointer_position;
+      __shared__ int non_part_vertex_pointer;
       // int pointer_position;
       __shared__ int neighbours[BLOCK_SIZE];
       __shared__ int part_id[BLOCK_SIZE];
@@ -245,56 +246,79 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           part_id[threadIdx.x] = d_part_array[neb_data];
           // part_id[threadIdx.x] = d_part_array[in_index[in_row_start + threadIdx.x]];
         }
-        if (threadIdx.x < num_picks) {
-          counts[threadIdx.x] = 0;
-        }
+        // if (threadIdx.x < num_picks) {
+        //   counts[threadIdx.x] = 0;
+        // }
 
         if(threadIdx.x == 0)
         {
           maxValue = d_part_array[row]; //source node part id
+          // counts[maxValue] = 0;
+          pointer_position = 0;
+          non_part_vertex_pointer = 0;
         }
         __syncthreads();
 
-        for(int kk= threadIdx.x; kk < deg; kk+=BLOCK_SIZE)
-        {
-          int val = part_id[threadIdx.x];
-          if( val == maxValue)
-          {
-            atomicAdd(&counts[val], 1);
-          }
-          if (counts[val] >= num_picks)
-          {
-            break;
-          }
-
-        }
-        // if( threadIdx.x < deg)
+        // for(int kk= threadIdx.x; kk < deg; kk+=BLOCK_SIZE)
+        // // if(threadIdx.x < deg)
         // {
-        //   int val = part_id[threadIdx.x];
+        //   int val = part_id[kk];
         //   if( val == maxValue)
         //   {
         //     atomicAdd(&counts[val], 1);
         //   }
-        //   // if (counts[val] >= num_picks)
+        //   if (counts[val] >= num_picks)
+        //   {
+        //     break;
+        //   }
+        // }
+
+        // if(threadIdx.x == 0)
+        // {
+        // for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
+        // // for (int kk = 0; kk < deg; kk++)
+        // {
+        //
+        //   // int val = d_part_array[in_index[in_row_start + kk]];
+        //   int val = part_id[kk];
+        //   if( val == maxValue && pointer_position < num_picks)
+        //   {
+        //     atomicAdd(&counts[val], 1);
+        //     // counts[val] = counts[val] + 1;
+        //     int array_pos = atomicAdd(&pointer_position, 1);
+        //     index_array[array_pos] = kk;
+        //     // index_array[pointer_position] = kk;
+        //     // pointer_position++;
+        //   }
+        //   else if(non_part_vertex_pointer < num_picks)
+        //   {
+        //     int non_p_arr_ptr = atomicAdd(&non_part_vertex_pointer, 1);
+        //     non_part_vertex[non_p_arr_ptr] = kk;
+        //     // non_part_vertex[non_part_vertex_pointer] = kk;
+        //     // non_part_vertex_pointer++;
+        //   }
+        //   // if (counts[val] >= num_picks && pointer_position >= num_picks && non_part_vertex_pointer >= num_picks)
+        //   // if (pointer_position >= num_picks && non_part_vertex_pointer >= num_picks)
         //   // {
         //     // break;
         //   // }
         //   // atomicAdd(&counts[val], 1);
         // }
-        // __syncthreads();
+        // // } //threadIdx.x == 0
+
         // Find maximum count and corresponding value
-        if (threadIdx.x == 0) {
-          maxCount = 0;
-          pointer_position = 0; 
-          // maxValue = d_part_array[row];
-          maxCount = counts[maxValue];
-          // printf("maxCount: %d, maxValue: %d, row: %ld\n",maxCount, maxValue, d_part_array[row]);
-        }
-        __syncthreads();
-        // //   // // Find indices of maximum repeated value
+        // if (threadIdx.x == 0) {
+        //   maxCount = 0;
+        //   // pointer_position = 0; 
+        //   // maxValue = d_part_array[row];
+        //   maxCount = counts[maxValue];
+        //   // printf("maxCount: %d, maxValue: %d, row: %ld\n",maxCount, maxValue, d_part_array[row]);
+        // }
+        // __syncthreads();
+          // Find indices of maximum repeated value
         if (threadIdx.x == 0)
         {
-          int non_part_vertex_pointer=0;
+          // int non_part_vertex_pointer=0;
           for(int kk = 0; kk < deg; kk++)
           // for(int kk = threadIdx.x; kk < deg; kk++)
           {
@@ -302,21 +326,24 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
             // if(part_id[threadIdx.x] == maxValue && pointer_position < num_picks)
             // if(d_part_array[in_index[in_row_start + kk]] == maxValue && pointer_position < num_picks)
             {
-              index_array[pointer_position] = threadIdx.x;
+              // index_array[pointer_position] = threadIdx.x;
+              index_array[pointer_position] = kk;
               pointer_position++;
             }
             if(part_id[kk] != maxValue && non_part_vertex_pointer < num_picks)
             {
-              non_part_vertex[non_part_vertex_pointer] = threadIdx.x;
+              // non_part_vertex[non_part_vertex_pointer] = threadIdx.x;
+              non_part_vertex[non_part_vertex_pointer] = kk;
               non_part_vertex_pointer++;
             }
-            if( pointer_position >= num_picks || non_part_vertex_pointer >= num_picks)
+            if( pointer_position >= num_picks-1 && non_part_vertex_pointer >= num_picks-1)
             {
               break;
             }
           }
-        }
-        // //   // generate permutation list via reservoir algorithm
+          maxCount = pointer_position;
+        } //threadidx.x ==0
+          // generate permutation list via reservoir algorithm
         for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
           out_idxs[out_row_start + idx] = idx;
         }
@@ -339,12 +366,12 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
             out_cols[out_row_start + idx] = neighbours[index_array[idx]];
             out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
           }
-          int remining_size = num_picks - maxCount;
+          // int remining_size = num_picks - maxCount;
           // printf("remining size: %d maxCount: %d\n",remining_size,maxCount);
           for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
-            out_cols[out_row_start + idx] = neighbours[non_part_vertex[threadIdx.x]];
+            out_cols[out_row_start + idx] = neighbours[non_part_vertex[idx - maxCount]];
             // int counter = 0;
             // for(int i = 0; i < deg && counter < remining_size; i++)
             // {
@@ -370,65 +397,101 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
       }
       else
     {
-        if (threadIdx.x < num_picks) {
-          counts[threadIdx.x] = 0;
-        }
+        // if (threadIdx.x < num_picks) {
+        //   counts[threadIdx.x] = 0;
+        // }
         // __syncthreads();
 
         //count the total repeated values of same partition
         if( threadIdx.x == 0)
         {
           maxValue = d_part_array[row];
+          pointer_position = 0;
+          non_part_vertex_pointer = 0;
+          // counts[maxValue] = 0;
+          // maxCount = 0;
         }
-        for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
+        // for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
+        // {
+        //
+        //   int val = d_part_array[in_index[in_row_start + kk]];
+        //   if( val == maxValue)
+        //   {
+        //     atomicAdd(&counts[val], 1);
+        //   }
+        //   if (counts[val] >= num_picks)
+        //   {
+        //     break;
+        //   }
+        //   // atomicAdd(&counts[val], 1);
+        // }
+        // __syncthreads();
+        if(threadIdx.x == 0)
+        {
+        // for( int kk = threadIdx.x; kk < deg; kk += BLOCK_SIZE)
+        for (int kk = 0; kk < deg; kk++)
         {
 
           int val = d_part_array[in_index[in_row_start + kk]];
-          if( val == maxValue)
+          if( val == maxValue && pointer_position < num_picks)
           {
-            atomicAdd(&counts[val], 1);
+            // atomicAdd(&counts[val], 1);
+            // counts[val] = counts[val] + 1;
+            // int array_pos = atomicAdd(&pointer_position, 1);
+            index_array[pointer_position] = in_row_start + kk;
+            // index_array[array_pos] = in_row_start + kk;
+            pointer_position++;
           }
-          if (counts[val] >= num_picks)
+          else if(non_part_vertex_pointer < num_picks)
+          {
+            // int non_p_arr_ptr = atomicAdd(&non_part_vertex_pointer, 1);
+            // non_part_vertex[non_p_arr_ptr] = in_row_start + kk;
+            non_part_vertex[non_part_vertex_pointer] = in_row_start + kk;
+            non_part_vertex_pointer++;
+          }
+          if (pointer_position >= num_picks-1 && non_part_vertex_pointer >= num_picks-1)
           {
             break;
           }
           // atomicAdd(&counts[val], 1);
         }
-        __syncthreads();
+          maxCount = pointer_position;
+        } //threadIdx.x == 0
+        // __syncthreads();
 
         // Find maximum count and corresponding value
-        if (threadIdx.x == 0) {
-          maxCount = 0;
-          pointer_position = 0; 
-          maxCount = counts[maxValue];
-        }
+        // if (threadIdx.x == 0) {
+          // maxCount = 0;
+          // pointer_position = 0; 
+          // maxCount = counts[maxValue];
+        // }
         __syncthreads();
 
         // Find indices of maximum repeated value
-        if (threadIdx.x == 0)
-        {
-          int non_part_vertex_pointer=0;
-          for(int kk = 0; kk < deg; kk++)
-          {
-            if(d_part_array[in_index[in_row_start + kk]] == maxValue && pointer_position < num_picks)
-            {
-              index_array[pointer_position] = in_row_start + kk;
-              // index_array[pointer_position] = in_index[in_row_start + kk];
-              pointer_position++;
-            }
-            if(d_part_array[in_index[in_row_start + kk]] != maxValue && non_part_vertex_pointer < num_picks)
-            {
-              non_part_vertex[non_part_vertex_pointer] = in_row_start + kk;
-              non_part_vertex_pointer++;
-            }
-            if( pointer_position >= num_picks || non_part_vertex_pointer >= num_picks)
-
-            // if( pointer_position >= num_picks)
-            {
-              break;
-            }
-          }
-        }
+        // if (threadIdx.x == 0)
+        // {
+        //   int non_part_vertex_pointer=0;
+        //   for(int kk = 0; kk < deg; kk++)
+        //   {
+        //     if(d_part_array[in_index[in_row_start + kk]] == maxValue && pointer_position < num_picks)
+        //     {
+        //       index_array[pointer_position] = in_row_start + kk;
+        //       // index_array[pointer_position] = in_index[in_row_start + kk];
+        //       pointer_position++;
+        //     }
+        //     if(d_part_array[in_index[in_row_start + kk]] != maxValue && non_part_vertex_pointer < num_picks)
+        //     {
+        //       non_part_vertex[non_part_vertex_pointer] = in_row_start + kk;
+        //       non_part_vertex_pointer++;
+        //     }
+        //     if( pointer_position >= num_picks || non_part_vertex_pointer >= num_picks)
+        //
+        //     // if( pointer_position >= num_picks)
+        //     {
+        //       break;
+        //     }
+        //   }
+        // }
 
         // generate permutation list via reservoir algorithm
         for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
@@ -455,12 +518,12 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
             out_cols[out_row_start + idx] = in_index[index_array[idx]];
             out_idxs[out_row_start + idx] = data ? data[perm_idx] : perm_idx;
           }
-          int remining_size = num_picks - maxCount;
+          // int remining_size = num_picks - maxCount;
           // printf("remining size: %d maxCount: %d\n",remining_size,maxCount);
           for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
-            out_cols[out_row_start + idx] = in_index[non_part_vertex[threadIdx.x]];
+            out_cols[out_row_start + idx] = in_index[non_part_vertex[idx - maxCount]];
             // int counter = 0;
             // for(int i = 0; i < deg && counter < remining_size; i++)
             // {

@@ -915,14 +915,14 @@ void reorderd_kernel_call(const int m, const int n, IdType* A_indptr, const IdTy
   //   std::cout<<A_indptr[i]<<" ";
   // }
   // printf("\n");
-  if(n < 256)
+  if(n < 512)
   {
     // dkernel_ksn<<<M,N>>>(M,N,d_indptr,d_indices,d_b,d_c,len);
     dkernel_reorderd<IdType,DType><<<m, n >>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
   }
   else {
     // dkernel_ksn<<<M, BLOCKSIZE, N*sizeof(int)>>>(M, N, d_indptr, d_indices, d_b, d_c, min, max, processed_arr);
-    dkernel_reorderd<IdType,DType><<<m, 256 >>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
+    dkernel_reorderd<IdType,DType><<<m, 512 >>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
   }
   cudaDeviceSynchronize();
   cudaEventRecord(stop);
