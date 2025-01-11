@@ -1,15 +1,15 @@
+#!/data/kishan/anaconda3/envs/dgl-dev-gpu-117/bin/python3
 import argparse
 import numpy as np
 import dgl
 import time
-import matplotlib.pyplot as plt
 import dgl.nn as dglnn
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics.functional as MF
 import tqdm
-from dgl.sampling.metis_sampling import *
+from dgl.metis_sampling import *
 from dgl.data import AsNodePredDataset
 from dgl.dataloading import (
     DataLoader,
@@ -17,8 +17,11 @@ from dgl.dataloading import (
     NeighborSampler,
 )
 from ogb.nodeproppred import DglNodePropPredDataset
-from dgl.data import CoraGraphDataset,RedditDataset,FlickrDataset
 
+from dgl.data import CoraGraphDataset,RedditDataset,FlickrDataset, YelpDataset
+
+
+print("at the top")
 
 class SAGE(nn.Module):
     def __init__(self, in_size, hid_size, out_size):
@@ -164,26 +167,82 @@ def train(args, device, g, dataset, model, num_classes):
     opt = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=5e-4)
 
     total_training_time = 0.0
+    total_for_loop_time = 0.0
+    total_model_time = 0.0
+    total_loss_opt_time = 0.0
     epoch_lines = []
     for epoch in range(int(args.epoch)):
         model.train()    
         total_loss = 0
         execution_time = 0.0
+        model_exe_time = 0.0
+        loop_exe_time = 0.0
+        x_y_time = 0.0
+        pred_time = 0.0
+        loss_opt_time = 0.0
         start_time1 = time.time()
+        start_loop_time = time.time()
         for it, (input_nodes, output_nodes, blocks) in enumerate(
             train_dataloader
         ):
+            # print("blocks: ",blocks)
+            # print("input nodes: ",input_nodes)
+            # print("output nodes: ",output_nodes)
+            end_loop_time = time.time()
+            start_model_time = time.time()
+            start_x_y_time = time.time()
             x = blocks[0].srcdata["feat"]
+            # print("X shape",blocks[0])
+            # print("X:",x)
             y = blocks[-1].dstdata["label"]
+            # print("dst nodes of block -1: ",blocks[-1].dstdata)
+            end_x_y_time = time.time()
+            # print("Y shape", blocks[-1])
+            # print("Y: ",y)
+
+            start_pred_time = time.time()
             y_hat = model(blocks, x)
+            # print(type(y_hat))
+            # print("y_hat: ", y_hat)
+            # print("len: ", len(y_hat))
+            end_pred_time = time.time()
+            
+            start_loss_time = time.time()
+            # y = y.float()
+            y = y.long()
+            # print("y :", y)
+            # print("type: ", type(y))
+            # print("len: ", len(y))
+            # print("y_hat type:", y_hat.dtype)
+            # print("y type:", y.dtype)
+            # print("y_hat shape:", y_hat.shape)
+            # print("y shape:", y.shape)
+            #
+            # y = torch.argmax(y, dim=1)
+
             loss = F.cross_entropy(y_hat, y)
+            # loss = F.binary_cross_entropy_with_logits(y_hat, y)
             opt.zero_grad()
             loss.backward()
             opt.step()
             total_loss += loss.item()
+            end_loss_time = time.time()
+            end_model_time = time.time()
+
+            model_exe_time += end_model_time - start_model_time
+            loop_exe_time += end_loop_time - start_loop_time
+            x_y_time += end_x_y_time - start_x_y_time
+            pred_time += end_pred_time - start_pred_time
+            loss_opt_time =+ end_loss_time - start_loss_time
+
+            start_loop_time = time.time()
+
         end_time1 = time.time()
         execution_time = end_time1 - start_time1
         total_training_time += execution_time
+        total_for_loop_time += loop_exe_time
+        total_model_time += model_exe_time
+        total_loss_opt_time += loss_opt_time
         # print("training time:", execution_time, "seconds")
         acc = evaluate(model, g, val_dataloader, num_classes)
         # print(
@@ -191,11 +250,13 @@ def train(args, device, g, dataset, model, num_classes):
         #          epoch, total_loss / (it + 1), acc.item(), execution_time
         #      )
         #  )
-        epoch_line = "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {}".format(
-                    epoch, total_loss / (it + 1), acc.item(), execution_time
+        epoch_line = "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {:.4f} | loop {:.4f} | Model {:.4f} | x_y_time {:.4f} | pred {:.4f} | loss_time {:.4f}".format(
+                    epoch, total_loss / (it + 1), acc.item(), execution_time, loop_exe_time, model_exe_time, x_y_time, pred_time, loss_opt_time
         )
         epoch_lines.append(epoch_line)
-    tt_time = "Total Training time {:.4f}".format( total_training_time)
+    tt_str = "total for loop time, total model time, total loss time, total_training_time"
+    tt_time = "{:.4f}, {:.4f}, {:.4f}, {:.4f}".format(total_for_loop_time, total_model_time, total_loss_opt_time, total_training_time)
+    epoch_lines.append(tt_str)
     epoch_lines.append(tt_time)
     return epoch_lines
 
@@ -203,6 +264,8 @@ def train(args, device, g, dataset, model, num_classes):
         
 
 if __name__ == "__main__":
+
+    print("inside the main")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--mode",
@@ -220,13 +283,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset",
         default="ogbn-products",
-        choices=["ogbn-products", "ogbn-arxiv", "ogbn-papers100M", "reddit"],
+        # choices=["ogbn-products", "ogbn-arxiv", "ogbn-papers100M", "reddit"],
         help="pass dataset",
     )
     parser.add_argument(
         "--batch_size",
         default="1024",
-        choices=["1024", "2048", "4096", "8192"],
+        # choices=["1024", "2048", "4096", "8192"],
         help="batch_size for train",
     )
     parser.add_argument(
@@ -234,8 +297,16 @@ if __name__ == "__main__":
         default="1",
         help="batch_size for train",
     )
+    parser.add_argument(
+        "--method",
+        type=str,
+        default = None,
+        choices=["metis", "rm", "contig"],
+        help="Partition method for sampling"
+    )
     parser.add_argument("--fan_out", type=str, default="10,10,10")
     parser.add_argument("--parts", type=int, default=10)
+    parser.add_argument("--spmm", default="cusparse")
     args = parser.parse_args()
     if not torch.cuda.is_available():
         args.mode = "cpu"
@@ -257,94 +328,47 @@ if __name__ == "__main__":
         dataset = FlickrDataset()
     elif args.dataset == "reddit":
         dataset = RedditDataset()
+    elif args.dataset == "yelp":
+        dataset = YelpDataset()
     elif args.dataset == "ogbn-products":
         dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-products"))
     elif args.dataset == "ogbn-arxiv":
         dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-arxiv"))
     else:
         dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
-        raise ValueError("Unknown dataset: {}".format(args.dataset))
+        # raise ValueError("Unknown dataset: {}".format(args.dataset))
+
+    if args.spmm == "cusparse":
+        spmm_method = 0.
+    elif args.spmm == "respmm":
+        spmm_method = 1
+    elif args.spmm == "gespmm":
+        spmm_method = 2
+    else:
+        print("please provide valid spmm mathod like respmm or gespmm. default value is cusparse")
 
     g = dataset[0]
-    # g = g.to("cuda")
-    print(type(g))
-    print(g)
-
-    #---------find cosin similarity of graph--------------
-    # Extract node features for all edges
-    # src, dst = g.edges()
-    # src_features = g.ndata['feat'][src]
-    # dst_features = g.ndata['feat'][dst]
-
-    # Compute cosine similarity for all edges
-    # cosine_similarities = F.cosine_similarity(src_features, dst_features)
-    # print(type(cosine_similarities))
-    # print(cosine_similarities)
-    # Print the results
-    # for (s, d), sim in zip(zip(src.tolist(), dst.tolist()), cosine_similarities.tolist()):
-    #     print(f"Edge ({s}, {d}) - Cosine Similarity: {sim}")
-    #
-    out_degrees = np.array(g.out_degrees())
-    max_value = np.max(out_degrees)
-    avg_value = np.mean(out_degrees)
-    print("maximum degree : ",max_value)
-    print("Average degree : ",avg_value)
-    # Count the number of nodes with in-degree less than 100
-    num_nodes_less_than_100 = len(out_degrees[out_degrees < 100])
-    num_nodes_less_than_128 = len(out_degrees[out_degrees < 128])
-    num_nodes_less_than_1024 = len(out_degrees[out_degrees < 1024])
-    num_nodes_less_than_1024_1 = len(out_degrees[out_degrees >= 1024])
-    print("Total number of nodes with in-degree less than 100:", num_nodes_less_than_100)
-    print("Total number of nodes with in-degree less than 1024:", num_nodes_less_than_1024)
-    print("Total number of nodes with in-degree greter than 1024:", num_nodes_less_than_1024_1)
-    print("Total number of nodes with in-degree less than 128:", num_nodes_less_than_128)
-    unique_values, frequencies = np.unique(out_degrees, return_counts=True)
-    #
-    # # Create a TSV file
-    # output_file = str(args.dataset) + ".tsv"
-    # # Write unique values and frequencies to the TSV file
-    # np.savetxt(output_file, np.column_stack((unique_values, frequencies)), delimiter='\t', fmt='%d')
-    #
-    plt.bar(unique_values, frequencies)
-    plt.xlabel('Degree of Vertex', fontsize=12)
-    plt.ylabel('Frequency', fontsize=12)
-    plt.ylim(0, 200000)
-    max_y = max(frequencies)
-    highest_y = np.max(frequencies)
-    highest_x = unique_values[np.argmax(frequencies)]
-    plt.annotate(str(highest_y), xy=(highest_x, highest_y), ha='center', va='bottom', fontsize=18)
-    #
-    # # Add text annotation for the highest value
-    # plt.text(unique_values[frequencies.index(max_y)], max_y, str(max_y), ha='center', va='bottom')
-    plt.xticks(fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.yscale('log')
-    plt.ylim(1, 10**7)
-    #plt.title('Degree Distribution')
-    plot_name = str(args.dataset) + ".eps"
-    plt.savefig(plot_name, format='eps')
-    
-
-    # g = g.to("cuda" if args.mode == "puregpu" else "cpu")
+    print("metis partition called")
+    part_array = get_part_array(g, args.parts, args.method, spmm_method)
+    g = g.to("cuda" if args.mode == "puregpu" else "cpu")
+    device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     test_mask=g.ndata['test_mask']
     test_idx = torch.nonzero(test_mask).squeeze()
 
     num_classes = dataset.num_classes
-    device = torch.device("cpu" if args.mode == "cpu" else "cuda")
 
     # create GraphSAGE model)
-    # in_size = g.ndata["feat"].shape[1]
-    # out_size = dataset.num_classes
-    # model = SAGE(in_size, 256, out_size).to(device)
-    #
-    # # convert model and graph to bfloat16 if needed
-    # if args.dt == "bfloat16":
-    #     g = dgl.to_bfloat16(g)
-    #     model = model.to(dtype=torch.bfloat16)
+    in_size = g.ndata["feat"].shape[1]
+    out_size = dataset.num_classes
+    model = SAGE(in_size, 256, out_size).to(device)
+
+    # convert model and graph to bfloat16 if needed
+    if args.dt == "bfloat16":
+        g = dgl.to_bfloat16(g)
+        model = model.to(dtype=torch.bfloat16)
 
     # out partion create array 
     #part_array = np.ones(5)
-    # part_array = get_part_array(g, args.parts)
 
     # part_array = torch.from_numpy(part_array)
     # model training
@@ -352,23 +376,23 @@ if __name__ == "__main__":
     execution_time1 = 0.0
     start_time1 = time.time()
     #train(args, device, g, dataset, model, num_classes)
-    # epoch_lines=train(args, device, g, dataset, model, num_classes)
+    epoch_lines=train(args, device, g, dataset, model, num_classes)
     end_time1 = time.time()
     execution_time1 = end_time1 - start_time1
     # print("total training time:", execution_time1, "seconds")
 
 
     # test the model
-    # print("\nTesting...")
-    # acc = layerwise_infer(
-    #     device, g, test_idx, model, num_classes, batch_size=4096
-    # )
-    # #print("\nTest Accuracy {:.4f}".format(acc.item()))
-    # Accuracy = "Test Accuracy {:.4f}".format(acc.item())
-    # epoch_lines.append(Accuracy)
-    # with open('epoch_data.txt', 'w') as file:
-    #     for value in epoch_lines:
-    #         file.write(str(value) + '\n')
-    #
+    print("\nTesting...")
+    acc = layerwise_infer(
+        device, g, test_idx, model, num_classes, batch_size=1024
+    )
+    #print("\nTest Accuracy {:.4f}".format(acc.item()))
+    Accuracy = "Test Accuracy {:.4f}".format(acc.item())
+    epoch_lines.append(Accuracy)
+    with open('epoch_data.txt', 'w') as file:
+        for value in epoch_lines:
+            file.write(str(value) + '\n')
+
 
 
