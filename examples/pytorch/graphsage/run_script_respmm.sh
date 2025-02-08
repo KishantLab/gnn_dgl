@@ -21,7 +21,7 @@ for fanout in "${fanouts[@]}"; do
     last_cuda_sampling_time=""
     add_spmm_time=true
 
-    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2 --spmm=respmm --parts=$fanout)
+    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2 --spmm=respmm --parts=$fanout --sampling=metis)
     filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm.txt"
     echo "Dataset = $1, batch_size = $batch_size" > $filename
     #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
@@ -40,11 +40,11 @@ for fanout in "${fanouts[@]}"; do
         #echo $time_value
         # spmm_time=$(echo "$spmm_time + $spmm_time_value" | bc -l)
         # fi
-      elif [[ $line == cuda\ sapmling\ time* ]]; then
+      elif [[ $line == metis\ cuda\ sapmling\ time* ]]; then
         # Extract the time value and add it to the sampling time
         #echo $line
         # time_value=$(echo $line | awk '{print $4}')
-        last_cuda_sampling_time=$(echo $line | awk '{print $4}')
+        last_cuda_sampling_time=$(echo $line | awk '{print $5}')
         #echo $time_value
         # sampling_time=$(echo "$sampling_time + $time_value" | bc -l)
       fi

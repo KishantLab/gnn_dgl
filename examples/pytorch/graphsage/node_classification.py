@@ -307,6 +307,7 @@ if __name__ == "__main__":
     parser.add_argument("--fan_out", type=str, default="10,10,10")
     parser.add_argument("--parts", type=int, default=10)
     parser.add_argument("--spmm", default="cusparse")
+    parser.add_argument("--sampling", default="default")
     args = parser.parse_args()
     if not torch.cuda.is_available():
         args.mode = "cpu"
@@ -339,17 +340,24 @@ if __name__ == "__main__":
         # raise ValueError("Unknown dataset: {}".format(args.dataset))
 
     if args.spmm == "cusparse":
-        spmm_method = 0.
+        spmm_method = 0
     elif args.spmm == "respmm":
         spmm_method = 1
     elif args.spmm == "gespmm":
         spmm_method = 2
     else:
         print("please provide valid spmm mathod like respmm or gespmm. default value is cusparse")
+        
+    if args.sampling == "metis":
+        sampling_method = 0
+    elif args.sampling == "default":
+        sampling_method = 1
+    else:
+        print("please provide valid sampling mathod like metis (0) or default (1). default value is cusparse")
 
     g = dataset[0]
     print("metis partition called")
-    part_array = get_part_array(g, args.parts, args.method, spmm_method)
+    part_array = get_part_array(g, args.parts, args.method, spmm_method, sampling_method)
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     test_mask=g.ndata['test_mask']

@@ -6,11 +6,13 @@ import dgl
 _computed_array = None
 _part_array = None
 _spmm_method = 0
+_sampling_method = 0
 
-def metis_partition(G, parts=None, method=None, spmm_reorderd=0):
+def metis_partition(G, parts=None, method=None, spmm_reorderd=0, sampling=0):
     global _computed_array
     global _part_array
     global _spmm_method
+    global _sampling_method
     if _computed_array is None:
         # Perform computation here
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Choose device
@@ -66,8 +68,9 @@ def metis_partition(G, parts=None, method=None, spmm_reorderd=0):
         # device = "cuda" if dgl.cuda.is_available() else "cpu"
         # _computed_array = _computed_array.to(device)
         # _computed_array = _computed_array.tolist
+        _sampling_method = sampling
         print("Array computation done and passed to neighbour.py line 631")
-    return _computed_array
+    return _computed_array, _sampling_method
 
 def return_array():
     global _part_array
@@ -78,9 +81,9 @@ def return_array():
     # print(_spmm_method)
     return _part_array, _spmm_method 
 
-def get_part_array(G, parts=None, method=None, spmm_reorderd=0):
+def get_part_array(G, parts=None, method=None, spmm_reorderd=0, sampling=0):
     # print("array passed")
-    return metis_partition(G, parts, method, spmm_reorderd)
+    return metis_partition(G, parts, method, spmm_reorderd, sampling)
 
 def spmm_part_array():
     return return_array()
