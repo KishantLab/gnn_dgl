@@ -638,7 +638,8 @@ def _sample_neighbors(
         assert ret.is_unibipartite
 
     else: 
-        part_array = get_part_array(g)
+        part_array, sampling_method = get_part_array(g)
+        # print("sampling_method",sampling_method)
         # part_array = utils.prepare_tensor_dict(part_array, part_array, "part_array")
         # device = utils.context_of(part_array)
         # ctx = utils.to_dgl_context(device)
@@ -652,7 +653,7 @@ def _sample_neighbors(
         # print(part_array)
         # print(type(part_array))
         # print("graph send to CAPI",g._graph)
-        if _flag_call is None:
+        if sampling_method == 0:
             subgidx = _CAPI_DGLSampleNeighbors(
             g._graph,
             nodes_all_types,

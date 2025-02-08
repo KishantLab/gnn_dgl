@@ -1175,7 +1175,7 @@ void reorderd_Csr(const BcastOff& bcast,
   const int m = csr.num_rows;
   const int n = x_length;
   // printf("num_vertex: %d\n",m);
-  // printf("feat_size: %d\n",n);
+  printf("feat_size: %d\n",n);
   int W_SIZE=1024;
   int T_MBlock;
   T_MBlock=m/W_SIZE;

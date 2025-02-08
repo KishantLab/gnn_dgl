@@ -30,7 +30,8 @@ namespace impl {
 
 namespace {
 
-constexpr int BLOCK_SIZE = 256;
+constexpr int BLOCK_SIZE = 128;
+constexpr int METIS_BLOCK_SIZE = 256;
 int flag = 0;
 int64_t* d_part_array;
 float sampling_time = 0.0;
@@ -736,7 +737,7 @@ COOMatrix _CSRRowWiseSamplingUniform(
   device->FreeWorkspace(ctx, out_ptr);
   float milliseconds = 0;
   cudaEventElapsedTime(&milliseconds, start, stop);
-  // printf("cuda sapmling time: %.6f\n", milliseconds/1000);
+  printf("default cuda sapmling time: %.6f\n", milliseconds/1000);
 
   // wait for copying `new_len` to finish
   CUDA_CALL(cudaEventSynchronize(copyEvent));
@@ -771,7 +772,7 @@ COOMatrix _CSRRowWiseSamplingUniform1(
     cudaMalloc(&d_part_array, size * sizeof(int64_t));
 
     cudaMemcpy(d_part_array, parts_array, size * sizeof(int64_t), cudaMemcpyHostToDevice);
-    // printf("Cudamemcpy called");
+    // printf("\nCudamemcpy called\n");
     // flag = 1;
   }
   const int64_t num_rows = rows->shape[0];
@@ -883,7 +884,7 @@ COOMatrix _CSRRowWiseSamplingUniform1(
     //     stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
     //     data, out_ptr, out_rows, out_cols, out_idxs);
     //
-    const dim3 block(BLOCK_SIZE);
+    const dim3 block(METIS_BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
     CUDA_KERNEL_CALL(
       (_CSRRowWiseSampleUniformKernel1<IdType, TILE_SIZE>), grid, block, num_picks,
@@ -901,7 +902,7 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   float milliseconds = 0;
   cudaEventElapsedTime(&milliseconds, start, stop);
   sampling_time += milliseconds/1000;
-  printf("cuda sapmling time %.6f\n", sampling_time);
+  printf("metis cuda sapmling time %.6f\n", sampling_time);
   // cudaFree(d_part_array);samplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsamplingsampling
 
   const IdType new_len = static_cast<const IdType*>(new_len_tensor->data)[0];
@@ -1044,19 +1045,19 @@ COOMatrix _CSRRowWiseSamplingUniform2(
       in_cols, data, out_ptr, out_rows, out_cols, out_idxs);
     // cudaEventRecord(stop);
   } else {  // without replacement
-    // const dim3 block(BLOCK_SIZE);
-    // const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
-    // CUDA_KERNEL_CALL(
-    //     (_CSRRowWiseSampleUniformKernel<IdType, TILE_SIZE>), grid, block, 0,
-    //     stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
-    //     data, out_ptr, out_rows, out_cols, out_idxs);
-    //
     const dim3 block(BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
     CUDA_KERNEL_CALL(
-      (_CSRRowWiseSampleUniformKernel1<IdType, TILE_SIZE>), grid, block, num_picks,
-      stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
-      data, out_ptr, out_rows, out_cols, out_idxs, d_part_array);
+        (_CSRRowWiseSampleUniformKernel<IdType, TILE_SIZE>), grid, block, 0,
+        stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
+        data, out_ptr, out_rows, out_cols, out_idxs);
+    //
+    // const dim3 block(METIS_BLOCK_SIZE);
+    // const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
+    // CUDA_KERNEL_CALL(
+    //   (_CSRRowWiseSampleUniformKernel1<IdType, TILE_SIZE>), grid, block, num_picks,
+    //   stream, random_seed, num_picks, num_rows, slice_rows, in_ptr, in_cols,
+    //   data, out_ptr, out_rows, out_cols, out_idxs, d_part_array);
 
   }
   device->FreeWorkspace(ctx, out_ptr);
@@ -1069,7 +1070,7 @@ COOMatrix _CSRRowWiseSamplingUniform2(
   float milliseconds = 0;
   cudaEventElapsedTime(&milliseconds, start, stop);
   sampling_time += milliseconds/1000;
-  printf("\ncuda sapmling time %.6f\t \n", sampling_time);
+  printf("default cuda sapmling time %.6f\t \n", sampling_time);
   // cudaFree(d_part_array);
 
   const IdType new_len = static_cast<const IdType*>(new_len_tensor->data)[0];

@@ -40,11 +40,11 @@ for fanout in "${fanouts[@]}"; do
         #echo $time_value
         # spmm_time=$(echo "$spmm_time + $spmm_time_value" | bc -l)
         # fi
-      elif [[ $line == cuda\ sapmling\ time* ]]; then
+      elif [[ $line == default\ cuda\ sapmling\ time* ]]; then
         # Extract the time value and add it to the sampling time
         #echo $line
         # time_value=$(echo $line | awk '{print $4}')
-        last_cuda_sampling_time=$(echo $line | awk '{print $4}')
+        last_cuda_sampling_time=$(echo $line | awk '{print $5}')
         #echo $time_value
         # sampling_time=$(echo "$sampling_time + $time_value" | bc -l)
       fi
