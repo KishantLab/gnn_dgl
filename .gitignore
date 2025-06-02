@@ -1,15 +1,20 @@
 # IDE
 .idea
-
+.csr
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
+third_party/IGB-Datasets/*
+*.npy
+*.pt
+*.dgl
 *.tsv
 *.csv
 *.txt
 *.eps
+*.csr
 # epoch_data.txt
 epoch_data.txt
 # C extensions

@@ -235,6 +235,7 @@ class SAGEConv(nn.Module):
                     self.fc_neigh(feat_src) if lin_before_mp else feat_src
                 )
                 graph.update_all(msg_fn, fn.mean("m", "neigh"))
+                print("mean aggregation")
                 h_neigh = graph.dstdata["neigh"]
                 if not lin_before_mp:
                     h_neigh = self.fc_neigh(h_neigh)
@@ -243,6 +244,7 @@ class SAGEConv(nn.Module):
                 graph.srcdata["h"] = (
                     self.fc_neigh(feat_src) if lin_before_mp else feat_src
                 )
+                print("gcn aggregation")
                 if isinstance(feat, tuple):  # heterogeneous
                     graph.dstdata["h"] = (
                         self.fc_neigh(feat_dst) if lin_before_mp else feat_dst

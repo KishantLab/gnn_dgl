@@ -5,10 +5,8 @@ dataset=$1
 #fanout = $2
 #batch_size = $3
 epoch=$2
-batch_sizes=(1024 2048 4096 8192 16384 32768 65536)
-# batch_sizes=(1024 2048 4096 8192 16384 32768 65536)
+batch_sizes=(1024 2048 4096 8192 16384 32768 65536 131072)
 fanouts=(10 15 20 30)
-# fanouts=(10 15 20 30)
 
 # output=$(python3 node_classification.py --dataset=$1 --batch_size=1024)
 #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
@@ -23,8 +21,8 @@ for fanout in "${fanouts[@]}"; do
     last_cuda_sampling_time=""
     add_spmm_time=true
 
-    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2 --spmm=respmm --sampling=metis)
-    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm.txt"
+    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2)
+    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_default.txt"
     echo "Dataset = $1, batch_size = $batch_size" > $filename
     #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
     #Loop through the output lines
@@ -34,15 +32,16 @@ for fanout in "${fanouts[@]}"; do
       fi
       # Check if the line contains the string "cuda,sapmling"
       # if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
-      if [[ $line == re_orderd_spmm\ time* ]] && $add_spmm_time; then
+      # cusparse spmm time 0.285855
+      if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
         # Extract the time value and add it to the sampling time
         #echo $line
         # spmm_time_value=$(echo $line | awk '{print $3}')
-        last_spmm_time=$(echo $line | awk '{print $3}')
+        last_spmm_time=$(echo $line | awk '{print $4}')
         #echo $time_value
         # spmm_time=$(echo "$spmm_time + $spmm_time_value" | bc -l)
         # fi
-      elif [[ $line == metis\ cuda\ sapmling\ time* ]]; then
+      elif [[ $line == default\ cuda\ sapmling\ time* ]]; then
         # Extract the time value and add it to the sampling time
         #echo $line
         # time_value=$(echo $line | awk '{print $4}')
