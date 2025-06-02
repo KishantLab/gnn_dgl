@@ -250,6 +250,8 @@ def _gspmm(gidx, op, reduce_op, u, e):
     if part_array is None:
         part_array = torch.ones(10)
 
+    # print("line from _sparse_ops.py 253")
+    # print(spmm_method)
     # Print number of nodes
     # print(gidx)
     # for ntype in range(gidx.number_of_ntypes()):

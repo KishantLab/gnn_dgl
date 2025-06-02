@@ -19,7 +19,7 @@
 #include "macro.cuh"
 #include "global_array.h"
 
-#define Shared_mem_size 512
+#define Shared_mem_size 2048
 namespace dgl {
 
 using namespace cuda;
@@ -211,6 +211,7 @@ void CusparseCsrmm2(
   const int n = x_length;
   const int k = csr.num_cols;
   const int nnz = csr.indices->shape[0];
+  // printf("csr num_rows %d, num_x_lenght %d, nnz %d, num_cols %d\n", m, n, nnz,k);
   const DType alpha = 1.0;
   const DType beta = 0.0;
   static float spmm_time = 0;
@@ -716,6 +717,7 @@ __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdT
   // int rid = reorderd_arr[blockIdx.x];
   int rid = blockIdx.x;
   __shared__ int Neb[Shared_mem_size];    //initilize the shared memory
+  // extern __shared__ int Neb[];    //initilize the shared memory
   // extern __shared__ int result[];         //initilize external/ dynamic shared memory
   // __shared__ int start;
   // __shared__ int end;
@@ -915,14 +917,15 @@ void reorderd_kernel_call(const int m, const int n, IdType* A_indptr, const IdTy
   //   std::cout<<A_indptr[i]<<" ";
   // }
   // printf("\n");
-  if(n < 512)
+    // dkernel_reorderd<IdType,DType><<<m, n >>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
+  if(n < 256)
   {
     // dkernel_ksn<<<M,N>>>(M,N,d_indptr,d_indices,d_b,d_c,len);
     dkernel_reorderd<IdType,DType><<<m, n >>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
   }
   else {
     // dkernel_ksn<<<M, BLOCKSIZE, N*sizeof(int)>>>(M, N, d_indptr, d_indices, d_b, d_c, min, max, processed_arr);
-    dkernel_reorderd<IdType,DType><<<m, 512 >>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
+    dkernel_reorderd<IdType,DType><<<m, 256>>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
   }
   cudaDeviceSynchronize();
   cudaEventRecord(stop);
@@ -1175,7 +1178,7 @@ void reorderd_Csr(const BcastOff& bcast,
   const int m = csr.num_rows;
   const int n = x_length;
   // printf("num_vertex: %d\n",m);
-  printf("feat_size: %d\n",n);
+  // printf("feat_size: %d\n",n);
   int W_SIZE=1024;
   int T_MBlock;
   T_MBlock=m/W_SIZE;

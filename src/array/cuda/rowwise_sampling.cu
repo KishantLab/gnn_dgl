@@ -31,7 +31,7 @@ namespace impl {
 namespace {
 
 constexpr int BLOCK_SIZE = 128;
-constexpr int METIS_BLOCK_SIZE = 256;
+constexpr int METIS_BLOCK_SIZE = 128;
 int flag = 0;
 int64_t* d_part_array;
 float sampling_time = 0.0;
@@ -188,7 +188,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
   const IdType* const out_ptr, IdType* const out_rows, IdType* const out_cols,
   IdType* const out_idxs, int64_t* d_part_array) {
   // we assign one warp per row
-  assert(blockDim.x == BLOCK_SIZE);
+  assert(blockDim.x == METIS_BLOCK_SIZE);
 
   int64_t out_row = blockIdx.x * TILE_SIZE;
   const int64_t last_row =
@@ -214,7 +214,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
     // }
     if (deg <= num_picks) {
       // just copy row when there is not enough nodes to sample.
-      for (int idx = threadIdx.x; idx < deg; idx += BLOCK_SIZE) {
+      for (int idx = threadIdx.x; idx < deg; idx += METIS_BLOCK_SIZE) {
         const IdType in_idx = in_row_start + idx;
         out_rows[out_row_start + idx] = row;
         out_cols[out_row_start + idx] = in_index[in_idx];
@@ -233,11 +233,11 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
       __shared__ int pointer_position;
       __shared__ int non_part_vertex_pointer;
       // int pointer_position;
-      __shared__ int neighbours[BLOCK_SIZE];
-      __shared__ int part_id[BLOCK_SIZE];
+      __shared__ int neighbours[METIS_BLOCK_SIZE];
+      __shared__ int part_id[METIS_BLOCK_SIZE];
 
       // initilize 0 
-      if ( deg < BLOCK_SIZE)
+      if ( deg < METIS_BLOCK_SIZE)
       {
         if(threadIdx.x < deg)
         {
@@ -345,13 +345,13 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           maxCount = pointer_position;
         } //threadidx.x ==0
           // generate permutation list via reservoir algorithm
-        for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
+        for (int idx = threadIdx.x; idx < num_picks; idx += METIS_BLOCK_SIZE) {
           out_idxs[out_row_start + idx] = idx;
         }
         __syncthreads();
         if (num_picks < maxCount)
         {
-          for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE)
+          for (int idx = threadIdx.x; idx < num_picks; idx += METIS_BLOCK_SIZE)
           {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
@@ -361,7 +361,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         }
         else {
           // copy maximum same partition vertex avalible 
-          for (int idx = threadIdx.x; idx < maxCount; idx += BLOCK_SIZE) {
+          for (int idx = threadIdx.x; idx < maxCount; idx += METIS_BLOCK_SIZE) {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
             out_cols[out_row_start + idx] = neighbours[index_array[idx]];
@@ -369,7 +369,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           }
           // int remining_size = num_picks - maxCount;
           // printf("remining size: %d maxCount: %d\n",remining_size,maxCount);
-          for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
+          for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += METIS_BLOCK_SIZE) {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
             out_cols[out_row_start + idx] = neighbours[non_part_vertex[idx - maxCount]];
@@ -495,7 +495,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         // }
 
         // generate permutation list via reservoir algorithm
-        for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE) {
+        for (int idx = threadIdx.x; idx < num_picks; idx += METIS_BLOCK_SIZE) {
           out_idxs[out_row_start + idx] = idx;
         }
         __syncthreads();
@@ -503,7 +503,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         // copy all vertex if avalible of same partition
         if (num_picks < maxCount)
         {
-          for (int idx = threadIdx.x; idx < num_picks; idx += BLOCK_SIZE)
+          for (int idx = threadIdx.x; idx < num_picks; idx += METIS_BLOCK_SIZE)
           {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
@@ -513,7 +513,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
         }
         else {
           // copy maximum same partition vertex avalible 
-          for (int idx = threadIdx.x; idx < maxCount; idx += BLOCK_SIZE) {
+          for (int idx = threadIdx.x; idx < maxCount; idx += METIS_BLOCK_SIZE) {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
             out_cols[out_row_start + idx] = in_index[index_array[idx]];
@@ -521,7 +521,7 @@ __global__ void _CSRRowWiseSampleUniformKernel1(
           }
           // int remining_size = num_picks - maxCount;
           // printf("remining size: %d maxCount: %d\n",remining_size,maxCount);
-          for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += BLOCK_SIZE) {
+          for (int idx = threadIdx.x + maxCount; idx < num_picks; idx += METIS_BLOCK_SIZE) {
             const IdType perm_idx = out_idxs[out_row_start + idx] + in_row_start;
             out_rows[out_row_start + idx] = row;
             out_cols[out_row_start + idx] = in_index[non_part_vertex[idx - maxCount]];
@@ -863,11 +863,11 @@ COOMatrix _CSRRowWiseSamplingUniform1(
   cudaEvent_t start,stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
-  constexpr int TILE_SIZE = BLOCK_SIZE / BLOCK_SIZE;
+  constexpr int TILE_SIZE = METIS_BLOCK_SIZE / METIS_BLOCK_SIZE;
   // constexpr int TILE_SIZE = 128 / BLOCK_SIZE;
   cudaEventRecord(start);
   if (replace) {  // with replacement
-    const dim3 block(BLOCK_SIZE);
+    const dim3 block(METIS_BLOCK_SIZE);
     const dim3 grid((num_rows + TILE_SIZE - 1) / TILE_SIZE);
 
     // cudaEventRecord(start);

@@ -20,6 +20,7 @@ from ogb.nodeproppred import DglNodePropPredDataset
 
 from dgl.data import CoraGraphDataset,RedditDataset,FlickrDataset, YelpDataset
 
+# from igb import download
 
 print("at the top")
 
@@ -221,7 +222,8 @@ def train(args, device, g, dataset, model, num_classes):
             # y = torch.argmax(y, dim=1)
 
             loss = F.cross_entropy(y_hat, y)
-            # loss = F.binary_cross_entropy_with_logits(y_hat, y)
+            # loss = F.binary_cross_entropy_with_logits(y_hat, y.flot())
+            # loss = F.binary_cross_entropy_with_logits(y_hat, y.float())
             opt.zero_grad()
             loss.backward()
             opt.step()
@@ -335,6 +337,14 @@ if __name__ == "__main__":
         dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-products"))
     elif args.dataset == "ogbn-arxiv":
         dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-arxiv"))
+    elif args.dataset == "igb-tiny":
+        dataset, meta = dgl.load_graphs("dataset/igb_datasets/igb_tiny.dgl")
+    elif args.dataset == "igb-small":
+        dataset, meta = dgl.load_graphs("dataset/igb_datasets/igb_small.dgl")
+    elif args.dataset == "igb-medium":
+        dataset, meta = dgl.load_graphs("dataset/igb_datasets/igb_medium.dgl")
+    elif args.dataset == "igb-large":
+        dataset, meta = dgl.load_graphs("dataset/igb_datasets/igb_large.dgl")
     else:
         dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
         # raise ValueError("Unknown dataset: {}".format(args.dataset))
@@ -356,18 +366,26 @@ if __name__ == "__main__":
         print("please provide valid sampling mathod like metis (0) or default (1). default value is cusparse")
 
     g = dataset[0]
+    print(g)
     print("metis partition called")
-    part_array = get_part_array(g, args.parts, args.method, spmm_method, sampling_method)
-    g = g.to("cuda" if args.mode == "puregpu" else "cpu")
+    No_parts = int(args.fan_out.split(",")[0])
+    # if No_parts > :
+    # part_array = get_part_array(g, args.parts, args.method, spmm_method, sampling_method)
+    part_array = get_part_array(g, No_parts, args.method, spmm_method, sampling_method, args.dataset)
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
+    # g = g.to(device)
+    g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     test_mask=g.ndata['test_mask']
-    test_idx = torch.nonzero(test_mask).squeeze()
+    test_idx = torch.nonzero(test_mask).squeeze().to("cpu")
 
-    num_classes = dataset.num_classes
+    # num_classes = dataset.num_classes
+    labels = g.ndata['label']
+    num_classes = int(labels.max().item()) + 1
 
     # create GraphSAGE model)
     in_size = g.ndata["feat"].shape[1]
-    out_size = dataset.num_classes
+    # out_size = dataset.num_classes
+    out_size = num_classes
     model = SAGE(in_size, 256, out_size).to(device)
 
     # convert model and graph to bfloat16 if needed
@@ -391,13 +409,13 @@ if __name__ == "__main__":
 
 
     # test the model
-    print("\nTesting...")
-    acc = layerwise_infer(
-        device, g, test_idx, model, num_classes, batch_size=1024
-    )
-    #print("\nTest Accuracy {:.4f}".format(acc.item()))
-    Accuracy = "Test Accuracy {:.4f}".format(acc.item())
-    epoch_lines.append(Accuracy)
+    #print("\nTesting...")
+    #acc = layerwise_infer(
+    #    device, g, test_idx, model, num_classes, batch_size=8192
+    #)
+    ##print("\nTest Accuracy {:.4f}".format(acc.item()))
+    #Accuracy = "Test Accuracy {:.4f}".format(acc.item())
+    #epoch_lines.append(Accuracy)
     with open('epoch_data.txt', 'w') as file:
         for value in epoch_lines:
             file.write(str(value) + '\n')

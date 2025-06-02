@@ -5,10 +5,8 @@ dataset=$1
 #fanout = $2
 #batch_size = $3
 epoch=$2
-batch_sizes=(1024 2048 4096 8192 16384 32768 65536)
-# batch_sizes=(1024 2048 4096 8192 16384 32768 65536)
-fanouts=(10 15 20 30)
-# fanouts=(10 15 20 30)
+batch_sizes=(2000 4000 8000)
+fanouts=(20 30)
 
 # output=$(python3 node_classification.py --dataset=$1 --batch_size=1024)
 #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
@@ -23,8 +21,8 @@ for fanout in "${fanouts[@]}"; do
     last_cuda_sampling_time=""
     add_spmm_time=true
 
-    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2 --spmm=respmm --sampling=metis)
-    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm.txt"
+    output=$(python3 node_classification_gcn.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2 --spmm=respmm --parts=$fanout --sampling=metis)
+    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm_gcn.txt"
     echo "Dataset = $1, batch_size = $batch_size" > $filename
     #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
     #Loop through the output lines

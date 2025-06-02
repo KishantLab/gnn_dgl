@@ -2,18 +2,18 @@ import numpy as np
 import torch
 import torch as th
 import dgl
-
+import os
 _computed_array = None
 _part_array = None
-_spmm_method = 0
-_sampling_method = 0
+_spmm_method = 0  # 0: no reorder, 1: reorderd, 2: no reorder with samplin
+_sampling_method = 1
 
-def metis_partition(G, parts=None, method=None, spmm_reorderd=0, sampling=0):
+def metis_partition(G, parts=None, method=None, spmm_reorderd=0, sampling=0, dataset=None):
     global _computed_array
     global _part_array
     global _spmm_method
     global _sampling_method
-    if _computed_array is None:
+    if _computed_array is None and sampling == 0:
         # Perform computation here
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Choose device
         print(G)
@@ -25,8 +25,15 @@ def metis_partition(G, parts=None, method=None, spmm_reorderd=0, sampling=0):
         # ( g, node_feats, edge_feats, gpb, graph_name, ntypes_list, etypes_list,) = dgl.distributed.load_partition('output/test.json', 0)
 
         # print(g)
+        _computed_array = np.zeros(Nodes, dtype=int)  # create an array of size n filled with zeros
         if method is None:
-            _computed_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
+                if os.path.exists(dataset + "_metis_part.npy"):
+                    _computed_array = np.load(dataset + "_metis_part.npy")
+                    print(f"Loaded array from {dataset}_metis_part.npy")
+                else:   
+                    _computed_array = dgl.metis_partition_assignment(G, parts, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
+                    np.save(dataset + "_metis_part.npy", _computed_array)
+                    print(f"Created new partion and saved to {dataset}_metis_part.npy")
         elif method == "rm":
             _computed_array = np.random.randint(0, parts, size=Nodes)
         elif method == "contig":
@@ -70,6 +77,15 @@ def metis_partition(G, parts=None, method=None, spmm_reorderd=0, sampling=0):
         # _computed_array = _computed_array.tolist
         _sampling_method = sampling
         print("Array computation done and passed to neighbour.py line 631")
+    else:
+        Nodes = G.num_nodes() 
+        _computed_array = np.zeros(Nodes, dtype=int)  # create an array of size n filled with zeros
+        _computed_array = dgl.ndarray.array(_computed_array)
+        if spmm_reorderd == 2:
+            _spmm_method = 2
+        # elif spmm_reorderd == 0:
+            # _spmm_method = 0
+    # print("spmm_methods: ",_spmm_method)
     return _computed_array, _sampling_method
 
 def return_array():
@@ -78,12 +94,11 @@ def return_array():
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Choose device
     # if _part_array is None:
         # print("Array not initilized")
-    # print(_spmm_method)
+    # print("spmm: ",_spmm_method)
     return _part_array, _spmm_method 
 
-def get_part_array(G, parts=None, method=None, spmm_reorderd=0, sampling=0):
-    # print("array passed")
-    return metis_partition(G, parts, method, spmm_reorderd, sampling)
+def get_part_array(G, parts=None, method=None, spmm_reorderd=0, sampling=0, dataset=None):
+    return metis_partition(G, parts, method, spmm_reorderd, sampling, dataset)
 
 def spmm_part_array():
     return return_array()
