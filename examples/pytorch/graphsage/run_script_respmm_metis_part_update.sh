@@ -39,7 +39,10 @@ dataset=$1
 #fanout = $2
 #batch_size = $3
 epoch=$2
-batch_sizes=(1024 2048 4096 8192 16384 32768 65536 131072)
+# batch_sizes=(2048 4096)
+# batch_sizes=(1024 2048 4096 8192 16384 32768 65536)
+batch_sizes=(1024 2048 4096 8192 16384 32768 65536)
+# fanouts=(20 30)
 fanouts=(10 15 20 30)
 
 # output=$(python3 node_classification.py --dataset=$1 --batch_size=1024)
@@ -55,53 +58,45 @@ for fanout in "${fanouts[@]}"; do
     last_cuda_sampling_time=""
     add_spmm_time=true
 
-    # echo -e "\n▶️ Running config: Dataset=$dataset | Fanout=$fanout | Batch=$batch_size | Epoch=$epoch"
-    echo -e "\n▶️ Running config: Start Time $(date +"%Y-%m-%d %H:%M:%S") | Dataset=$dataset | Fanout=$fanout | Batch=$batch_size | Epoch=$epoch | base"
+    echo -e "\n▶️ Running config: Dataset=$dataset | Fanout=$fanout | Batch=$batch_size | Epoch=$epoch"
     # Start progress animation in background
     show_progress &
     progress_pid=$!
 
-    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2)
+    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2 --spmm=respmm --sampling=metis)
 
         # Kill the progress spinner
     kill $progress_pid >/dev/null 2>&1
     wait $progress_pid 2>/dev/null
 
-    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_default.txt"
+    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm.txt"
     echo "Dataset = $1, batch_size = $batch_size" > $filename
-    last_spmm_time=$(echo "$output" | tac | grep -m1 "^re_orderd_spmm time" | awk '{print $3}')
-    last_cuda_sampling_time=$(echo "$output" | tac | grep -m1 "^metis cuda sapmling time" | awk '{print $5}')
-    echo ""
-    echo "last_spmm_time: $last_spmm_time , last_cuda_sampling_time: $last_cuda_sampling_time"
-    tail -3 "epoch_data.txt"
-
     #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
     #Loop through the output lines
-    #while read -r line; do
-    #  if [[ $line == Testing...\* ]]; then
-    #    add_spmm_time=false
-    #  fi
-    #  # Check if the line contains the string "cuda,sapmling"
-    #  # if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
-    #  # cusparse spmm time 0.285855
-    #  if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
-    #    # Extract the time value and add it to the sampling time
-    #    #echo $line
-    #    # spmm_time_value=$(echo $line | awk '{print $3}')
-    #    last_spmm_time=$(echo $line | awk '{print $4}')
-    #    #echo $time_value
-    #    # spmm_time=$(echo "$spmm_time + $spmm_time_value" | bc -l)
-    #    # fi
-    #  elif [[ $line == default\ cuda\ sapmling\ time* ]]; then
-    #    # Extract the time value and add it to the sampling time
-    #    #echo $line
-    #    # time_value=$(echo $line | awk '{print $4}')
-    #    last_cuda_sampling_time=$(echo $line | awk '{print $5}')
-    #    #echo $time_value
-    #    # sampling_time=$(echo "$sampling_time + $time_value" | bc -l)
-    #  fi
+    while read -r line; do
+      if [[ $line == Testing...\* ]]; then
+        add_spmm_time=false
+      fi
+      # Check if the line contains the string "cuda,sapmling"
+      # if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
+      if [[ $line == re_orderd_spmm\ time* ]] && $add_spmm_time; then
+        # Extract the time value and add it to the sampling time
+        #echo $line
+        # spmm_time_value=$(echo $line | awk '{print $3}')
+        last_spmm_time=$(echo $line | awk '{print $3}')
+        #echo $time_value
+        # spmm_time=$(echo "$spmm_time + $spmm_time_value" | bc -l)
+        # fi
+      elif [[ $line == metis\ cuda\ sapmling\ time* ]]; then
+        # Extract the time value and add it to the sampling time
+        #echo $line
+        # time_value=$(echo $line | awk '{print $4}')
+        last_cuda_sampling_time=$(echo $line | awk '{print $5}')
+        #echo $time_value
+        # sampling_time=$(echo "$sampling_time + $time_value" | bc -l)
+      fi
 
-    #done <<< "$output"
+    done <<< "$output"
 
       echo "last_spmm_time: $last_spmm_time , last_cuda_sampling_time: $last_cuda_sampling_time"
         # Check if epoch_data.txt exists

@@ -39,14 +39,20 @@ dataset=$1
 #fanout = $2
 #batch_size = $3
 epoch=$2
-batch_sizes=(1024 2048 4096 8192 16384 32768 65536 131072)
-fanouts=(10 15 20 30)
+# batch_sizes=(1024 2048 4096 8192 16384 32768 65536)
+# fanouts=(10 15 20 30)
+# batch_sizes=(1024 2048 4096)
+batch_sizes=(1024)
+# fanouts=(30)
+fanouts=${3:-20}
+num_layer=${4:-3}
+# fanouts=(20 30)
 
-# output=$(python3 node_classification.py --dataset=$1 --batch_size=1024)
-#python3 node_classification.py --dataset=ogbn-products --batch_size=1024
 # Initialize variables to keep track of the total sampling time and the last line that contained "Epoch"
 for fanout in "${fanouts[@]}"; do
   # Loop through each batch size
+  fan_out_arg=$(yes "$fanout" | head -n "$num_layer" | paste -sd "," -)
+  echo $fan_out_arg
   for batch_size in "${batch_sizes[@]}"; do
     sampling_time=0.0
     training_time=0.0
@@ -56,24 +62,40 @@ for fanout in "${fanouts[@]}"; do
     add_spmm_time=true
 
     # echo -e "\n▶️ Running config: Dataset=$dataset | Fanout=$fanout | Batch=$batch_size | Epoch=$epoch"
-    echo -e "\n▶️ Running config: Start Time $(date +"%Y-%m-%d %H:%M:%S") | Dataset=$dataset | Fanout=$fanout | Batch=$batch_size | Epoch=$epoch | base"
+    echo -e "\n▶️ Running config: Start Time $(date +"%Y-%m-%d %H:%M:%S") | Dataset=$dataset | Fanout=$fanout | Batch=$batch_size | Epoch=$epoch | respmm"
     # Start progress animation in background
     show_progress &
     progress_pid=$!
 
-    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2)
-
+    # if [${dataset} == "yelp"]; then
+    if [ "$dataset" == "yelp" ]; then
+      echo "Dataset is yelp, setting batch_size to ${batch_size} and fanout to ${fanout} for node_classification_yelp.py"
+      output=$(python3 node_classification_yelp.py --dataset=$1 --batch_size=$batch_size --fan_out=$fan_out_arg --epoch=$2 --spmm=respmm --sampling=metis --mode puregpu)
+    else
+    	output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fan_out_arg --epoch=$2 --spmm=respmm --sampling=metis --mode puregpu)
+    fi
         # Kill the progress spinner
     kill $progress_pid >/dev/null 2>&1
     wait $progress_pid 2>/dev/null
 
-    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_default.txt"
+    if [ "$num_layer" -gt 3 ]; then
+      echo "num_layer is greater than 3, so we will not print the output"
+      filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm_puregpu_layer-${num_layer}.txt"
+    else
+      echo "$output"
+      filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_respmm_puregpu.txt"
+    fi
     echo "Dataset = $1, batch_size = $batch_size" > $filename
     last_spmm_time=$(echo "$output" | tac | grep -m1 "^re_orderd_spmm time" | awk '{print $3}')
     last_cuda_sampling_time=$(echo "$output" | tac | grep -m1 "^metis cuda sapmling time" | awk '{print $5}')
     echo ""
     echo "last_spmm_time: $last_spmm_time , last_cuda_sampling_time: $last_cuda_sampling_time"
-    tail -3 "epoch_data.txt"
+    # tail -3 "epoch_data.txt"
+    if [ "$dataset" == "yelp" ]; then
+      tail -3 "epoch_data_yelp.txt"
+    else
+	tail -3 "epoch_data.txt"
+    fi
 
     #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
     #Loop through the output lines
@@ -83,16 +105,15 @@ for fanout in "${fanouts[@]}"; do
     #  fi
     #  # Check if the line contains the string "cuda,sapmling"
     #  # if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
-    #  # cusparse spmm time 0.285855
-    #  if [[ $line == cusparse\ spmm\ time* ]] && $add_spmm_time; then
+    #  if [[ $line == re_orderd_spmm\ time* ]] && $add_spmm_time; then
     #    # Extract the time value and add it to the sampling time
     #    #echo $line
     #    # spmm_time_value=$(echo $line | awk '{print $3}')
-    #    last_spmm_time=$(echo $line | awk '{print $4}')
+    #    last_spmm_time=$(echo $line | awk '{print $3}')
     #    #echo $time_value
     #    # spmm_time=$(echo "$spmm_time + $spmm_time_value" | bc -l)
     #    # fi
-    #  elif [[ $line == default\ cuda\ sapmling\ time* ]]; then
+    #  elif [[ $line == metis\ cuda\ sapmling\ time* ]]; then
     #    # Extract the time value and add it to the sampling time
     #    #echo $line
     #    # time_value=$(echo $line | awk '{print $4}')
@@ -105,12 +126,22 @@ for fanout in "${fanouts[@]}"; do
 
       echo "last_spmm_time: $last_spmm_time , last_cuda_sampling_time: $last_cuda_sampling_time"
         # Check if epoch_data.txt exists
-        if [ -f "epoch_data.txt" ]; then
-          cat "epoch_data.txt" >> $filename
-          echo "Data copied successfully!"
-        else
-          echo "Error: epoch_data.txt does not exist."
-        fi
+	if [ "$dataset" == "yelp" ]; then
+		tail -3 "epoch_data_yelp.txt"
+		cat "epoch_data_yelp.txt" >> $filename
+		echo "Data copied successfully!"
+	else
+		tail -3 "epoch_data.txt"
+		cat "epoch_data.txt" >> $filename
+		echo "Data copied successfully!"
+	fi
+
+        # if [ -f "epoch_data.txt" ]; then
+        #   cat "epoch_data.txt" >> $filename
+        #   echo "Data copied successfully!"
+        # else
+        #   echo "Error: epoch_data.txt does not exist."
+        # fi
         # echo "Total sampling time :" $sampling_time ", Total training time :" $training_time >> $filename
         # echo "Total spmm time , Total sampling time" >> $filename
         # echo $spmm_time"," $sampling_time >> $filename

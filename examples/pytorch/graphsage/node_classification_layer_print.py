@@ -171,6 +171,9 @@ def train(args, device, g, dataset, model, num_classes):
     total_model_time = 0.0
     total_loss_opt_time = 0.0
     epoch_lines = []
+    total_src_nodes_layer_3=0   
+    total_src_nodes_layer_2=0
+    total_src_nodes_layer_1=0
     for epoch in range(int(args.epoch)):
         model.train()    
         total_loss = 0
@@ -197,13 +200,17 @@ def train(args, device, g, dataset, model, num_classes):
             # print("layer_3: ",blocks[-1])
             # print("X:",x)
             y = blocks[-1].dstdata["label"]
+            if epoch == 0:
+                total_src_nodes_layer_3 = total_src_nodes_layer_3 + blocks[0].num_src_nodes()
+                total_src_nodes_layer_2 = total_src_nodes_layer_2 + blocks[1].num_src_nodes()
+                total_src_nodes_layer_1 = total_src_nodes_layer_1 + blocks[-1].num_src_nodes()
             # print("dst nodes of block -1: ",blocks[-1].dstdata)
             end_x_y_time = time.time()
             # print("Y shape", blocks[-1])
             # print("Y: ",y)
 
             start_pred_time = time.time()
-            y_hat = model(blocks, x)
+            # y_hat = model(blocks, x)
             # print(type(y_hat))
             # print("y_hat: ", y_hat)
             # print("len: ", len(y_hat))
@@ -211,7 +218,7 @@ def train(args, device, g, dataset, model, num_classes):
             
             start_loss_time = time.time()
             # y = y.float()
-            y = y.long()
+            # y = y.long()
             # print("y :", y)
             # print("type: ", type(y))
             # print("len: ", len(y))
@@ -222,13 +229,13 @@ def train(args, device, g, dataset, model, num_classes):
             #
             # y = torch.argmax(y, dim=1)
 
-            loss = F.cross_entropy(y_hat, y)
+            # loss = F.cross_entropy(y_hat, y)
             # loss = F.binary_cross_entropy_with_logits(y_hat, y.flot())
             # loss = F.binary_cross_entropy_with_logits(y_hat, y.float())
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
-            total_loss += loss.item()
+            # opt.zero_grad()
+            # loss.backward()
+            # opt.step()
+            # total_loss += loss.item()
             end_loss_time = time.time()
             end_model_time = time.time()
 
@@ -247,16 +254,20 @@ def train(args, device, g, dataset, model, num_classes):
         total_model_time += model_exe_time
         total_loss_opt_time += loss_opt_time
         # print("training time:", execution_time, "seconds")
-        acc = evaluate(model, g, val_dataloader, num_classes)
+        if epoch == 0: 
+            layer_line = "Layer_1 {:d} | Layer_2 {:d} | Layer_3 {:d}" .format(
+                    int(total_src_nodes_layer_1/it), int(total_src_nodes_layer_2/it), int(total_src_nodes_layer_3/it))
+            epoch_lines.append(layer_line)
+        # acc = evaluate(model, g, val_dataloader, num_classes)
         # print(
         #     "\nEpoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {}".format(
         #          epoch, total_loss / (it + 1), acc.item(), execution_time
         #      )
         #  )
-        epoch_line = "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {:.4f} | loop {:.4f} | Model {:.4f} | x_y_time {:.4f} | pred {:.4f} | loss_time {:.4f}".format(
-                    epoch, total_loss / (it + 1), acc.item(), execution_time, loop_exe_time, model_exe_time, x_y_time, pred_time, loss_opt_time
-        )
-        epoch_lines.append(epoch_line)
+        # epoch_line = "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {:.4f} | loop {:.4f} | Model {:.4f} | x_y_time {:.4f} | pred {:.4f} | loss_time {:.4f}".format(
+        #             epoch, total_loss / (it + 1), acc.item(), execution_time, loop_exe_time, model_exe_time, x_y_time, pred_time, loss_opt_time
+        # )
+        # epoch_lines.append(epoch_line)
     tt_str = "total for loop time, total model time, total loss time, total_training_time"
     tt_time = "{:.4f}, {:.4f}, {:.4f}, {:.4f}".format(total_for_loop_time, total_model_time, total_loss_opt_time, total_training_time)
     epoch_lines.append(tt_str)
@@ -308,7 +319,7 @@ if __name__ == "__main__":
         help="Partition method for sampling"
     )
     parser.add_argument("--fan_out", type=str, default="20,20,20")
-    parser.add_argument("--parts", type=int, default=10)
+    parser.add_argument("--parts", type=int, default=20)
     parser.add_argument("--spmm", default="cusparse")
     parser.add_argument("--sampling", default="default")
     args = parser.parse_args()
@@ -360,7 +371,10 @@ if __name__ == "__main__":
 
     g = dataset[0]
     print("metis partition called")
-    part_array = get_part_array(g, args.parts, args.method, spmm_method, sampling_method)
+    No_parts = int(args.fan_out.split(",")[0])
+    # part_array = get_part_array(g, args.parts, args.method, spmm_method, sampling_method)
+
+    part_array = get_part_array(g, No_parts, args.method, spmm_method, sampling_method, args.dataset)
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     test_mask=g.ndata['test_mask']
@@ -394,14 +408,14 @@ if __name__ == "__main__":
 
 
     # test the model
-    print("\nTesting...")
-    acc = layerwise_infer(
-        device, g, test_idx, model, num_classes, batch_size=8192
-    )
+    # print("\nTesting...")
+    # acc = layerwise_infer(
+    #     device, g, test_idx, model, num_classes, batch_size=8192
+    # )
     #print("\nTest Accuracy {:.4f}".format(acc.item()))
-    Accuracy = "Test Accuracy {:.4f}".format(acc.item())
-    epoch_lines.append(Accuracy)
-    with open('epoch_data.txt', 'w') as file:
+    # Accuracy = "Test Accuracy {:.4f}".format(acc.item())
+    # epoch_lines.append(Accuracy)
+    with open('epoch_data_layer.txt', 'w') as file:
         for value in epoch_lines:
             file.write(str(value) + '\n')
 

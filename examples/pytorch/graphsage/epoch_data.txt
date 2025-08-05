@@ -1,3 +1,5 @@
-Epoch 00000 | Loss 0.7828 | Accuracy 0.7312 | Time : 1916.9535 | loop 896.6066 | Model 1020.3395 | x_y_time 0.0999 | pred 914.8011 | loss_time 0.0101
+Layer_1 11342 | Layer_2 125727 | Layer_3 621288
+Epoch 00000 | Loss 0.8343 | Accuracy 0.7363 | Time : 43.4584 | loop 3.4888 | Model 39.9690 | x_y_time 0.0153 | pred 22.5469 | loss_time 0.0289
 total for loop time, total model time, total loss time, total_training_time
-896.6066, 1020.3395, 0.0101, 1916.9535
+3.4888, 39.9690, 0.0289, 43.4584
+Test Accuracy 0.7395

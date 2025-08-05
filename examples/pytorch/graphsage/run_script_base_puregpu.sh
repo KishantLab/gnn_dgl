@@ -39,14 +39,25 @@ dataset=$1
 #fanout = $2
 #batch_size = $3
 epoch=$2
-batch_sizes=(1024 2048 4096 8192 16384 32768 65536 131072)
-fanouts=(10 15 20 30)
+# batch_sizes=(1024 2048 4096 8192 16384 32768 65536 131072)
+# fanouts=(10 15 20 30)
+batch_sizes=(1024)
+# fanouts=(20 30)
+# batch_sizes=(2048 4096)
+# fanouts=(10 15)
+# fanouts=(30)
+# fanouts=$3
+fanouts=${3:-20}
+num_layer=${4:-3}
 
 # output=$(python3 node_classification.py --dataset=$1 --batch_size=1024)
 #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
 # Initialize variables to keep track of the total sampling time and the last line that contained "Epoch"
 for fanout in "${fanouts[@]}"; do
   # Loop through each batch size
+  fan_out_arg=$(yes "$fanout" | head -n "$num_layer" | paste -sd "," -)
+  echo $fan_out_arg
+
   for batch_size in "${batch_sizes[@]}"; do
     sampling_time=0.0
     training_time=0.0
@@ -61,19 +72,36 @@ for fanout in "${fanouts[@]}"; do
     show_progress &
     progress_pid=$!
 
-    output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fanout,$fanout,$fanout --epoch=$2)
+    if [ "$dataset" == "yelp" ]; then
+      echo "Dataset is yelp, setting batch_size to 1024"
+      output=$(python3 node_classification_yelp.py --dataset=$1 --batch_size=$batch_size --fan_out=$fan_out_arg --epoch=$2 --mode puregpu)
+    else
+	output=$(python3 node_classification.py --dataset=$1 --batch_size=$batch_size --fan_out=$fan_out_arg --epoch=$2 --mode puregpu)
+    fi
+ 
 
         # Kill the progress spinner
     kill $progress_pid >/dev/null 2>&1
     wait $progress_pid 2>/dev/null
-
-    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_default.txt"
+    
+    if [ "$num_layer" -gt 3 ]; then
+	    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_default_puregpu_layer-${num_layer}.txt"
+    else 
+	    filename="training_time/$1/$1_F${fanout}_B${batch_size}_${epoch}_Sampling_default_puregpu.txt"
+    fi
     echo "Dataset = $1, batch_size = $batch_size" > $filename
-    last_spmm_time=$(echo "$output" | tac | grep -m1 "^re_orderd_spmm time" | awk '{print $3}')
-    last_cuda_sampling_time=$(echo "$output" | tac | grep -m1 "^metis cuda sapmling time" | awk '{print $5}')
+    last_spmm_time=$(echo "$output" | tac | grep -m1 "^cusparse spmm time" | awk '{print $4}')
+    # last_spmm_time=$(echo "$output" | tac | grep -m1 "^re_orderd_spmm time" | awk '{print $3}')
+    last_cuda_sampling_time=$(echo "$output" | tac | grep -m1 "^default cuda sapmling time" | awk '{print $5}')
+    # last_cuda_sampling_time=$(echo "$output" | tac | grep -m1 "^metis cuda sapmling time" | awk '{print $5}')
     echo ""
     echo "last_spmm_time: $last_spmm_time , last_cuda_sampling_time: $last_cuda_sampling_time"
-    tail -3 "epoch_data.txt"
+    # tail -3 "epoch_data.txt"
+    if [ "$dataset" == "yelp" ]; then
+     	tail -3 "epoch_data_yelp.txt"
+    else
+	tail -3 "epoch_data.txt"
+    fi
 
     #python3 node_classification.py --dataset=ogbn-products --batch_size=1024
     #Loop through the output lines
@@ -105,12 +133,22 @@ for fanout in "${fanouts[@]}"; do
 
       echo "last_spmm_time: $last_spmm_time , last_cuda_sampling_time: $last_cuda_sampling_time"
         # Check if epoch_data.txt exists
-        if [ -f "epoch_data.txt" ]; then
-          cat "epoch_data.txt" >> $filename
-          echo "Data copied successfully!"
-        else
-          echo "Error: epoch_data.txt does not exist."
-        fi
+	if [ "$dataset" == "yelp" ]; then
+		tail -3 "epoch_data_yelp.txt"
+		cat "epoch_data_yelp.txt" >> $filename
+		echo "yelp Data copied successfully!"
+	else
+		tail -3 "epoch_data.txt"
+		cat "epoch_data.txt" >> $filename
+		echo "Data copied successfully!"
+	fi
+
+        # if [ -f "epoch_data.txt" ]; then
+        #   cat "epoch_data.txt" >> $filename
+        #   echo "Data copied successfully!"
+        # else
+        #   echo "Error: epoch_data.txt does not exist."
+        # fi
         # echo "Total sampling time :" $sampling_time ", Total training time :" $training_time >> $filename
         # echo "Total spmm time , Total sampling time" >> $filename
         # echo $spmm_time"," $sampling_time >> $filename

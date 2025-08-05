@@ -69,27 +69,13 @@ def interleave_partitions_by_degree(train_idx, part_id, degrees):
 
 
 class SAGE(nn.Module):
-    def __init__(self, in_size, hid_size, out_size, num_layers):
+    def __init__(self, in_size, hid_size, out_size):
         super().__init__()
         self.layers = nn.ModuleList()
         # three-layer GraphSAGE-mean
-        # num_layers = len(fanouts)
-
-        # # input layer
-        # self.layers.append(dglnn.SAGEConv(in_size, hid_size, "mean"))
-
-        # # hidden layers (excluding last)
-        # for _ in range(num_layers - 2):
-        #     self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
-
-        # # output layer
-        # self.layers.append(dglnn.SAGEConv(hid_size, out_size, "mean"))
         self.layers.append(dglnn.SAGEConv(in_size, hid_size, "mean"))
-        # print("num_layers: ",num_layers)
-        for i in range(num_layers -2):
-            self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
-        # self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
-        # self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
+        self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
+        self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
         self.layers.append(dglnn.SAGEConv(hid_size, out_size, "mean"))
         self.dropout = nn.Dropout(0.5)
         self.hid_size = hid_size
@@ -334,7 +320,7 @@ def train(args, device, g, dataset, model, num_classes, part_id=None):
             # print("y_hat: ", y_hat)
             # print("len: ", len(y_hat))
             end_pred_time = time.time()
-            # print("prediction time:", end_pred_time - start_pred_time, "seconds")
+            print("prediction time:", end_pred_time - start_pred_time, "seconds")
             
             start_loss_time = time.time()
             # y = y.float()
@@ -512,10 +498,7 @@ if __name__ == "__main__":
 
     g = dataset[0]
     print(g)
-    # num_layers = len(args.fan_out)
-    # print("num_layers: ",num_layers)
-    fanouts = [int(x) for x in args.fan_out.split(",")]
-    num_layers = len(fanouts)
+
     print("metis partition called")
     # No_parts = int(g.num_nodes()/1024)
     out_degrees = np.array(g.out_degrees())
@@ -556,9 +539,7 @@ if __name__ == "__main__":
     in_size = g.ndata["feat"].shape[1]
     # out_size = dataset.num_classes
     out_size = num_classes
-    model = SAGE(in_size, 256, out_size, num_layers).to(device)
-    # model = GraphSAGE(in_size=256, hid_size=128, out_size=10, fanouts=fanouts)
-
+    model = SAGE(in_size, 256, out_size).to(device)
 
     # convert model and graph to bfloat16 if needed
     if args.dt == "bfloat16":
