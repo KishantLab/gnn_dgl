@@ -123,12 +123,13 @@ def train(args, device, g, dataset, model, num_classes):
 
     execution_time = 0.0
     start_time = time.time()
-    sampler = NeighborSampler(
-        [int(fanout) for fanout in args.fan_out.split(",")],
-        #[30, 30, 30],  # fanout for [layer-0, layer-1, layer-2]
-        prefetch_node_feats=["feat"],
-        prefetch_labels=["label"],
-    )
+    # sampler = NeighborSampler(
+    #     [int(fanout) for fanout in args.fan_out.split(",")],
+    #     #[30, 30, 30],  # fanout for [layer-0, layer-1, layer-2]
+    #     prefetch_node_feats=["feat"],
+    #     prefetch_labels=["label"],
+    # )
+    sampler = MultiLayerFullNeighborSampler(3)
     end_time = time.time()
     execution_time = end_time - start_time
     # G = dgl.to_homogeneous(g)
@@ -254,6 +255,7 @@ def train(args, device, g, dataset, model, num_classes):
                     epoch, total_loss / (it + 1), acc.item(), execution_time, loop_exe_time, model_exe_time, x_y_time, pred_time, loss_opt_time
         )
         epoch_lines.append(epoch_line)
+        torch.cuda.empty_cache()
     tt_str = "total for loop time, total model time, total loss time, total_training_time"
     tt_time = "{:.4f}, {:.4f}, {:.4f}, {:.4f}".format(total_for_loop_time, total_model_time, total_loss_opt_time, total_training_time)
     epoch_lines.append(tt_str)
@@ -304,7 +306,9 @@ if __name__ == "__main__":
         choices=["metis", "rm", "contig"],
         help="Partition method for sampling"
     )
-    parser.add_argument("--fan_out", type=str, default="0,0,0")
+    # parser.add_argument("--fan_out", type=str, default="0,0,0")
+    parser.add_argument("--fan_out", type=str, default="-1,-1,-1")
+    # parser.add_argument("--fan_out", type=str, default="10,10,10")
     parser.add_argument("--parts", type=int, default=10)
     parser.add_argument("--spmm", default="cusparse")
     parser.add_argument("--sampling", default="default")

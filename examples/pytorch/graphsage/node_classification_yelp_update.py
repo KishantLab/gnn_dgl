@@ -25,71 +25,13 @@ from dgl.data import CoraGraphDataset,RedditDataset,FlickrDataset, YelpDataset
 
 print("at the top")
 
-def closest_choice(num):
-    choices = [4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
-    return min(choices, key=lambda x: abs(x - num))
-
-from collections import defaultdict
-from itertools import zip_longest
-import torch
-
-def interleave_partitions_by_degree(train_idx, part_id, degrees):
-    """
-    Group train_idx by partition and sort within each partition by degree (descending).
-    Then interleave across partitions to preserve diversity.
-    
-    Args:
-        train_idx: Tensor of node indices (1D)
-        part_id: Tensor of shape [num_nodes]
-        degrees: Tensor of shape [num_nodes] (in-deg + out-deg or just one side)
-
-    Returns:
-        Tensor: reordered train_idx
-    """
-    grouped = defaultdict(list)
-
-    # Step 1: Collect and sort within each partition
-    train_idx = train_idx.cpu()
-    part_id = part_id.cpu()
-    degrees = degrees.cpu()
-
-    for nid in train_idx.tolist():
-        pid = part_id[nid].item()
-        grouped[pid].append(nid)
-
-    for pid in grouped:
-        grouped[pid].sort(key=lambda nid: -degrees[nid])  # descending degree
-
-    # Step 2: Interleave nodes across partitions
-    interleaved = []
-    for batch in zip_longest(*grouped.values()):
-        interleaved.extend([x for x in batch if x is not None])
-
-    return torch.tensor(interleaved, dtype=torch.long)
-
-
 class SAGE(nn.Module):
-    def __init__(self, in_size, hid_size, out_size, num_layers):
+    def __init__(self, in_size, hid_size, out_size):
         super().__init__()
         self.layers = nn.ModuleList()
         # three-layer GraphSAGE-mean
-        # num_layers = len(fanouts)
-
-        # # input layer
-        # self.layers.append(dglnn.SAGEConv(in_size, hid_size, "mean"))
-
-        # # hidden layers (excluding last)
-        # for _ in range(num_layers - 2):
-        #     self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
-
-        # # output layer
-        # self.layers.append(dglnn.SAGEConv(hid_size, out_size, "mean"))
         self.layers.append(dglnn.SAGEConv(in_size, hid_size, "mean"))
-        # print("num_layers: ",num_layers)
-        for i in range(num_layers -2):
-            self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
-        # self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
-        # self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
+        self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
         self.layers.append(dglnn.SAGEConv(hid_size, out_size, "mean"))
         self.dropout = nn.Dropout(0.5)
         self.hid_size = hid_size
@@ -155,11 +97,11 @@ def evaluate(model, graph, dataloader, num_classes):
     return MF.accuracy(
         torch.cat(y_hats),
         torch.cat(ys),
-        # task="multilabel",
-        task="multiclass",
-        num_classes=num_classes,
-        # num_labels=num_classes,          # number of classes
-        # threshold=0.5          # threshold after applying sigmoid
+        task="multilabel",
+        # task="multiclass",
+        # num_classes=num_classes,
+        num_labels=num_classes,          # number of classes
+        threshold=0.5          # threshold after applying sigmoid
     )
 
 
@@ -172,64 +114,20 @@ def layerwise_infer(device, graph, nid, model, num_classes, batch_size):
         pred = pred[nid]
         label = graph.ndata["label"][nid].to(pred.device)
         return MF.accuracy(
-            pred, label, task="multiclass", 
-            # num_labels=num_classes,          # number of classes
-            # threshold=0.5          # threshold after applying sigmoid
-            num_classes=num_classes
+            pred, label, task="multilabel", 
+            num_labels=num_classes,          # number of classes
+            threshold=0.5          # threshold after applying sigmoid
+            # num_classes=num_classes
         )
 
 
-def train(args, device, g, dataset, model, num_classes, part_id=None):
+def train(args, device, g, dataset, model, num_classes):
     # create sampler & dataloader
     #train_idx = dataset.train_idx.to(device)
     #val_idx = dataset.val_idx.to(device)
     train_mask=g.ndata['train_mask']
     val_mask=g.ndata['val_mask']
-    # if part_id is not None:
     train_idx = torch.nonzero(train_mask).squeeze().to(device)
-    print("train_idx: ", train_idx)
-    # print("type of part id",type(part_id))
-    # if part_id is not None:
-    #     # Extract the part IDs for train nodes
-    #     # train_parts = part_id[train_idx]  # shape [N_train]
-    #     sorted_train_idx = train_idx.cpu()[part_id.cpu()[train_idx.cpu()].argsort()].to(train_idx.device)
-    #     # Sort train_idx by corresponding partition ID
-    #     # sorted_parts, sorted_indices = torch.sort(train_parts)
-    #     # sorted_train_idx = train_idx[sorted_indices]
-    #     train_idx = sorted_train_idx
-    # else:
-    #     print("part_id is None, using default train_idx")
-        # train_idx = torch.nonzero(train_mask).squeeze().to(device)
-    # train_idx = torch.nonzero(train_mask).squeeze().to(device)
-
-    ##------------------------resuffled train idx sort by deg and part to get better performance------------------------
-    # degrees can be in-degree, out-degree, or in + out
-    degrees = g.in_degrees() + g.out_degrees()
-    # Get reordered train_idx
-    # sorted_train_idx = interleave_partitions_by_degree(train_idx, part_id, degrees)
-    # train_idx = sorted_train_idx.to(device)
-    # print("sorted train idx: ", sorted_train_idx)
-
-    # Make sure everything is on CPU for indexing and sorting
-    train_idx_cpu = train_idx.cpu()
-    degrees_cpu = degrees.cpu()  # e.g., g.in_degrees() + g.out_degrees()
-
-    # Get degrees of train nodes
-    train_degrees = degrees_cpu[train_idx_cpu]
-
-    # Sort indices by degree (descending)
-    sorted_degrees, sorted_idx = torch.sort(train_degrees, descending=True)
-    sorted_train_idx = train_idx_cpu[sorted_idx]
-    # train_idx = sorted_train_idx.to(device)
-
-    # Keep top 60%
-    top_k = int(1.0 * len(sorted_train_idx))
-    top_60_train_idx = sorted_train_idx[:top_k]
-
-    # Optional: move back to original device (e.g., GPU)
-    top_60_train_idx = top_60_train_idx.to(train_idx.device)
-
-    train_idx = top_60_train_idx
     val_idx = torch.nonzero(val_mask).squeeze().to(device)
 
     execution_time = 0.0
@@ -259,7 +157,6 @@ def train(args, device, g, dataset, model, num_classes, part_id=None):
         sampler,
         device=device,
         batch_size= int(args.batch_size),
-        # shuffle=False,
         shuffle=True,
         drop_last=False,
         num_workers=0,
@@ -334,7 +231,7 @@ def train(args, device, g, dataset, model, num_classes, part_id=None):
             # print("y_hat: ", y_hat)
             # print("len: ", len(y_hat))
             end_pred_time = time.time()
-            # print("prediction time:", end_pred_time - start_pred_time, "seconds")
+            print("prediction time:", end_pred_time - start_pred_time, "seconds")
             
             start_loss_time = time.time()
             # y = y.float()
@@ -349,8 +246,8 @@ def train(args, device, g, dataset, model, num_classes, part_id=None):
             #
             # y = torch.argmax(y, dim=1)
 
-            loss = F.cross_entropy(y_hat, y)
-            # loss = F.binary_cross_entropy_with_logits(y_hat, y.float())
+            # loss = F.cross_entropy(y_hat, y)
+            loss = F.binary_cross_entropy_with_logits(y_hat, y.float())
             # loss = F.binary_cross_entropy_with_logits(y_hat, y.flot())
             # loss = F.binary_cross_entropy_with_logits(y_hat, y.float())
             opt.zero_grad()
@@ -512,36 +409,12 @@ if __name__ == "__main__":
 
     g = dataset[0]
     print(g)
-    # num_layers = len(args.fan_out)
-    # print("num_layers: ",num_layers)
-    fanouts = [int(x) for x in args.fan_out.split(",")]
-    num_layers = len(fanouts)
+
     print("metis partition called")
-    # No_parts = int(g.num_nodes()/1024)
-    out_degrees = np.array(g.out_degrees())
-    in_degrees = np.array(g.in_degrees())
-    if np.sum(out_degrees) == np.sum(in_degrees):
-        print("graph is undirected")
-    else:
-        print("graph is direct")
-    max_value = np.max(out_degrees)
-    avg_value = np.mean(out_degrees)
-    No_parts = args.parts
-    fanout_part = int(args.fan_out.split(",")[0])
-    if No_parts == 0:
-        No_parts = int(avg_value)
-    if No_parts == 1:
-        No_parts = closest_choice(avg_value)
-    No_parts = int(avg_value)
-    if No_parts < fanout_part:
-        No_parts = fanout_part
-    # No_parts = closest_choice(avg_value)
-    # No_parts = int(args.fan_out.split(",")[0])
-    # No_parts = 1024
+    No_parts = int(args.fan_out.split(",")[0])
     # if No_parts > :
     # part_array = get_part_array(g, args.parts, args.method, spmm_method, sampling_method)
     part_array = get_part_array(g, No_parts, args.method, spmm_method, sampling_method, args.dataset)
-    part_id = get_part_id()
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     # g = g.to(device)
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
@@ -556,9 +429,7 @@ if __name__ == "__main__":
     in_size = g.ndata["feat"].shape[1]
     # out_size = dataset.num_classes
     out_size = num_classes
-    model = SAGE(in_size, 256, out_size, num_layers).to(device)
-    # model = GraphSAGE(in_size=256, hid_size=128, out_size=10, fanouts=fanouts)
-
+    model = SAGE(in_size, 256, out_size).to(device)
 
     # convert model and graph to bfloat16 if needed
     if args.dt == "bfloat16":
@@ -574,7 +445,7 @@ if __name__ == "__main__":
     execution_time1 = 0.0
     start_time1 = time.time()
     #train(args, device, g, dataset, model, num_classes)
-    epoch_lines=train(args, device, g, dataset, model, num_classes, part_id)
+    epoch_lines=train(args, device, g, dataset, model, num_classes)
     end_time1 = time.time()
     execution_time1 = end_time1 - start_time1
     # print("total training time:", execution_time1, "seconds")

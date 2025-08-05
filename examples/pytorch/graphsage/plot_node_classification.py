@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics.functional as MF
 import tqdm
-from dgl.sampling.metis_sampling import *
+from dgl.metis_sampling import *
 from dgl.data import AsNodePredDataset
 from dgl.dataloading import (
     DataLoader,
@@ -236,8 +236,20 @@ if __name__ == "__main__":
         default="1",
         help="batch_size for train",
     )
-    parser.add_argument("--fan_out", type=str, default="10,10,10")
+    parser.add_argument(
+        "--method",
+        type=str,
+        default = None,
+        choices=["metis", "rm", "contig"],
+        help="Partition method for sampling"
+    )
+
+    parser.add_argument("--fan_out", type=str, default="20,20,20")
     parser.add_argument("--parts", type=int, default=10)
+    parser.add_argument("--spmm", default="respmm")
+    parser.add_argument("--sampling", default="metis")
+    parser.add_argument("--sampler", default="default")
+
     args = parser.parse_args()
     if not torch.cuda.is_available():
         args.mode = "cpu"
@@ -247,6 +259,28 @@ if __name__ == "__main__":
     # print("\nLoading data")
     # dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
     # load and preprocess dataset
+    # if args.dataset == "cora":
+    #     dataset = CoraGraphDataset()
+    # elif args.dataset == "citeseer":
+    #     dataset = CiteseerGraphDataset()
+    # elif args.dataset == "pubmed":
+    #     dataset = PubmedGraphDataset()
+    # elif args.dataset == "wisconsin":
+    #     dataset = WisconsinDataset()
+    # elif args.dataset == "flickr":
+    #     dataset = FlickrDataset()
+    # elif args.dataset == "reddit":
+    #     dataset = RedditDataset()
+    # elif args.dataset == "ogbn-products":
+    #     dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-products"))
+    # elif args.dataset == "ogbn-arxiv":
+    #     dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-arxiv"))
+    # elif args.dataset == "yelp":
+    #     dataset = YelpDataset()
+    # else:
+    #     dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
+    #     raise ValueError("Unknown dataset: {}".format(args.dataset))
+
     if args.dataset == "cora":
         dataset = CoraGraphDataset()
     elif args.dataset == "citeseer":
@@ -259,19 +293,47 @@ if __name__ == "__main__":
         dataset = FlickrDataset()
     elif args.dataset == "reddit":
         dataset = RedditDataset()
+    elif args.dataset == "yelp":
+        dataset = YelpDataset()
     elif args.dataset == "ogbn-products":
         dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-products"))
     elif args.dataset == "ogbn-arxiv":
         dataset = AsNodePredDataset(DglNodePropPredDataset("ogbn-arxiv"))
-    elif args.dataset == "yelp":
-        dataset = YelpDataset()
+    elif args.dataset == "igb-tiny":
+        dataset, meta = dgl.load_graphs("dataset/igb_datasets/igb_tiny.dgl")
+    elif args.dataset == "igb-small":
+        dataset, meta = dgl.load_graphs("dataset/igb_datasets/igb_small.dgl")
+    elif args.dataset == "igb-medium":
+        dataset, meta = dgl.load_graphs("dataset/igb_datasets/igb_medium.dgl")
+    elif args.dataset == "igb-large":
+        dataset, meta = dgl.load_graphs("dataset/igb_datasets/igb_large.dgl")
+    elif args.dataset == "amazon-products":
+        dataset, meta = dgl.load_graphs("/data/Dataset/gnn_dataset/amazon_products.dgl")
+    elif args.dataset == "wiki5M":
+        dataset, meta = dgl.load_graphs("/data/Dataset/gnn_dataset/wikidata5M/wikidata5m_dgl_graph.bin")
     else:
         dataset = AsNodePredDataset(DglNodePropPredDataset(args.dataset))
-        raise ValueError("Unknown dataset: {}".format(args.dataset))
+ 
 
     g = dataset[0]
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     # g = g.to("cuda")
+    if args.spmm == "cusparse":
+        spmm_method = 0
+    elif args.spmm == "respmm":
+        spmm_method = 1
+    elif args.spmm == "gespmm":
+        spmm_method = 2
+    else:
+        print("please provide valid spmm mathod like respmm or gespmm. default value is cusparse")
+        
+    if args.sampling == "metis":
+        sampling_method = 0
+    elif args.sampling == "default":
+        sampling_method = 1
+    else:
+        print("please provide valid sampling mathod like metis (0) or default (1). default value is cusparse")
+
     print(type(g))
     print(g)
     train_mask=g.ndata['train_mask']
@@ -297,6 +359,17 @@ if __name__ == "__main__":
     #     print(f"Edge ({s}, {d}) - Cosine Similarity: {sim}")
     #
     out_degrees = np.array(g.out_degrees())
+    in_degrees = np.array(g.in_degrees())
+    if np.sum(out_degrees) == np.sum(in_degrees):
+        print("graph is undirected")
+    else:
+        print("graph is direct")
+    deg = out_degrees
+    zero_deg_mask = (deg == 0)
+    num_removed = zero_deg_mask.sum().item()
+    print(f"Removed {num_removed} zero-degree nodes.")
+
+    # out_degrees = np.array(g.out_degrees())
     max_value = np.max(out_degrees)
     avg_value = np.mean(out_degrees)
     print("maximum degree : ",max_value)
@@ -333,15 +406,38 @@ if __name__ == "__main__":
     plt.yscale('log')
     plt.ylim(1, 10**7)
     #plt.title('Degree Distribution')
-    plot_name = str(args.dataset) + ".eps"
-    plt.savefig(plot_name, format='eps')
-    
+    plot_name = str(args.dataset) + ".pdf"
+    plt.savefig(plot_name, format='pdf')
+
+    fanout_part = int(args.fan_out.split(",")[0])
+    No_parts = int(avg_value)
+    if No_parts < fanout_part:
+        No_parts = fanout_part
+
+    No_parts = int(args.fan_out.split(",")[0])
+    part_array = get_part_array(g, No_parts, args.method, spmm_method, sampling_method, args.dataset)
+    part_id = get_part_id()
+
+    num_parts = int(part_id.max().item()) + 1  # total partitions
+    counts = torch.bincount(part_id, minlength=num_parts)
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(torch.arange(num_parts).tolist(), counts.tolist())
+    plt.xlabel("Partition ID")
+    plt.ylabel("Number of Nodes")
+    plt.title("Node Count per Partition (METIS)")
+    plt.grid(True, axis='y')
+    plt.tight_layout()
+    plt.show()
+    plot_name = str(args.dataset) + "_partition_distribution" + str(num_parts) + ".pdf"
+    plt.savefig(plot_name, format='pdf')
+
 
     # g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     test_mask=g.ndata['test_mask']
     test_idx = torch.nonzero(test_mask).squeeze()
 
-    num_classes = dataset.num_classes
+    # num_classes = dataset.num_classes
 
     # create GraphSAGE model)
     # in_size = g.ndata["feat"].shape[1]

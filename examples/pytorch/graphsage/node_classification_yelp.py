@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchmetrics.functional as MF
-import tqdm
+from tqdm import tqdm
 from dgl.metis_sampling import *
 from dgl.data import AsNodePredDataset
 from dgl.dataloading import (
@@ -19,18 +19,25 @@ from dgl.dataloading import (
 from ogb.nodeproppred import DglNodePropPredDataset
 
 from dgl.data import CoraGraphDataset,RedditDataset,FlickrDataset, YelpDataset
-
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import f1_score
 
 print("at the top")
 
 class SAGE(nn.Module):
-    def __init__(self, in_size, hid_size, out_size):
+    def __init__(self, in_size, hid_size, out_size, num_layers):
         super().__init__()
         self.layers = nn.ModuleList()
         # three-layer GraphSAGE-mean
         self.layers.append(dglnn.SAGEConv(in_size, hid_size, "mean"))
-        self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
+        # print("num_layers: ",num_layers)
+        for i in range(num_layers -2):
+            self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
         self.layers.append(dglnn.SAGEConv(hid_size, out_size, "mean"))
+
+        # self.layers.append(dglnn.SAGEConv(in_size, hid_size, "mean"))
+        # self.layers.append(dglnn.SAGEConv(hid_size, hid_size, "mean"))
+        # self.layers.append(dglnn.SAGEConv(hid_size, out_size, "mean"))
         self.dropout = nn.Dropout(0.5)
         self.hid_size = hid_size
         self.out_size = out_size
@@ -70,7 +77,7 @@ class SAGE(nn.Module):
                 pin_memory=pin_memory,
             )
             feat = feat.to(device)
-            for input_nodes, output_nodes, blocks in tqdm.tqdm(dataloader):
+            for input_nodes, output_nodes, blocks in tqdm(dataloader):
                 x = feat[input_nodes]
                 h = layer(blocks[0], x)  # len(blocks) = 1
                 if l != len(self.layers) - 1:
@@ -91,42 +98,30 @@ def evaluate(model, graph, dataloader, num_classes):
             x = blocks[0].srcdata["feat"]
             ys.append(blocks[-1].dstdata["label"])
             y_hats.append(model(blocks, x))
-    # return MF.accuracy(
-    #     # torch.cat(y_hats),
-    #     # torch.cat(ys),
-    #     # task="multiclass",
-    #     # num_classes=num_classes,
-    #     (torch.cat(y_hats).sigmoid() > 0.5).int(),
-    #     torch.cat(ys).int(),
-    #     task="multiclass",
-    #     num_classes=num_classes,
-    # )
-    logits = torch.cat(y_hats)
-    labels = torch.cat(ys)
+    # Combine all predictions and labels
+    # y_true = torch.cat(ys).numpy()
+    y_true = torch.cat(ys).cpu().numpy()
+    y_pred = torch.cat(y_hats).cpu() 
+    y_pred = torch.where(torch.sigmoid(y_pred) > 0.5, 1, 0).numpy()
+    # y_pred_0 = torch.cat(y_hats).sigmoid().cpu() > 0.5
+    # print("y_true: ", y_true)
+    # print("y_pred: ", y_pred.numpy())
+    # print("y_pred_01: ", y_pred_01)
+    # print("y_pred_0: ", y_pred_0.numpy())
+    # Compute metrics
+    f1_micro = f1_score(y_true, y_pred, average='micro')
+    f1_macro = f1_score(y_true, y_pred, average='macro')
+    return MF.accuracy(
+        torch.cat(y_hats),
+        torch.cat(ys),
+        task="multilabel",
+        # task="multiclass",
+        # num_classes=num_classes,
+        num_labels=num_classes,          # number of classes
+        threshold=0.5          # threshold after applying sigmoid
 
-    # Apply sigmoid and threshold
-    preds = (logits.sigmoid() > 0.5).int()
-    labels = labels.int()
+    ), f1_micro, f1_macro
 
-    # Micro accuracy (element-wise)
-    micro_acc = (preds == labels).float().mean()
-
-    # Exact match accuracy (all labels correct for a sample)
-    exact_match = (preds == labels).all(dim=1).float().mean()
-
-    # Per-label (macro) accuracy
-    per_label_acc = (preds == labels).float().mean(dim=0)
-    macro_acc = per_label_acc.mean()
-
-    print(f"Micro Acc: {micro_acc:.4f} | Exact Match Acc: {exact_match:.4f} | Macro Acc: {macro_acc:.4f}")
-
-    return micro_acc
-    # preds = (torch.cat(y_hats).sigmoid() > 0.5).int()
-    # labels = torch.cat(ys).int()
-    # acc = (preds == labels).all(dim=1).float().mean()  # mean over all labels and samples
-    # acc = (preds == labels).float().mean()  # mean over all labels and samples
-    # return acc
-    # return acc.item()
 
 def layerwise_infer(device, graph, nid, model, num_classes, batch_size):
     model.eval()
@@ -136,19 +131,27 @@ def layerwise_infer(device, graph, nid, model, num_classes, batch_size):
         )  # pred in buffer_device
         pred = pred[nid]
         label = graph.ndata["label"][nid].to(pred.device)
-                # Apply sigmoid to logits and threshold
-        pred_labels = (pred.sigmoid() > 0.5).int()
-        label = label.int()
+        # y_true = torch.cat(label).numpy()
+        # y_pred = torch.cat(pred).sigmoid().numpy() > 0.5
+        # y_true = torch.cat(label).cpu().numpy()
+        # y_pred = torch.cat(pred).sigmoid().cpu().numpy() > 0.5 
+        y_true = label.cpu().numpy()
+        # y_true = torch.cat(ys).cpu().numpy()
+        y_pred = pred.cpu() 
 
-        # Compute accuracy as exact match or elementwise
-        # correct = (pred_labels == label).float()
-        correct = (preds == labels).all(dim=1).float().mean()
-        acc = correct.mean()  # mean over all samples and classes
-        return acc
-        # return MF.accuracy(
-        #     pred, label, task="multiclass", num_classes=num_classes
-        # )
+        y_pred = torch.where(torch.sigmoid(y_pred) > 0.5, 1, 0).numpy()
+        # Compute metrics
+        # f1_micro = f1_score(y_true, y_pred, average='micro')
+        f1_micro = f1_score(y_true, y_pred, average='micro')
+        f1_macro = f1_score(y_true, y_pred, average='macro')
 
+        return MF.accuracy(
+            pred, label, task="multilabel", 
+            # num_classes=num_classes
+            num_labels=num_classes,          # number of classes
+            threshold=0.5          # threshold after applying sigmoid
+
+        ), f1_micro, f1_macro
 
 def train(args, device, g, dataset, model, num_classes):
     # create sampler & dataloader
@@ -209,6 +212,10 @@ def train(args, device, g, dataset, model, num_classes):
     total_model_time = 0.0
     total_loss_opt_time = 0.0
     epoch_lines = []
+    total_src_nodes_layer_3=0   
+    total_src_nodes_layer_2=0
+    total_src_nodes_layer_1=0
+
     for epoch in range(int(args.epoch)):
         model.train()    
         total_loss = 0
@@ -233,6 +240,11 @@ def train(args, device, g, dataset, model, num_classes):
             # print("X shape",blocks[0])
             # print("X:",x)
             y = blocks[-1].dstdata["label"]
+            if epoch == 0:
+                total_src_nodes_layer_3 = total_src_nodes_layer_3 + blocks[0].num_src_nodes()
+                total_src_nodes_layer_2 = total_src_nodes_layer_2 + blocks[1].num_src_nodes()
+                total_src_nodes_layer_1 = total_src_nodes_layer_1 + blocks[-1].num_src_nodes()
+ 
             # print("dst nodes of block -1: ",blocks[-1].dstdata)
             end_x_y_time = time.time()
             # print("Y shape", blocks[-1])
@@ -243,6 +255,7 @@ def train(args, device, g, dataset, model, num_classes):
             # print(type(y_hat))
             # print("y_hat: ", y_hat)
             # print("len: ", len(y_hat))
+            # print("y_hat shape: ", y_hat.shape)
             end_pred_time = time.time()
             
             start_loss_time = time.time()
@@ -283,14 +296,21 @@ def train(args, device, g, dataset, model, num_classes):
         total_model_time += model_exe_time
         total_loss_opt_time += loss_opt_time
         # print("training time:", execution_time, "seconds")
-        acc = evaluate(model, g, val_dataloader, num_classes)
-        # print(
-        #     "\nEpoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {}".format(
-        #          epoch, total_loss / (it + 1), acc.item(), execution_time
-        #      )
-        #  )
-        epoch_line = "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {:.4f} | loop {:.4f} | Model {:.4f} | x_y_time {:.4f} | pred {:.4f} | loss_time {:.4f}".format(
-                    epoch, total_loss / (it + 1), acc.item(), execution_time, loop_exe_time, model_exe_time, x_y_time, pred_time, loss_opt_time
+        # acc = evaluate(model, g, val_dataloader, num_classes)
+        acc, f1_micro, f1_macro = evaluate(model, g, val_dataloader, num_classes)
+        if epoch == 0: 
+            layer_line = "Layer_1 {:d} | Layer_2 {:d} | Layer_3 {:d}" .format(
+                    int(total_src_nodes_layer_1/it), int(total_src_nodes_layer_2/it), int(total_src_nodes_layer_3/it))
+            epoch_lines.append(layer_line)
+
+
+        print(
+            "\nEpoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {}".format(
+                 epoch, total_loss / (it + 1), acc.item(), execution_time
+             )
+         )
+        epoch_line = "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Time : {:.4f} | loop {:.4f} | Model {:.4f} | x_y_time {:.4f} | pred {:.4f} | loss_time {:.4f} | micro_f1 {:.4f} | macro_f1 {:.4f}".format(
+                    epoch, total_loss / (it + 1), acc.item(), execution_time, loop_exe_time, model_exe_time, x_y_time, pred_time, loss_opt_time, f1_micro, f1_macro
         )
         epoch_lines.append(epoch_line)
     tt_str = "total for loop time, total model time, total loss time, total_training_time"
@@ -321,7 +341,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dataset",
-        default="ogbn-products",
+        default="yelp",
         # choices=["ogbn-products", "ogbn-arxiv", "ogbn-papers100M", "reddit"],
         help="pass dataset",
     )
@@ -396,18 +416,48 @@ if __name__ == "__main__":
 
     g = dataset[0]
     print("metis partition called")
-    part_array = get_part_array(g, args.parts, args.method, spmm_method, sampling_method)
+    out_degrees = np.array(g.out_degrees())
+    in_degrees = np.array(g.in_degrees())
+    if np.sum(out_degrees) == np.sum(in_degrees):
+        print("graph is undirected")
+    else:
+        print("graph is direct")
+    fanouts = [int(x) for x in args.fan_out.split(",")]
+    num_layers = len(fanouts)
+
+    max_value = np.max(out_degrees)
+    avg_value = np.mean(out_degrees)
+    No_parts = args.parts
+    fanout_part = int(args.fan_out.split(",")[0])
+    if No_parts == 0:
+        No_parts = int(avg_value)
+    if No_parts == 1:
+        No_parts = closest_choice(avg_value)
+    No_parts = int(avg_value)
+    if No_parts < fanout_part:
+        No_parts = fanout_part
+    # No_parts = closest_choice(avg_value)
+    # No_parts = int(args.fan_out.split(",")[0])
+    # No_parts = 1024
+    # if No_parts > :
+    # part_array = get_part_array(g, args.parts, args.method, spmm_method, sampling_method)
+    part_array = get_part_array(g, No_parts, args.method, spmm_method, sampling_method, args.dataset)
+    part_id = get_part_id()
+
+    # part_array = get_part_array(g, args.parts, args.method, spmm_method, sampling_method)
     g = g.to("cuda" if args.mode == "puregpu" else "cpu")
     device = torch.device("cpu" if args.mode == "cpu" else "cuda")
     test_mask=g.ndata['test_mask']
     test_idx = torch.nonzero(test_mask).squeeze().to("cpu")
 
     num_classes = dataset.num_classes
+    print("num_classes",num_classes)
 
     # create GraphSAGE model)
     in_size = g.ndata["feat"].shape[1]
     out_size = dataset.num_classes
-    model = SAGE(in_size, 256, out_size).to(device)
+    # model = SAGE(in_size, 256, out_size).to(device)
+    model = SAGE(in_size, 256, out_size, num_layers).to(device)
 
     # convert model and graph to bfloat16 if needed
     if args.dt == "bfloat16":
@@ -431,13 +481,23 @@ if __name__ == "__main__":
 
     # test the model
     print("\nTesting...")
-    acc = layerwise_infer(
-        device, g, test_idx, model, num_classes, batch_size=8192
+    # acc = layerwise_infer(
+    #     device, g, test_idx, model, num_classes, batch_size=4096
+    # 
+    acc, f1_micro, f1_macro = layerwise_infer(
+        device, g, test_idx, model, num_classes, batch_size=4096
     )
-    #print("\nTest Accuracy {:.4f}".format(acc.item()))
+
+    print("\nTest Accuracy {:.4f}".format(acc.item()))
+    print("\nTest F1 Micro {:.4f}".format(f1_micro))
+    print("\nTest F1 Macro {:.4f}".format(f1_macro))
     Accuracy = "Test Accuracy {:.4f}".format(acc.item())
+    F1_Micro = "Test F1 Micro {:.4f}".format(f1_micro)
+    F1_Macro = "Test F1 Macro {:.4f}".format(f1_macro)
     epoch_lines.append(Accuracy)
-    with open('epoch_data.txt', 'w') as file:
+    epoch_lines.append(F1_Micro)
+    epoch_lines.append(F1_Macro)
+    with open('epoch_data_yelp.txt', 'w') as file:
         for value in epoch_lines:
             file.write(str(value) + '\n')
 
