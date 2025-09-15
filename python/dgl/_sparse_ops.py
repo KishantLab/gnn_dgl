@@ -8,6 +8,7 @@ from ._ffi.function import _init_api
 from .base import DGLError
 from .metis_sampling import *
 
+import time
 # from dgl import DGLHeteroGraph
 import torch as th
 device = th.device('cuda')
@@ -248,7 +249,7 @@ def _gspmm(gidx, op, reduce_op, u, e):
     
     part_array, spmm_method = spmm_part_array()
     if part_array is None:
-        part_array = torch.ones(10)
+        part_array = torch.ones(5)
 
     # print("line from _sparse_ops.py 253")
     # print(spmm_method)
@@ -279,7 +280,7 @@ def _gspmm(gidx, op, reduce_op, u, e):
     # Print edge data (weights or attributes)
     
     # print(dir(gidx))
-
+    start_spmm_time = time.time()
     if gidx.num_edges(0) > 0:
         if spmm_method == 0:
             _CAPI_DGLKernelSpMM(
@@ -297,12 +298,16 @@ def _gspmm(gidx, op, reduce_op, u, e):
                 gidx,
                 op,
                 reduce_op,
+                # None,
+                # None,
                 to_dgl_nd(u if use_u else None),
                 to_dgl_nd(e if use_e else None),
+                # to_dgl_nd(u if use_u else None),
+                # to_dgl_nd(e if use_e else None),
                 to_dgl_nd_for_write(v),
                 arg_u_nd,
                 arg_e_nd,
-                to_dgl_nd(part_array)
+                # to_dgl_nd(part_array)
             )
         if spmm_method == 2:
             _CAPI_DGLKernelGESpMM(
@@ -315,7 +320,6 @@ def _gspmm(gidx, op, reduce_op, u, e):
                 arg_u_nd,
                 arg_e_nd,
             )
-
     # NOTE(zihao): actually we can avoid the following step, because arg_*_nd
     # refers to the data that stores arg_*. After we call _CAPI_DGLKernelSpMM,
     # arg_* should have already been changed. But we found this doesn't work
@@ -323,6 +327,10 @@ def _gspmm(gidx, op, reduce_op, u, e):
     # all zero).
     # The workaround is proposed by Jinjing, and we still need to investigate
     # where the problem is.
+    end_spmm_time = time.time()
+    print(f"SpMM time: {end_spmm_time - start_spmm_time} seconds")
+    
+    start_nd_array_time_sparse_ops = time.time()
     arg_u = None if arg_u is None else F.zerocopy_from_dgl_ndarray(arg_u_nd)
     arg_e = None if arg_e is None else F.zerocopy_from_dgl_ndarray(arg_e_nd)
     # To deal with scalar node/edge features.
@@ -332,6 +340,8 @@ def _gspmm(gidx, op, reduce_op, u, e):
         arg_u = F.squeeze(arg_u, -1)
     if expand_e and use_cmp:
         arg_e = F.squeeze(arg_e, -1)
+    end_nd_array_time_sparse_ops = time.time()
+    print("Time taken for converting to DGL NDArray:", end_nd_array_time_sparse_ops - start_nd_array_time_sparse_ops, "seconds")
     return v, (arg_u, arg_e)
 
 

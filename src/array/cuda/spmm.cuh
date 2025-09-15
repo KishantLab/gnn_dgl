@@ -19,7 +19,8 @@
 #include "macro.cuh"
 #include "global_array.h"
 
-#define Shared_mem_size 2048
+#define Shared_mem_size 128
+#define Chunk_size 32
 namespace dgl {
 
 using namespace cuda;
@@ -711,7 +712,9 @@ void la_spmm(const int m, const int n, Idx* A_indptr, const Idx* A_indices, cons
 
 //----------------------------------reorderd_spmm kernel--------------------------------------------------------------
 template <typename IdType, typename DType>
-__global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdType* A_indices, const DType* B, DType* C, IdType *reorderd_arr)
+__global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdType* A_indices, const DType* B, DType* C 
+		// ,IdType *reorderd_arr
+		)
 // __global__ void dkernel_ksn(int m, int k, int* A_indptr, int* A_indices, int* B, int* C)
 {
   // int rid = reorderd_arr[blockIdx.x];
@@ -722,6 +725,7 @@ __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdT
   // __shared__ int start;
   // __shared__ int end;
   // __shared__ int pos;
+  __shared__ int neb_location; //initilize the shared memory for neb location					
 
   if(rid < m)
   {
@@ -740,7 +744,7 @@ __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdT
     // printf("bid: %d, tid: %d, start: %d, end: %d, deg: %d, start_org: %d, end_org: %d\n",blockIdx.x, threadIdx.x, start, end, deg);
     int neb_size = end-start;
     float sum = 0;
-    // int sum1 = 0;
+    // float sum1 = 0;
     if(neb_size < Shared_mem_size)
     {
       for(int ii=tid; ii<neb_size; ii+=blockDim.x)          //copy all neb in shared memory
@@ -750,20 +754,34 @@ __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdT
       }
       __syncthreads();
       // __syncwarp();
+      // int tile = ceil((float)(k)/32);             //Feature matrix divided initilizeo tiles.
       int tile = ceil((float)(k)/blockDim.x);             //Feature matrix divided initilizeo tiles.
       // printf("rid: %d, tid: %d, start: %d, end: %d, sum: %d, tile: %d, \n",rid, tid, start, end, sum, tile);
       for(int tt=0; tt<tile; tt++)
       {
         sum = 0.0;
+	// sum1 = 0.0;				//making for 32 thredss
+	// int loc = tt*32*2; 			//making for 32 threads 
+	int loc = tt*blockDim.x; 
+	// int loc = tt*blockDim.x*2; 
         // for(int zz=start; zz<end; zz+=blockDim.x)
         for(int zz=0; zz<neb_size; zz++)
         {
+	  // if(tid == 0)
+	  // {
+	    // neb_location = Neb[zz]; //store the location of neb in shared memory.
+	    // printf("rid: %d, tid: %d, start: %d, end: %d, sum: %d, tile: %d, Neb_zz: %d\n", rid, tid, start, end, sum, tile, Neb[zz]);
+	  // }
+	  // __syncthreads();
           int offset = Neb[zz]*k+tid;
-          offset += (tt*blockDim.x);                //find the location in danse matrix for multiplication.
+          // int offset = neb_location*k+tid;
+          offset += loc;                //find the location in danse matrix for multiplication.
+          // offset += (tt*blockDim.x);                //find the location in danse matrix for multiplication.
           // printf("if -> rid: %d, tid: %d, strat: %d, end: %d, sum: %d, offset: %d, tile: %d, Neb: %d\n",rid, tid, start, end, sum, offset, tile, Neb[zz]);
           // sum = sum + B[offset];
           sum = sum_reduce(sum, B[offset]);
-          // sum1 += B[offset + blockDim.x];
+	  // if ( offset+blockDim.x < k)
+          	// sum1 = sum_reduce(sum1, B[offset + blockDim.x]);
           // sum += offset;
           // }
           // __syncwarp();
@@ -771,9 +789,12 @@ __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdT
         }
         int out = rid*k+tid;
         // printf("rid: %d, out: %d, tid: %d\n", rid, (blockDim.x*tt+out), tid);
-        // C[blockDim.x * tt + out] = sum;
+        C[loc + out] = sum;
+	// if ((loc + out + blockDim.x ) < k)
+        	// C[loc + out + blockDim.x] = sum1;
         // result[blockDim.x * tt + tid] = sum;
-        C[blockDim.x * tt + out] = sum_reduce(C[blockDim.x * tt + out], sum);
+        // C[loc + out] = sum_reduce(C[loc + out], sum);
+        // C[blockDim.x * tt + out] = sum_reduce(C[blockDim.x * tt + out], sum);
         // C[(blockDim.x * tt + out) + blockDim.x] = C[(blockDim.x * tt + out) + blockDim.x] +sum;
       }
       // __syncthreads();
@@ -808,17 +829,32 @@ __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdT
           __syncthreads();
           // __syncwarp();
           int tile = ceil((float)(k)/blockDim.x);
+          // int tile = ceil((float)(k)/32);
           for(int tt=0; tt<tile; tt++)
           {
             sum = 0;
+	    // int loc = tt*32*2; 
+	    int loc = tt*blockDim.x; 
             // for(int zz=start; zz<end; zz+=blockDim.x)
             for(int zz=0; zz<Shared_mem_size; zz++)
             {
-              int offset = Neb[zz]*k+tid;
-              offset += (tt*blockDim.x);
+		if(tid == 0)
+	    	{
+		    neb_location = Neb[zz]; //store the location of neb in shared memory.
+		    // printf("rid: %d, tid: %d, start: %d, end: %d, sum: %d, tile: %d, Neb_zz: %d\n", rid, tid, start, end, sum, tile, Neb[zz]);
+	    	}
+		__syncthreads();
+              int offset = neb_location*k+tid;
+              // int offset = Neb[zz]*k+tid;
+              offset += loc;
+              // offset += (tt*blockDim.x);
               // printf("else -> rid: %d, tid: %d, strat: %d, end: %d, sum: %d, offset: %d, tile: %d, sharetile: %d Neb0: %d, Neb1: %d ii: %d, tt: %d, zz: %d, Neb_zz: %d\n",rid, tid, start, end, sum, offset, tile, sharetile, Neb[0], Neb[1], ii, tt, zz, Neb[zz]);
               // sum += B[offset];
               sum = sum_reduce(sum, B[offset]);
+	      // if( offset + blockDim.x < k)
+	      // {
+		// sum1 = sum_reduce(sum1, B[offset + blockDim.x]);
+	      // }
               // sum1 += B[offset + blockDim.x];
               // sum += offset;
 
@@ -826,7 +862,9 @@ __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdT
               // }
             }
             int out = rid*k+tid;
-            C[blockDim.x * tt + out] = sum_reduce(C[blockDim.x * tt + out], sum);
+            C[loc + out] = sum_reduce(C[loc + out], sum);
+	    // if ((loc + out + blockDim.x) < k)
+		    // C[loc + out + blockDim.x] = sum_reduce(C[loc + out + blockDim.x], sum1);
             // result[blockDim.x * tt + tid] = result[blockDim.x * tt + tid] +sum;
           }
           remining_size = remining_size - Shared_mem_size;
@@ -846,28 +884,42 @@ __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdT
           __syncthreads();
           // __syncwarp();
           int tile = ceil((float)(k)/blockDim.x);
+	  // int tile = ceil((float)(k)/32);
           for(int tt=0; tt<tile; tt++)
           {
             sum = 0;
+	    int loc = tt*blockDim.x;
             // for(int zz=start; zz<end; zz+=blockDim.x)
             for(int zz=0; zz<remining_size; zz++)
             {
+	      if(tid == 0)
+	      {
+		neb_location = Neb[zz]; //store the location of neb in shared memory.
+		// printf("rid: %d, tid: %d, start: %d, end: %d, sum: %d, tile: %d, Neb_zz: %d\n", rid, tid, start, end, sum, tile, Neb[zz]);
+	      }
+	      __syncthreads();
               // sum = 0;
               // for(int kk=0; (zz+kk)<end ; kk++)
               // {
-              int offset = Neb[zz]*k+tid;
+              // int offset = Neb[zz]*k+tid;
+	      int offset = neb_location*k+tid;
               // int offset = Neb[kk]*k+tid;
-              offset += (tt*blockDim.x);
+              offset += loc;
+              // offset += (tt*blockDim.x);
               // printf("else -> rid: %d, tid: %d, strat: %d, end: %d, sum: %d, offset: %d, tile: %d, sharetile: %d Neb0: %d, Neb1: %d ii: %d, tt: %d, zz: %d, Neb_zz: %d\n",rid, tid, start, end, sum, offset, tile, sharetile, Neb[0], Neb[1], ii, tt, zz, Neb[zz]);
               // sum += B[offset];
               sum = sum_reduce(sum, B[offset]);
+	      // if( offset + blockDim.x < k)
+		      // sum1 = sum_reduce(sum1, B[offset + blockDim.x]);
               // sum1 += B[offset + blockDim.x];
               // sum += offset;
               // }
               __syncwarp();
             }
             int out = rid*k+tid;
-            C[blockDim.x * tt + out] = sum_reduce(C[blockDim.x * tt + out], sum);
+            C[loc + out] = sum_reduce(C[loc + out], sum);
+	    // if ((loc + out + blockDim.x) < k)
+		    // C[loc + out + blockDim.x] = sum_reduce(C[loc + out + blockDim.x], sum1);
             // result[blockDim.x * tt + tid] = result[blockDim.x * tt + tid] +sum;
           }
           // __syncthreads();
@@ -887,8 +939,272 @@ __global__ void dkernel_reorderd(int m, int k, const IdType* A_indptr, const IdT
 }
 
 
+//----------------------------------chunk_wise_vertex_spmm kernel--------------------------------------------------------------
 template <typename IdType, typename DType>
-void reorderd_kernel_call(const int m, const int n, IdType* A_indptr, const IdType* A_indices, const DType* B_data, DType* C_data, int M, int W_SIZE, IdType* d_part_array)
+__global__ void dkernel_reorderd_chunk(int m, int k, const IdType* A_indptr, const IdType* A_indices, const DType* B, DType* C 
+		// ,IdType *reorderd_arr
+		)
+// __global__ void dkernel_ksn(int m, int k, int* A_indptr, int* A_indices, int* B, int* C)
+{
+  // int rid = reorderd_arr[blockIdx.x];
+  int rid_start = blockIdx.x * (blockDim.x / Chunk_size);
+  int rid = rid_start + (threadIdx.x / Chunk_size);
+
+  // int rid = blockIdx.x;
+  __shared__ int Neb[Shared_mem_size];    //initilize the shared memory
+  // extern __shared__ int Neb[];    //initilize the shared memory
+  // extern __shared__ int result[];         //initilize external/ dynamic shared memory
+  // __shared__ int start;
+  // __shared__ int end;
+  // __shared__ int pos;
+  // __shared__ int neb_location; //initilize the shared memory for neb location					
+
+  if(rid < m)
+  {
+    // int tid = threadIdx.x+blockIdx.x*blockDim.x;
+    int tid = threadIdx.x;
+    int vertex_id = tid / Chunk_size;         // 0 to 3
+    int threads_id_chunk = tid % Chunk_size;   // 0 to 31
+    // int vertex_rid = rid_start + vertex_id;
+    // int row_start = indptr[vertex_rid];
+    // int row_end   = indptr[vertex_rid + 1];
+    // int deg       = row_end - row_start;
+    int shared_offset = vertex_id * Chunk_size;  //0 to 31, 32 to 63, 64 to 95, 96 to 127
+    // if(threadIdx.x == 0)
+    // {
+    // pos = 0;
+    // start = A_indptr[rid];
+    // end = A_indptr[rid+1];
+    // }
+    // __syncthreads();
+    int start = A_indptr[rid];      
+    int end = A_indptr[rid+1];
+    // int deg = end - start;
+    // printf("bid: %d, tid: %d, start: %d, end: %d, deg: %d, start_org: %d, end_org: %d\n",blockIdx.x, threadIdx.x, start, end, deg);
+    int neb_size = end-start;
+    // printf("bid: %d, rid: %d, tid: %d, start: %d, end: %d, neb_size: %d\n", blockIdx.x, rid, tid, start, end, neb_size);
+    float sum = 0;
+    float sum1 = 0;
+    // if(neb_size < Shared_mem_size)
+    if(neb_size < 32)
+    {
+      Neb[shared_offset + threads_id_chunk] = A_indices[threads_id_chunk + start];
+      // shared_neighbors[base_offset + thread_in_chunk] = indices[row_start + thread_in_chunk];
+
+      // for(int ii=tid; ii<neb_size; ii+=blockDim.x)          //copy all neb in shared memory
+      // {
+      //   Neb[ii] = A_indices[ii+start];
+      //   // printf("tid: %d, bid: %d, neb: %d\n", tid, blockIdx.x, Neb[ii]);
+      // }
+      // __syncthreads();
+      // __syncwarp();
+      int tile = ceil((float)(k)/Chunk_size);             //Feature matrix divided initilizeo tiles.
+      tile = ceil((float)(tile)/2);             //Feature matrix divided initilizeo tiles.
+      // int tile = ceil((float)(k)/blockDim.x);             //Feature matrix divided initilizeo tiles.
+      // printf("rid: %d, tid: %d, start: %d, end: %d, sum: %d, tile: %d, \n",rid, tid, start, end, sum, tile);
+      for(int tt=0; tt<=tile; tt++)
+      {
+        sum = 0.0;
+	sum1 = 0.0;				//making for 32 thredss
+	int loc = tt*Chunk_size*2; 			//making for 32 threads 
+	// int loc = tt*blockDim.x; 
+	// int loc = tt*blockDim.x*2; 
+        // for(int zz=start; zz<end; zz+=blockDim.x)
+        // for(int zz=0; zz<neb_size; zz++)
+        for(int zz=shared_offset; zz<neb_size; zz++)
+        {
+	  // if(tid == 0)
+	  // {
+	    // neb_location = Neb[zz]; //store the location of neb in shared memory.
+	    // printf("rid: %d, tid: %d, start: %d, end: %d, sum: %d, tile: %d, Neb_zz: %d\n", rid, tid, start, end, sum, tile, Neb[zz]);
+	  // }
+	  // __syncthreads();
+          int offset = Neb[zz]*k+threads_id_chunk;
+          // int offset = Neb[zz]*k+tid;
+          // int offset = neb_location*k+tid;
+          offset += loc;                //find the location in danse matrix for multiplication.
+          // offset += (tt*blockDim.x);                //find the location in danse matrix for multiplication.
+          // printf("if -> rid: %d, tid: %d, strat: %d, end: %d, sum: %d, offset: %d, tile: %d, Neb: %d\n",rid, tid, start, end, sum, offset, tile, Neb[zz]);
+          // sum = sum + B[offset];
+	  if (offset < k)
+	  {
+          	sum = sum_reduce(sum, B[offset]);
+	  }
+	  if( (offset + 32) < k)
+	  {
+		sum1 = sum_reduce(sum1, B[offset + 32]);
+	  }
+	  // sum1 = sum_reduce(sum1, B[offset + blockDim.x]);
+          // sum += offset;
+          // }
+          // __syncwarp();
+          // __syncthreads();
+        }
+        int out = rid*k+threads_id_chunk;
+        // int out = rid*k+tid;
+        // printf("rid: %d, out: %d, tid: %d\n", rid, (blockDim.x*tt+out), tid);
+	if( (loc + out) < k )
+	{
+		C[loc + out] = sum;
+	}
+	if ((loc + out + 32) < k)
+	{
+		C[loc + out + 32] = sum1;
+	}
+        // C[loc + out] = sum;
+	// if ((loc + out + blockDim.x ) < k)
+        	// C[loc + out + blockDim.x] = sum1;
+        // result[blockDim.x * tt + tid] = sum;
+        // C[loc + out] = sum_reduce(C[loc + out], sum);
+        // C[blockDim.x * tt + out] = sum_reduce(C[blockDim.x * tt + out], sum);
+        // C[(blockDim.x * tt + out) + blockDim.x] = C[(blockDim.x * tt + out) + blockDim.x] +sum;
+      }
+      // __syncthreads();
+      // for(int ii=tid; ii<k; ii+=blockDim.x)
+      // {
+      //   int out = rid*k+ii;
+      //   // C[blockDim.x * tt + out] = result[ii]; 
+      //   C[out] = result[ii]; 
+      // }
+    }
+    // else
+  // {
+    //   int sharetile = ceil((float)(neb_size)/Shared_mem_size);
+    //   int remining_size = neb_size;
+    //   // printf("else  ->  bid: %d, rid: %d\n", blockIdx.x, rid);
+    //   for(int ii=0; ii<sharetile; ii++)
+    //   {
+    //     if (remining_size > Shared_mem_size)
+    //     {
+    //       for(int xx=tid; xx<Shared_mem_size; xx+=blockDim.x)
+    //       {
+    //         int index_ptr = ii*Shared_mem_size+xx;
+    //         // printf("rid: %d, tid: %d, start : %d, end: %d, ii: %d, xx: %d, sharetile: %d, index_ptr: %d\n", rid, tid, start, end, ii, xx, sharetile, index_ptr);
+    //         if(index_ptr < end)
+    //         {
+    //           // atomicAdd(&pos, 1);
+    //           Neb[xx] = A_indices[index_ptr+start];
+    //           // Neb[xx] = A_indices;
+    //           // printf("rid: %d, tid: %d, start : %d, end: %d, ii: %d, xx: %d, sharetile: %d, index_ptr: %d, Neb_%d: %d\n", rid, tid, start, end, ii, xx, sharetile, index_ptr, xx, Neb[xx]);
+    //         }
+    //       }
+    //       __syncthreads();
+    //       // __syncwarp();
+    //       int tile = ceil((float)(k)/blockDim.x);
+    //       // int tile = ceil((float)(k)/32);
+    //       for(int tt=0; tt<tile; tt++)
+    //       {
+    //         sum = 0;
+	    // // int loc = tt*32*2; 
+	    // int loc = tt*blockDim.x; 
+    //         // for(int zz=start; zz<end; zz+=blockDim.x)
+    //         for(int zz=0; zz<Shared_mem_size; zz++)
+    //         {
+		// if(tid == 0)
+	    	// {
+		    // neb_location = Neb[zz]; //store the location of neb in shared memory.
+		    // // printf("rid: %d, tid: %d, start: %d, end: %d, sum: %d, tile: %d, Neb_zz: %d\n", rid, tid, start, end, sum, tile, Neb[zz]);
+	    	// }
+		// __syncthreads();
+    //           int offset = neb_location*k+tid;
+    //           // int offset = Neb[zz]*k+tid;
+    //           offset += loc;
+    //           // offset += (tt*blockDim.x);
+    //           // printf("else -> rid: %d, tid: %d, strat: %d, end: %d, sum: %d, offset: %d, tile: %d, sharetile: %d Neb0: %d, Neb1: %d ii: %d, tt: %d, zz: %d, Neb_zz: %d\n",rid, tid, start, end, sum, offset, tile, sharetile, Neb[0], Neb[1], ii, tt, zz, Neb[zz]);
+    //           // sum += B[offset];
+    //           sum = sum_reduce(sum, B[offset]);
+	      // // if( offset + blockDim.x < k)
+	      // // {
+		// // sum1 = sum_reduce(sum1, B[offset + blockDim.x]);
+	      // // }
+    //           // sum1 += B[offset + blockDim.x];
+    //           // sum += offset;
+
+    //           __syncwarp();
+    //           // }
+    //         }
+    //         int out = rid*k+tid;
+    //         C[loc + out] = sum_reduce(C[loc + out], sum);
+	    // // if ((loc + out + blockDim.x) < k)
+		    // // C[loc + out + blockDim.x] = sum_reduce(C[loc + out + blockDim.x], sum1);
+    //         // result[blockDim.x * tt + tid] = result[blockDim.x * tt + tid] +sum;
+    //       }
+    //       remining_size = remining_size - Shared_mem_size;
+    //     }
+    //     else
+    //   {
+    //       for(int xx=tid; xx<remining_size; xx+=blockDim.x)
+    //       {
+    //         int index_ptr = ii*Shared_mem_size+xx;
+    //         // printf("rid: %d, tid: %d, start : %d, end: %d, ii: %d, xx: %d, sharetile: %d, index_ptr: %d\n", rid, tid, start, end, ii, xx, sharetile, index_ptr);
+    //         if(index_ptr < end)
+    //         {
+    //           Neb[xx] = A_indices[index_ptr+start];
+    //           // printf("rid: %d, tid: %d, start : %d, end: %d, ii: %d, xx: %d, sharetile: %d, index_ptr: %d, Neb_%d: %d\n", rid, tid, start, end, ii, xx, sharetile, index_ptr, xx, Neb[xx]);
+    //         }
+    //       }
+    //       __syncthreads();
+    //       // __syncwarp();
+    //       int tile = ceil((float)(k)/blockDim.x);
+	  // // int tile = ceil((float)(k)/32);
+    //       for(int tt=0; tt<tile; tt++)
+    //       {
+    //         sum = 0;
+	    // int loc = tt*blockDim.x;
+    //         // for(int zz=start; zz<end; zz+=blockDim.x)
+    //         for(int zz=0; zz<remining_size; zz++)
+    //         {
+	      // if(tid == 0)
+	      // {
+		// neb_location = Neb[zz]; //store the location of neb in shared memory.
+		// // printf("rid: %d, tid: %d, start: %d, end: %d, sum: %d, tile: %d, Neb_zz: %d\n", rid, tid, start, end, sum, tile, Neb[zz]);
+	      // }
+	      // __syncthreads();
+    //           // sum = 0;
+    //           // for(int kk=0; (zz+kk)<end ; kk++)
+    //           // {
+    //           // int offset = Neb[zz]*k+tid;
+	      // int offset = neb_location*k+tid;
+    //           // int offset = Neb[kk]*k+tid;
+    //           offset += loc;
+    //           // offset += (tt*blockDim.x);
+    //           // printf("else -> rid: %d, tid: %d, strat: %d, end: %d, sum: %d, offset: %d, tile: %d, sharetile: %d Neb0: %d, Neb1: %d ii: %d, tt: %d, zz: %d, Neb_zz: %d\n",rid, tid, start, end, sum, offset, tile, sharetile, Neb[0], Neb[1], ii, tt, zz, Neb[zz]);
+    //           // sum += B[offset];
+    //           sum = sum_reduce(sum, B[offset]);
+	      // // if( offset + blockDim.x < k)
+		      // // sum1 = sum_reduce(sum1, B[offset + blockDim.x]);
+    //           // sum1 += B[offset + blockDim.x];
+    //           // sum += offset;
+    //           // }
+    //           __syncwarp();
+    //         }
+    //         int out = rid*k+tid;
+    //         C[loc + out] = sum_reduce(C[loc + out], sum);
+	    // // if ((loc + out + blockDim.x) < k)
+		    // // C[loc + out + blockDim.x] = sum_reduce(C[loc + out + blockDim.x], sum1);
+    //         // result[blockDim.x * tt + tid] = result[blockDim.x * tt + tid] +sum;
+    //       }
+    //       // __syncthreads();
+    //       // for(int tt=0; tt<tile; tt++)
+    //       // {
+    //       // for(int ii=tid; ii<k; ii+=blockDim.x)
+    //       // {
+    //       //   int out = rid*k+ii;
+    //       //   // C[blockDim.x * tt + out] = result[ii]; 
+    //       //   C[out] = result[ii]; 
+    //       // }
+    //     }
+    //   }
+    // }
+    // } //this is for the neighbour chek
+  }
+}
+
+
+template <typename IdType, typename DType>
+void reorderd_kernel_call(const int m, const int n, IdType* A_indptr, const IdType* A_indices, const DType* B_data, DType* C_data, int M, int W_SIZE 
+		// ,IdType* d_part_array
+		)
 {
     static float summation=0;
     float elapsed_time;
@@ -918,15 +1234,35 @@ void reorderd_kernel_call(const int m, const int n, IdType* A_indptr, const IdTy
   // }
   // printf("\n");
     // dkernel_reorderd<IdType,DType><<<m, n >>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
+  // dkernel_reorderd<IdType,DType><<<m, 32>>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
   if(n < 256)
   {
     // dkernel_ksn<<<M,N>>>(M,N,d_indptr,d_indices,d_b,d_c,len);
-    dkernel_reorderd<IdType,DType><<<m, n >>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
+    dkernel_reorderd<IdType,DType><<<m, n >>>(m, n, A_indptr, A_indices, B_data, C_data 
+		    // ,d_part_array
+		    );
   }
   else {
     // dkernel_ksn<<<M, BLOCKSIZE, N*sizeof(int)>>>(M, N, d_indptr, d_indices, d_b, d_c, min, max, processed_arr);
-    dkernel_reorderd<IdType,DType><<<m, 256>>>(m, n, A_indptr, A_indices, B_data, C_data, d_part_array);
+    dkernel_reorderd<IdType,DType><<<m, 256>>>(m, n, A_indptr, A_indices, B_data, C_data 
+		    // ,d_part_array
+		    );
   }
+  
+  // if(n < 256)
+  // {
+  //   // dkernel_ksn<<<M,N>>>(M,N,d_indptr,d_indices,d_b,d_c,len);
+    // dkernel_reorderd_chunk<IdType,DType><<<m, 128>>>(m, n, A_indptr, A_indices, B_data, C_data
+		    // // , d_part_array
+		    // );
+  // }
+  // else {
+    // dkernel_ksn<<<M, BLOCKSIZE, N*sizeof(int)>>>(M, N, d_indptr, d_indices, d_b, d_c, min, max, processed_arr);
+    // dkernel_reorderd_chunk<IdType,DType><<<m, Shared_mem_size>>>(m, n, A_indptr, A_indices, B_data, C_data
+		    // // , d_part_array
+		    // );
+  // }
+
   cudaDeviceSynchronize();
   cudaEventRecord(stop);
   cudaEventSynchronize(stop);
@@ -1172,12 +1508,15 @@ void reorderd_Csr(const BcastOff& bcast,
                   const CSRMatrix& csr,
                   const DType* B_data, const DType* A_data,
                   DType* C_data,
-                  int x_length,
-                  IdType* d_part_array)
+                  int x_length
+                  // ,IdType* d_part_array
+		  )	
 {
   const int m = csr.num_rows;
   const int n = x_length;
   // printf("num_vertex: %d\n",m);
+  // printf("num_edges: %d\n",csr.num_cols);
+  // printf("num_edges final: %d\n",csr.indices->shape[0]);
   // printf("feat_size: %d\n",n);
   int W_SIZE=1024;
   int T_MBlock;
@@ -1186,7 +1525,9 @@ void reorderd_Csr(const BcastOff& bcast,
     T_MBlock+=1;
 
   T_MBlock *= W_SIZE;
-  reorderd_kernel_call<IdType,DType>(m,n,static_cast<IdType*>(csr.indptr->data),static_cast<IdType*>(csr.indices->data),B_data,C_data,T_MBlock,W_SIZE, d_part_array);
+  reorderd_kernel_call<IdType,DType>(m,n,static_cast<IdType*>(csr.indptr->data),static_cast<IdType*>(csr.indices->data),B_data,C_data,T_MBlock,W_SIZE 
+		  // ,d_part_array
+		  );
 }
 
 

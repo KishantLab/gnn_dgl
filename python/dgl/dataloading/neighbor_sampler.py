@@ -5,7 +5,7 @@ from ..heterograph import DGLGraph
 from ..transforms import to_block
 from ..utils import get_num_threads
 from .base import BlockSampler
-
+import time
 
 class NeighborSampler(BlockSampler):
     """Sampler that builds computational dependency of node representations via
@@ -189,6 +189,7 @@ class NeighborSampler(BlockSampler):
         for fanout in reversed(self.fanouts):
             # print("data from neighbor_sampler.py line 188 part_array passed")
             # print(part_array)
+            start_time = time.time()
             frontier = g.sample_neighbors(
                 seed_nodes,
                 fanout,
@@ -199,6 +200,9 @@ class NeighborSampler(BlockSampler):
                 output_device=self.output_device,
                 exclude_edges=exclude_eids,
             )
+            end_time = time.time()
+            # print(f"Time taken for sample_neighbors: {end_time - start_time} seconds")
+            start_time = time.time()
             block = to_block(frontier, seed_nodes)
             # If sampled from graphbolt-backed DistGraph, `EID` may not be in
             # the block.
@@ -206,7 +210,8 @@ class NeighborSampler(BlockSampler):
                 block.edata[EID] = frontier.edata[EID]
             seed_nodes = block.srcdata[NID]
             blocks.insert(0, block)
-
+            end_time = time.time()
+            # print(f"Time taken for to_block: {end_time - start_time} seconds")
         return seed_nodes, output_nodes, blocks
 
 

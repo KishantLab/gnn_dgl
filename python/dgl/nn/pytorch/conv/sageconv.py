@@ -1,6 +1,7 @@
 """Torch Module for GraphSAGE layer"""
 # pylint: disable= no-member, arguments-differ, invalid-name
 import torch
+import time
 from torch import nn
 from torch.nn import functional as F
 
@@ -204,6 +205,7 @@ class SAGEConv(nn.Module):
             where :math:`N_{dst}` is the number of destination nodes in the input graph,
             :math:`D_{out}` is the size of the output feature.
         """
+        start_forward_conv_time = time.time()
         with graph.local_scope():
             if isinstance(feat, tuple):
                 feat_src = self.feat_drop(feat[0])
@@ -294,4 +296,8 @@ class SAGEConv(nn.Module):
             # normalization
             if self.norm is not None:
                 rst = self.norm(rst)
+            end_forward_conv_time = time.time()
+            print("forward conv took {} seconds".format(
+                end_forward_conv_time - start_forward_conv_time
+            ))
             return rst

@@ -1,7 +1,7 @@
 """Neighbor sampling APIs"""
 
 import os
-
+import time
 import torch
 from ..metis_sampling import *
 from .. import backend as F, ndarray as nd, utils
@@ -638,7 +638,10 @@ def _sample_neighbors(
         assert ret.is_unibipartite
 
     else: 
+        start_time = time.time()
         part_array, sampling_method = get_part_array(g)
+        # print("part_array", part_array)
+        # print("len(part_array)", len(part_array))
         # print("sampling_method",sampling_method)
         # part_array = utils.prepare_tensor_dict(part_array, part_array, "part_array")
         # device = utils.context_of(part_array)
@@ -658,7 +661,8 @@ def _sample_neighbors(
             g._graph,
             nodes_all_types,
             fanout_array,
-            part_array,
+            # part_array,
+            F.to_dgl_nd(part_array),
             edge_dir,
             prob_arrays,
             excluded_edges_all_t,
@@ -678,11 +682,18 @@ def _sample_neighbors(
             )
 
         # print("sub graph after sampling: ",subgidx.graph)
+        end_time = time.time()
         ret = DGLGraph(subgidx.graph, g.ntypes, g.etypes)
         induced_edges = subgidx.induced_edges
+        # end_time = time.time()
+        # print("Time taken for sampling neighbors in seconds kernel: ", end_time - start_time)
         # print("returnd ret",ret)
         # print(type(ret))
         # print("edata: ",ret.edata)  # Print all edge data (including weights if they exist)
+        # print("subgidx.induced_edges :", subgidx.induced_edges)
+        # print("lenth of subgidx.induced_edges :", subgidx.induced_edges[0].shape)
+        # print("shape of subidx.induced_edges :", subgidx.induced_edges.shape)
+        # print("subgidx.induced_nodes :", subgidx.induced_nodes)
 
         
 
@@ -691,6 +702,7 @@ def _sample_neighbors(
     # incomprehensible errors with lazy feature copy.
     # So in distributed training context, we fall back to old behavior where we
     # only set the edge IDs.
+    start_time = time.time()
     if not _dist_training:
         if copy_ndata:
             if fused:
@@ -723,6 +735,8 @@ def _sample_neighbors(
             ret.edges[etype].data[EID] = induced_edges[i]
     # print("final_ret",ret)
     # print(type(ret))
+    end_time = time.time()
+    # print("Time taken for sampling neighbors in seconds: ", end_time - start_time)
     return ret
 
 

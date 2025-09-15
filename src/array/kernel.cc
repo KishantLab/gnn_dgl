@@ -46,7 +46,9 @@ void SpMM(
 /** @brief Generalized Sparse Matrix-Matrix Multiplication with reorderd vertex. */
 void ReSpMM(
     const std::string& op, const std::string& reduce, HeteroGraphPtr graph,
-    NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux, NDArray part_array) {
+    NDArray ufeat, NDArray efeat, NDArray out, std::vector<NDArray> out_aux
+    // , NDArray part_array
+    ) {
   // TODO(zihao): format tuning
   SparseFormat format = graph->SelectFormat(0, CSC_CODE);
   const auto& bcast = CalcBcastOff(op, ufeat, efeat);
@@ -57,7 +59,9 @@ void ReSpMM(
         if (format == SparseFormat::kCSC) {
           ReSpMMCsr<XPU, IdType, Dtype>(
               op, reduce, bcast, graph->GetCSCMatrix(0), ufeat, efeat, out,
-              out_aux, part_array);
+              out_aux
+	      // , part_array
+	      );
         } else if (format == SparseFormat::kCOO) {
           SpMMCoo<XPU, IdType, Dtype>(
               op, reduce, bcast, graph->GetCOOMatrix(0), ufeat, efeat, out,
@@ -563,7 +567,7 @@ DGL_REGISTER_GLOBAL("sparse._CAPI_DGLKernelReSpMM")
       NDArray V = args[5];
       NDArray ArgU = args[6];
       NDArray ArgE = args[7];
-      NDArray part_array = args[8];
+      // NDArray part_array = args[8];
       CheckCtx(
           graph->Context(), {U, E, V, ArgU, ArgE},
           {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
@@ -579,7 +583,9 @@ DGL_REGISTER_GLOBAL("sparse._CAPI_DGLKernelReSpMM")
            graph->NumVertices(dst_vtype)},
           {0, 1, 2, 2, 2}, {U, E, V, ArgU, ArgE},
           {"U_data", "E_data", "out", "Arg_U", "Arg_E"});
-      ReSpMM(op, reduce_op, graph.sptr(), U, E, V, {ArgU, ArgE}, part_array);
+      ReSpMM(op, reduce_op, graph.sptr(), U, E, V, {ArgU, ArgE}
+		      // , part_array
+		      );
     });
 
 DGL_REGISTER_GLOBAL("sparse._CAPI_DGLKernelGESpMM")

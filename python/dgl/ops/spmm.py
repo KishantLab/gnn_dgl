@@ -1,6 +1,6 @@
 """Internal module for general spmm operators."""
 import sys
-
+import time
 from .. import backend as F
 from ..backend import (
     gspmm as gspmm_internal,
@@ -72,6 +72,7 @@ def gspmm(g, op, reduce_op, lhs_data, rhs_data):
     tensor
         The result tensor.
     """
+    start_spmm_py_time = time.time()
     if g._graph.number_of_etypes() == 1:
         if op not in ["copy_lhs", "copy_rhs"]:
             lhs_data, rhs_data = reshape_lhs_rhs(lhs_data, rhs_data)
@@ -111,8 +112,12 @@ def gspmm(g, op, reduce_op, lhs_data, rhs_data):
         deg = g.in_degrees()
         deg = F.astype(F.clamp(deg, 1, max(g.num_edges(), 1)), F.dtype(ret))
         deg_shape = (ret_shape[0],) + (1,) * (len(ret_shape) - 1)
+        end_spmm_py_time = time.time()
+        print("gspmm mean op took {} seconds".format(end_spmm_py_time - start_spmm_py_time))
         return ret / F.reshape(deg, deg_shape)
     else:
+        end_spmm_py_time = time.time()
+        print("gspmm took {} seconds".format(end_spmm_py_time - start_spmm_py_time))
         return ret
 
 
