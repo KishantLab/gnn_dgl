@@ -12,6 +12,9 @@
 #include "./spmm.cuh"
 #include "global_array.h"
 
+// const IdType d_part_array_final;
+// int d_part_array_flag = 0;
+
 namespace dgl {
 
 using namespace cuda;
@@ -191,7 +194,9 @@ template <int XPU, typename IdType, typename DType>
 void ReSpMMCsr(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array) {
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    ) {
   bool is_scalar_efeat = efeat.NumElements() == csr.indices->shape[0];
   bool use_efeat = op != "copy_lhs";
 
@@ -226,16 +231,30 @@ void ReSpMMCsr(
       //   x_length
       // );
       // });
-    
+
+      // if( d_part_array_flag == 0)
+      // {
+	     // d_part_array_flag = 1; 
+	     // d_part_array_final = static_cast<IdType*>(d_part_array->data);
+	// }
       //--------------------------- reorderd_Csr CSR starts-------------------
+      // cuda::reorderd_Csr<IdType, DType>(                                 // function avalible in spmm.cuh
+      //   bcast, csr, static_cast<DType*>(ufeat->data),
+      //   nullptr, 
+      //   static_cast<DType*>(out->data),
+      //   x_length,
+      //     static_cast<IdType*>(d_part_array->data)
+      // );
+
+      // IdType* d_part_array = 0;
       cuda::reorderd_Csr<IdType, DType>(                                 // function avalible in spmm.cuh
         bcast, csr, static_cast<DType*>(ufeat->data),
         nullptr, 
         static_cast<DType*>(out->data),
-        x_length,
-          static_cast<IdType*>(d_part_array->data)
+        x_length
+          // static_cast<IdType*>(d_part_array->data)
+	// ,d_part_array
       );
-
 
       // CusparseCsrmm2<DType, IdType>(
       //     ufeat->ctx, csr, static_cast<DType*>(ufeat->data), nullptr,
@@ -503,11 +522,15 @@ template void SpMMCsr<kDGLCUDA, int64_t, __half>(
 template void ReSpMMCsr<kDGLCUDA, int32_t, __half>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCUDA, int64_t, __half>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 
 template void GESpMMCsr<kDGLCUDA, int32_t, __half>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
@@ -532,11 +555,15 @@ template void SpMMCsr<kDGLCUDA, int64_t, __nv_bfloat16>(
 template void ReSpMMCsr<kDGLCUDA, int32_t, __nv_bfloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCUDA, int64_t, __nv_bfloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 
 template void GESpMMCsr<kDGLCUDA, int32_t, __nv_bfloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
@@ -588,19 +615,27 @@ template void SpMMCsr<kDGLCUDA, int64_t, double>(
 template void ReSpMMCsr<kDGLCUDA, int32_t, float>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCUDA, int64_t, float>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCUDA, int32_t, double>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCUDA, int64_t, double>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 
 template void GESpMMCsr<kDGLCUDA, int32_t, float>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,

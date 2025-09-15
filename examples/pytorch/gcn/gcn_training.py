@@ -71,17 +71,17 @@ def train(g, features, labels, masks, model):
         acc = evaluate(g, features, labels, val_mask, model)
         model_exe_time += end_model_time - start_model_time
         total_training_time += model_exe_time
-        # print(
-        #         "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Model Time {:  .4f} ".format(
-        #         epoch, loss.item(), acc, model_exe_time
-        #     )
-        # )
-        
-        epoch_line = "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Model Time {:.4f} ".format(
+        print(
+                "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Model Time {:  .4f} ".format(
                 epoch, loss.item(), acc, model_exe_time
             )
+        )
 
-        epoch_lines.append(epoch_line)
+        # epoch_line = "Epoch {:05d} | Loss {:.4f} | Accuracy {:.4f} | Model Time {:.4f} ".format(
+        #         epoch, loss.item(), acc, model_exe_time
+        #     )
+
+        # epoch_lines.append(epoch_line)
     total_tt = "Total_Training_Time {:.4f}".format(total_training_time)
     epoch_lines.append(total_tt)
     return epoch_lines

@@ -46,7 +46,9 @@ template <int XPU, typename IdType, typename DType>
 void ReSpMMCsr(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array) {
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    ) {
   const int64_t dim = bcast.out_len;
   if (reduce == "sum") {
     SWITCH_OP(op, Op, {
@@ -215,27 +217,39 @@ template void SpMMCsr<kDGLCPU, int64_t, double>(
 template void ReSpMMCsr<kDGLCPU, int32_t, BFloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCPU, int64_t, BFloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCPU, int32_t, float>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCPU, int64_t, float>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCPU, int32_t, double>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 template void ReSpMMCsr<kDGLCPU, int64_t, double>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray d_part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray d_part_array
+    );
 
 template void GESpMMCsr<kDGLCPU, int32_t, BFloat16>(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,

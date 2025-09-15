@@ -33,7 +33,9 @@ template <int XPU, typename IdType, typename DType>
 void ReSpMMCsr(
     const std::string& op, const std::string& reduce, const BcastOff& bcast,
     const aten::CSRMatrix& csr, NDArray ufeat, NDArray efeat, NDArray out,
-    std::vector<NDArray> out_aux, NDArray part_array);
+    std::vector<NDArray> out_aux
+    // , NDArray part_array
+    );
 
 /**
  * @brief Generalized Sparse Matrix Dense Matrix Multiplication on Csr format.

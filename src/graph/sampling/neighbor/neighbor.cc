@@ -27,6 +27,10 @@ using namespace dgl::aten;
 NDArray parts_arr_nd;
 int flag_ndarray =0;
 
+// const auto parts_array;
+std::vector<int64_t> parts_array;
+int flag_parts_array = 0;
+
 namespace dgl {
 namespace sampling {
 
@@ -309,12 +313,12 @@ HeteroSubgraph SampleNeighbors(
     // );
     // //
     // Copy vector data into the NDArray
-    // if(flag_ndarray == 0)
-    //   {
-    //     flag_ndarray =1;
-    //     NDArray parts_arr_nd = NDArray::FromVector(parts_arr);
-    //   }
-      NDArray parts_arr_nd = NDArray::FromVector(parts_arr);
+    if(flag_ndarray == 0)
+      {
+        flag_ndarray =1;
+        parts_arr_nd = NDArray::FromVector(parts_arr);
+      }
+      // NDArray parts_arr_nd = NDArray::FromVector(parts_arr);
 
     // std::copy(parts_arr.begin(), parts_arr.end(), static_cast<int64_t*>(parts_array->data));
       // sample from one relation graph
@@ -999,7 +1003,12 @@ DGL_REGISTER_GLOBAL("sampling.neighbor._CAPI_DGLSampleNeighbors")
       const auto& fanouts = fanouts_array.ToVector<int64_t>();
       IdArray parts = args[3];
       // const auto& parts_array = ListValueToVector<NDArray>(args[3]);
-      const auto& parts_array = parts.ToVector<int64_t>();
+      if( flag_parts_array == 0)
+      {
+      	flag_parts_array = 1;
+	parts_array = parts.ToVector<int64_t>();
+	}
+      // const auto& parts_array = parts.ToVector<int64_t>();
       const std::string dir_str = args[4];
       const auto& prob_or_mask = ListValueToVector<NDArray>(args[5]);
       const auto& exclude_edges = ListValueToVector<IdArray>(args[6]);

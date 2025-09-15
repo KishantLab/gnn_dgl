@@ -1,4 +1,5 @@
 import torch as th
+import time
 
 from ..._sparse_ops import (
     _bwd_segment_cmp,
@@ -162,7 +163,13 @@ def _cast_if_autocast_enabled(*args):
 class GSpMM(th.autograd.Function):
     @staticmethod
     def forward(ctx, gidx, op, reduce_op, X, Y):
+        start_gspmm_time = time.time()
         out, (argX, argY) = _gspmm(gidx, op, reduce_op, X, Y)
+        end_gspmm_time = time.time()
+        print("GSpMM forward time: {:.4f} seconds".format(
+            end_gspmm_time - start_gspmm_time
+        ))
+        start_other_time = time.time()
         reduce_last = _need_reduce_last_dim(X, Y)
         X_shape = X.shape if X is not None else None
         Y_shape = Y.shape if Y is not None else None
@@ -189,6 +196,10 @@ class GSpMM(th.autograd.Function):
         if not spmm_cache_argY(op, reduce_op, req_grad_X, req_grad_Y):
             argY = None
         ctx.save_for_backward(X, Y, argX, argY)
+        end_other_time = time.time()
+        print("Other operations time: {:.4f} seconds".format(
+            end_other_time - start_other_time
+        ))
         return out
 
     @staticmethod
@@ -204,6 +215,7 @@ class GSpMM(th.autograd.Function):
             reduce_last,
         ) = ctx.backward_cache
         X, Y, argX, argY = ctx.saved_tensors
+        start_backward_time = time.time()
         if op != "copy_rhs" and ctx.needs_input_grad[3]:
             g_rev = gidx.reverse()
             if reduce_op == "sum":
@@ -245,6 +257,10 @@ class GSpMM(th.autograd.Function):
             dY = _reduce_grad(dY, Y_shape)
         else:  # Y has no gradient
             dY = None
+        end_backward_time = time.time()
+        print("GSpMM backward time: {:.4f} seconds".format(
+            end_backward_time - start_backward_time
+        ))
         return None, None, None, dX, dY
 
 
